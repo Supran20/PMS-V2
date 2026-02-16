@@ -1,0 +1,160 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { DeleteModal } from "@/components/ui/DeleteModal";
+import { Icon } from "@iconify/react";
+import { getUsers, deleteUser, User } from "@/lib/api/user";
+import { toast } from "sonner";
+
+export default function UsersPage() {
+  const router = useRouter();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const data = await getUsers();
+      setUsers(data ?? []);
+    } catch {
+      toast.error("Failed to load users");
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleEditClick = (user: User) => {
+    router.push(`/dashboard/users/edit/${user.id}`);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setDeleteModalOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDeleteConfirm = async (user: User) => {
+    await deleteUser(user.id);
+    fetchUsers();
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Users
+        </h2>
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Users
+        </h2>
+        <Link href="/dashboard/users/add">
+          <Button variant="primary" className="flex items-center gap-2">
+            <Icon icon="mdi:plus" className="text-xl" />
+            Add User
+          </Button>
+        </Link>
+      </div>
+
+      <Card>
+        <CardHeader>User Management</CardHeader>
+        <CardContent>
+          {users.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
+              No users found
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                      Full Name
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                      Email
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                      Role
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr
+                      key={user.id}
+                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
+                      <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                        {user.full_name}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                        {user.email}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                        {user.roles?.[0]?.role_name}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditClick(user)}
+                            className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="Edit"
+                          >
+                            <Icon icon="mdi:pencil" className="text-xl" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            title="Delete"
+                          >
+                            <Icon icon="mdi:delete" className="text-xl" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <DeleteModal<User>
+        open={deleteModalOpen}
+        item={userToDelete}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        titleKey="full_name"
+      />
+    </div>
+  );
+}
