@@ -57,15 +57,9 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image
-              src="/microphone.png"
-              alt="AdhiZ"
-              width={100}
-              height={32}
-              className="h-8 w-auto"
-            />
+            <Image src="/rst.png" alt="RST" width={110} height={50} />
           </Link>
         </div>
 

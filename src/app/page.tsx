@@ -83,12 +83,7 @@ const LoginPage = () => {
           <Card className="w-full max-w-md border border-primary-border">
             <CardHeader className="text-center pb-4">
               <div className="flex items-center justify-center mb-4">
-                <Image
-                  src="/microphone.png"
-                  alt="RST Logo"
-                  width={120}
-                  height={40}
-                />
+                <Image src="/rst.png" alt="RST Logo" width={120} height={40} />
               </div>
               <p className="text-gray-600 dark:text-gray-300 text-md font-medium">
                 Please sign in to access the dashboard
