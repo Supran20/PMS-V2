@@ -9,6 +9,7 @@ import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getTags, deleteTag, Tag } from "@/lib/api/tags";
 import { toast } from "sonner";
+import { AddButton } from "@/components/ui/AddButton";
 
 export default function TagsPage() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export default function TagsPage() {
     const q = search.toLowerCase();
     return tags.filter(
       (t) =>
-        t.tag_name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
+        t.tag_name.toLowerCase().includes(q) ||
+        t.slug.toLowerCase().includes(q),
     );
   }, [tags, search]);
 
@@ -82,16 +84,10 @@ export default function TagsPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Tags
         </h2>
-        <Link href="/dashboard/tags/add">
-          <Button variant="primary" className="flex items-center gap-2">
-            <Icon icon="mdi:plus" className="text-xl" />
-            Add Tag
-          </Button>
-        </Link>
+        <AddButton href="/dashboard/tags/add" label="Add Tag" />
       </div>
 
-      <Card>
-        <CardHeader>Tag Management</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">
@@ -111,9 +107,7 @@ export default function TagsPage() {
 
           {filteredTags.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
-              {search.trim()
-                ? "No tags match your search"
-                : "No tags found"}
+              {search.trim() ? "No tags match your search" : "No tags found"}
             </p>
           ) : (
             <div className="overflow-x-auto">

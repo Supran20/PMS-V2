@@ -16,3 +16,15 @@ export function getMediaUrl(path: string | null | undefined): string {
   const origin = base.replace(/\/api\/?$/, "");
   return `${origin}${path.startsWith("/") ? "" : "/"}${path}`;
 }
+
+/**
+ * Generates a URL-friendly slug from a string.
+ */
+export function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-");
+}

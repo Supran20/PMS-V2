@@ -15,6 +15,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { FormField } from "@/components/ui/FormField";
+import { FormInput } from "@/components/ui/FormInput";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { FormActions } from "@/components/ui/FormActions";
 
 export default function AddMediaPage() {
   const router = useRouter();
@@ -27,6 +31,7 @@ export default function AddMediaPage() {
     formState: { errors },
     setValue,
     watch,
+    control,
   } = useForm<CreateMediaInput>({
     resolver: zodResolver(createMediaSchema),
   });
@@ -62,45 +67,20 @@ export default function AddMediaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/media"
-          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Icon icon="mdi:arrow-left" className="text-xl" />
-        </Link>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Add Media
-        </h2>
-      </div>
+      <PageHeader title="Add Media" backHref="/dashboard/media" />
 
-      <Card>
-        <CardHeader>Upload New Media</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4 max-w-lg"
-          >
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Media Name *
-              </label>
-              <input
-                {...register("media_name")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="My Image"
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <FormField label="Media Name" required>
+              <FormInput<CreateMediaInput>
+                name="media_name"
+                control={control}
+                placeholder="Enter media name"
               />
-              {errors.media_name && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.media_name.message}
-                </p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                File *
-              </label>
+            <FormField label="File" required>
               <input
                 type="file"
                 accept="image/*,.pdf,.mp3,.mp4"
@@ -119,12 +99,9 @@ export default function AddMediaPage() {
                   {errors.file.message}
                 </p>
               )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tag
-              </label>
+            <FormField label="Tag">
               <select
                 {...register("tag_id")}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -141,18 +118,13 @@ export default function AddMediaPage() {
                   {errors.tag_id.message}
                 </p>
               )}
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Link href="/dashboard/media">
-                <Button type="button" variant="secondary">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? "Uploading..." : "Upload Media"}
-              </Button>
-            </div>
+            </FormField>
+            <FormActions
+              cancelHref="/dashboard/media"
+              submitLabel="Create Media"
+              loadingLabel="Creating..."
+              isSubmitting={submitting}
+            />
           </form>
         </CardContent>
       </Card>

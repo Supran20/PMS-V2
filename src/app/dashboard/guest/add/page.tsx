@@ -20,14 +20,7 @@ import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
-
-function slugFromName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-}
+import { slugify } from "@/lib/utils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -84,20 +77,20 @@ export default function AddGuestPage() {
       <PageHeader title="Add Guest" backHref="/dashboard/guest" />
 
       {/* Form */}
-      <Card className="py-5">
+      <Card className="shadow-lg bg-white border-none py-5">
         {/* <CardHeader>Create New Guest</CardHeader> */}
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Full Name */}
             <FormField label="Full Name" required>
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
                 onBlur={() => {
                   const currentSlug = watch("slug");
                   if (!currentSlug && fullName) {
-                    setValue("slug", slugFromName(fullName));
+                    setValue("slug", slugify(fullName));
                   }
                 }}
               />
@@ -105,7 +98,7 @@ export default function AddGuestPage() {
 
             {/* Slug */}
             <FormField label="Slug" required>
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="slug"
                 control={control}
                 placeholder="e.g. john-doe"
@@ -117,7 +110,7 @@ export default function AddGuestPage() {
 
             {/* Designation */}
             <FormField label="Designation">
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="designation"
                 control={control}
                 placeholder="e.g. CEO of Acme Corp"
@@ -126,7 +119,7 @@ export default function AddGuestPage() {
 
             {/* Email */}
             <FormField label="Email">
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="email"
                 control={control}
                 placeholder="e.g. john@example.com"
@@ -135,7 +128,7 @@ export default function AddGuestPage() {
 
             {/* Phone */}
             <FormField label="Phone">
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="phone"
                 control={control}
                 placeholder="e.g. +1234567890"
@@ -144,7 +137,7 @@ export default function AddGuestPage() {
 
             {/* Bio */}
             <FormField label="Bio">
-              <FormInput
+              <FormInput<CreateGuestInput>
                 name="bio"
                 control={control}
                 placeholder="Short bio about the guest"
@@ -203,22 +196,22 @@ export default function AddGuestPage() {
             {/* Social Media */}
             <FormField label="Social Media Profiles">
               <div className="md:w-3/4 space-y-2">
-                <FormInput
+                <FormInput<CreateGuestInput>
                   name="social_media.linkedin"
                   control={control}
                   placeholder="LinkedIn URL"
                 />
-                <FormInput
+                <FormInput<CreateGuestInput>
                   name="social_media.facebook"
                   control={control}
                   placeholder="Facebook URL"
                 />
-                <FormInput
+                <FormInput<CreateGuestInput>
                   name="social_media.github"
                   control={control}
                   placeholder="GitHub URL"
                 />
-                <FormInput
+                <FormInput<CreateGuestInput>
                   name="social_media.instagram"
                   control={control}
                   placeholder="Instagram URL"

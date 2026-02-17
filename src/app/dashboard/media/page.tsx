@@ -11,6 +11,7 @@ import { getMedia, deleteMedia, Media } from "@/lib/api/media";
 import { getTags } from "@/lib/api/tags";
 import { getMediaUrl } from "@/lib/utils";
 import { toast } from "sonner";
+import { AddButton } from "@/components/ui/AddButton";
 
 export default function MediaPage() {
   const router = useRouter();
@@ -90,16 +91,10 @@ export default function MediaPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Media
         </h2>
-        <Link href="/dashboard/media/add">
-          <Button variant="primary" className="flex items-center gap-2">
-            <Icon icon="mdi:plus" className="text-xl" />
-            Add Media
-          </Button>
-        </Link>
+        <AddButton href="/dashboard/media/add" label="Add Media" />
       </div>
 
-      <Card>
-        <CardHeader>Media Library</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">

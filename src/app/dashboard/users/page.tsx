@@ -9,6 +9,7 @@ import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getUsers, deleteUser, User } from "@/lib/api/user";
 import { toast } from "sonner";
+import { AddButton } from "@/components/ui/AddButton";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -72,16 +73,10 @@ export default function UsersPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Users
         </h2>
-        <Link href="/dashboard/users/add">
-          <Button variant="primary" className="flex items-center gap-2">
-            <Icon icon="mdi:plus" className="text-xl" />
-            Add User
-          </Button>
-        </Link>
+        <AddButton href="/dashboard/users/add" label="Add User" />
       </div>
 
-      <Card>
-        <CardHeader>User Management</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           {users.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 py-8 text-center">

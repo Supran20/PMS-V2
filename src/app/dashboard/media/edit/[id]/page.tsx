@@ -16,6 +16,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { FormInput } from "@/components/ui/FormInput";
+import { FormField } from "@/components/ui/FormField";
+import { FormActions } from "@/components/ui/FormActions";
 
 export default function EditMediaPage() {
   const router = useRouter();
@@ -33,6 +37,7 @@ export default function EditMediaPage() {
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<UpdateMediaInput>({
     resolver: zodResolver(updateMediaSchema),
@@ -95,25 +100,11 @@ export default function EditMediaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/media"
-          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Icon icon="mdi:arrow-left" className="text-xl" />
-        </Link>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Edit Media
-        </h2>
-      </div>
+      <PageHeader title="Edit Media" backHref="/dashboard/media" />
 
-      <Card>
-        <CardHeader>Update Media</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4 max-w-lg"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {currentPath && isImage(currentType) && (
               <div className="mb-4">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -128,26 +119,15 @@ export default function EditMediaPage() {
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Media Name *
-              </label>
-              <input
-                {...register("media_name")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="My Image"
+            <FormField label="Media Name" required>
+              <FormInput<UpdateMediaInput>
+                name="media_name"
+                control={control}
+                placeholder="Enter media name"
               />
-              {errors.media_name && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.media_name.message}
-                </p>
-              )}
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Replace File (optional)
-              </label>
+            <FormField label="Replace File (optional)">
               <input
                 type="file"
                 accept="image/*,.pdf,.mp3,.mp4"
@@ -166,12 +146,9 @@ export default function EditMediaPage() {
               <p className="text-xs text-gray-500 mt-1">
                 Leave empty to keep current file
               </p>
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tag
-              </label>
+            <FormField label="Tag">
               <select
                 {...register("tag_id")}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -188,18 +165,14 @@ export default function EditMediaPage() {
                   {errors.tag_id.message}
                 </p>
               )}
-            </div>
+            </FormField>
 
-            <div className="flex gap-3 pt-4">
-              <Link href="/dashboard/media">
-                <Button type="button" variant="secondary">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
+            <FormActions
+              cancelHref="/dashboard/media"
+              submitLabel="Update Media"
+              loadingLabel="Updating..."
+              isSubmitting={submitting}
+            />
           </form>
         </CardContent>
       </Card>

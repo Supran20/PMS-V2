@@ -20,6 +20,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { FormField } from "@/components/ui/FormField";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
+import { slugify } from "@/lib/utils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -42,10 +43,13 @@ export default function EditGuestPage() {
     setValue,
     reset,
     control,
+    watch,
     formState: { errors },
   } = useForm<UpdateGuestInput>({
     resolver: zodResolver(updateGuestSchema),
   });
+
+  const fullName = watch("full_name");
 
   // Fetch guest
   useEffect(() => {
@@ -116,7 +120,7 @@ export default function EditGuestPage() {
       {/* Header */}
       <PageHeader title="Edit Guest" backHref="/dashboard/guest" />
 
-      <Card className="py-5">
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Full Name */}
@@ -125,6 +129,12 @@ export default function EditGuestPage() {
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
+                onBlur={() => {
+                  const currentSlug = watch("slug");
+                  if (!currentSlug && fullName) {
+                    setValue("slug", slugify(fullName));
+                  }
+                }}
               />
             </FormField>
 

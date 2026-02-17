@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getStudios, deleteStudio, Studio } from "@/lib/api/studio";
@@ -88,8 +87,7 @@ export default function StudioPage() {
         <AddButton href="/dashboard/studio/add" label="Add Studio" />
       </div>
 
-      <Card>
-        <CardHeader>Studio Management</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">
