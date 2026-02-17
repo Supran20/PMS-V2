@@ -16,6 +16,10 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { getUsers, User } from "@/lib/api/user";
 import MediaSelectorModal from "@/components/media/MediaSelectorModal";
+import { FormField } from "@/components/ui/FormField";
+import { FormInput } from "@/components/ui/FormInput";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { FormActions } from "@/components/ui/FormActions";
 
 function slugFromName(name: string): string {
   return name
@@ -40,16 +44,13 @@ export default function AddGuestPage() {
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<CreateGuestInput>({
     resolver: zodResolver(createGuestSchema),
   });
 
   const fullName = watch("full_name");
-
-  const fillSlugFromName = () => {
-    if (fullName) setValue("slug", slugFromName(fullName));
-  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -80,192 +81,158 @@ export default function AddGuestPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/guest"
-          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Icon icon="mdi:arrow-left" className="text-xl" />
-        </Link>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Add Guest
-        </h2>
-      </div>
+      <PageHeader title="Add Guest" backHref="/dashboard/guest" />
 
       {/* Form */}
-      <Card>
-        <CardHeader>Create New Guest</CardHeader>
+      <Card className="py-5">
+        {/* <CardHeader>Create New Guest</CardHeader> */}
         <CardContent>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4 max-w-lg"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name *
-              </label>
-              <input
-                {...register("full_name")}
-                onBlur={fillSlugFromName}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <FormField label="Full Name" required>
+              <FormInput
+                name="full_name"
+                control={control}
                 placeholder="e.g. John Doe"
+                onBlur={() => {
+                  const currentSlug = watch("slug");
+                  if (!currentSlug && fullName) {
+                    setValue("slug", slugFromName(fullName));
+                  }
+                }}
               />
-              {errors.full_name && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.full_name.message}
-                </p>
-              )}
-            </div>
+            </FormField>
+
             {/* Slug */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Slug *
-              </label>
-              <input
-                {...register("slug")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <FormField label="Slug" required>
+              <FormInput
+                name="slug"
+                control={control}
                 placeholder="e.g. john-doe"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500">
                 Leave blank and blur Full Name to auto-fill.
               </p>
-              {errors.slug && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.slug.message}
-                </p>
-              )}
-            </div>
+            </FormField>
+
             {/* Designation */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Designation
-              </label>
-              <input
-                {...register("designation")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g. Manager"
+            <FormField label="Designation">
+              <FormInput
+                name="designation"
+                control={control}
+                placeholder="e.g. CEO of Acme Corp"
               />
-            </div>
+            </FormField>
+
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                {...register("email")}
-                type="email"
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <FormField label="Email">
+              <FormInput
+                name="email"
+                control={control}
                 placeholder="e.g. john@example.com"
               />
-            </div>
+            </FormField>
+
             {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone
-              </label>
-              <input
-                {...register("phone")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <FormField label="Phone">
+              <FormInput
+                name="phone"
+                control={control}
                 placeholder="e.g. +1234567890"
               />
-            </div>
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Bio
-              </label>
-              <textarea
-                {...register("bio")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Short bio..."
-                rows={3}
-              />
-            </div>
-            {/* Referred By */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Referred By
-              </label>
-              <select
-                {...register("referred_by")}
-                className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700"
-              >
-                <option value="">Select User</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.full_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Profile Image */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Profile Image
-              </label>
+            </FormField>
 
-              <div className="flex items-center gap-4">
+            {/* Bio */}
+            <FormField label="Bio">
+              <FormInput
+                name="bio"
+                control={control}
+                placeholder="Short bio about the guest"
+                as="textarea"
+                rows={4}
+              />
+            </FormField>
+
+            {/* Referred By */}
+            <FormField label="Referred By">
+              <div className="md:w-3/4">
+                <select
+                  {...register("referred_by")}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option
+                    value=""
+                    className="w-full px-3 py-2 text-sm  text-gray-100 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  >
+                    Select User
+                  </option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.full_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </FormField>
+
+            {/* Profile Image */}
+            <FormField label="Profile Image">
+              <div className="md:w-3/4 flex items-start gap-4">
+                {selectedMedia && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Current Image
+                    </p>
+                    <img
+                      src={`${API_BASE_URL}${selectedMedia.path}`}
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                    />
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="secondary"
+                  className="border border-gray-300 dark:border-gray-600 rounded-md"
                   onClick={() => setMediaModalOpen(true)}
                 >
                   Select Image
                 </Button>
-
-                {selectedMedia && (
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`${API_BASE_URL}${selectedMedia.path}`}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                    <span className="text-sm">{selectedMedia.media_name}</span>
-                  </div>
-                )}
               </div>
-            </div>
+            </FormField>
 
             {/* Social Media */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium">Social Media</label>
+            <FormField label="Social Media Profiles">
+              <div className="md:w-3/4 space-y-2">
+                <FormInput
+                  name="social_media.linkedin"
+                  control={control}
+                  placeholder="LinkedIn URL"
+                />
+                <FormInput
+                  name="social_media.facebook"
+                  control={control}
+                  placeholder="Facebook URL"
+                />
+                <FormInput
+                  name="social_media.github"
+                  control={control}
+                  placeholder="GitHub URL"
+                />
+                <FormInput
+                  name="social_media.instagram"
+                  control={control}
+                  placeholder="Instagram URL"
+                />
+              </div>
+            </FormField>
 
-              <input
-                {...register("social_media.linkedin")}
-                placeholder="LinkedIn URL"
-                className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700"
-              />
-
-              <input
-                {...register("social_media.facebook")}
-                placeholder="Facebook URL"
-                className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700"
-              />
-
-              <input
-                {...register("social_media.github")}
-                placeholder="GitHub URL"
-                className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700"
-              />
-
-              <input
-                {...register("social_media.instagram")}
-                placeholder="Instagram URL"
-                className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700"
-              />
-            </div>
-
-            {/* Submit / Cancel */}
-            <div className="flex gap-3 pt-4">
-              <Link href="/dashboard/guest">
-                <Button type="button" variant="secondary">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? "Creating..." : "Create Guest"}
-              </Button>
-            </div>
+            {/* Submit */}
+            <FormActions
+              cancelHref="/dashboard/guest"
+              submitLabel="Create Guest"
+              loadingLabel="Creating..."
+              isSubmitting={submitting}
+            />
           </form>
         </CardContent>
       </Card>

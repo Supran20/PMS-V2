@@ -56,12 +56,17 @@ export function DeleteModal<T>({
         </p>
 
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose} disabled={deleting}>
+          <Button
+            variant="secondary"
+            className="border-gray-400 rounded-md"
+            onClick={onClose}
+            disabled={deleting}
+          >
             Cancel
           </Button>
 
           <Button
-            className="bg-red-600 text-white"
+            className="bg-red-600 text-white border border-red-700 rounded-md"
             onClick={handleConfirm}
             disabled={deleting}
           >

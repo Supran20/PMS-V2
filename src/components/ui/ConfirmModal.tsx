@@ -58,7 +58,12 @@ export function ConfirmModal<T>({
         <p className="mb-6 text-sm text-gray-600">{description}</p>
 
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button
+            variant="secondary"
+            className="rounded-md border-gray-400 "
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </Button>
 

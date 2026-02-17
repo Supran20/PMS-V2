@@ -78,7 +78,7 @@ const LoginPage = () => {
   /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-bg-primary">
-      <div className="flex items-center justify-center container py-16">
+      <div className="flex items-center justify-center py-16">
         <div className="w-full lg:w-1/2 flex items-center justify-center">
           <Card className="w-full max-w-md border border-primary-border">
             <CardHeader className="text-center pb-4">

@@ -12,6 +12,7 @@ import { Icon } from "@iconify/react";
 import { getGuests, deleteGuest, approveGuest, Guest } from "@/lib/api/guest";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { AddButton } from "@/components/ui/AddButton";
 
 export default function GuestsPage() {
   const router = useRouter();
@@ -84,7 +85,6 @@ export default function GuestsPage() {
   const handleDeleteConfirm = async (guest: Guest) => {
     try {
       await deleteGuest(guest.id);
-      toast.success("Guest deleted successfully");
       fetchGuests();
     } catch {
       toast.error("Failed to delete guest");
@@ -118,17 +118,12 @@ export default function GuestsPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Guests
         </h2>
-        <Link href="/dashboard/guest/add">
-          <Button variant="primary" className="flex items-center gap-2">
-            <Icon icon="mdi:plus" className="text-xl" />
-            Add Guest
-          </Button>
-        </Link>
+        <AddButton href="/dashboard/guest/add" label="Add Guest" />
       </div>
 
       {/* Search */}
-      <Card>
-        <CardHeader>Guest Management</CardHeader>
+      <Card className="shadow-lg bg-white border-none py-5">
+        {/* <CardHeader>Guest Management</CardHeader> */}
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">

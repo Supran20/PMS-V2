@@ -9,6 +9,7 @@ import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getStudios, deleteStudio, Studio } from "@/lib/api/studio";
 import { toast } from "sonner";
+import { AddButton } from "@/components/ui/AddButton";
 
 export default function StudioPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function StudioPage() {
       (s) =>
         s.studio_name.toLowerCase().includes(q) ||
         s.slug.toLowerCase().includes(q) ||
-        (s.address?.toLowerCase().includes(q) ?? false)
+        (s.address?.toLowerCase().includes(q) ?? false),
     );
   }, [studios, search]);
 
@@ -84,12 +85,7 @@ export default function StudioPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Studio
         </h2>
-        <Link href="/dashboard/studio/add">
-          <Button variant="primary" className="flex items-center gap-2">
-            <Icon icon="mdi:plus" className="text-xl" />
-            Add Studio
-          </Button>
-        </Link>
+        <AddButton href="/dashboard/studio/add" label="Add Studio" />
       </div>
 
       <Card>
