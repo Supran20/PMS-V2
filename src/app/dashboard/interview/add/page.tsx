@@ -19,7 +19,12 @@ import {
   CreateInterviewInput,
 } from "@/lib/validations/interview.validation";
 
-import { createInterview } from "@/lib/api/interview";
+import {
+  createInterview,
+  getInterviews,
+  checkInterviewOverlap,
+  Interview,
+} from "@/lib/api/interview";
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getUsers, User } from "@/lib/api/user";
 import { getStudios, Studio } from "@/lib/api/studio";
@@ -55,6 +60,7 @@ export default function AddInterviewPage() {
    * Fetch dropdown data
    * -------------------------
    */
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -62,6 +68,7 @@ export default function AddInterviewPage() {
           getGuests(),
           getUsers(),
           getStudios(),
+          getInterviews(),
         ]);
 
         setGuests(guestData);
@@ -83,11 +90,56 @@ export default function AddInterviewPage() {
   const onSubmit = async (data: CreateInterviewInput) => {
     setSubmitting(true);
     try {
+      // Check for overlaps before creating the interview
+      const endTime = data.end_time || "";
+
+      if (
+        data.guest_id &&
+        data.host_id &&
+        data.studio_id &&
+        data.interview_date &&
+        data.start_time &&
+        endTime
+      ) {
+        try {
+          const overlapResponse = await checkInterviewOverlap({
+            guest_id: data.guest_id,
+            host_id: data.host_id,
+            studio_id: data.studio_id,
+            interview_date: data.interview_date,
+            start_time: data.start_time,
+            end_time: endTime,
+          });
+
+          if (overlapResponse.conflict) {
+            toast.error(
+              overlapResponse.message || "Scheduling conflict detected",
+            );
+            setSubmitting(false);
+            return;
+          }
+        } catch (overlapError: any) {
+          // If the overlap check fails (e.g., endpoint not available), proceed with creation
+          // The backend will handle the overlap check anyway
+          console.error("Overlap check error:", overlapError);
+        }
+      }
+
       await createInterview(data);
       toast.success("Interview scheduled successfully");
       router.push("/dashboard/interview");
-    } catch {
-      toast.error("Failed to schedule interview");
+    } catch (error: any) {
+      // Handle overlap errors from backend
+      const errorMessage = error.response?.data?.message || error.message;
+      if (
+        errorMessage.includes("Guest is already booked") ||
+        errorMessage.includes("Host is already assigned") ||
+        errorMessage.includes("Studio is already reserved")
+      ) {
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to schedule interview");
+      }
     } finally {
       setSubmitting(false);
     }

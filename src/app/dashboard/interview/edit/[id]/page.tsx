@@ -132,7 +132,7 @@ export default function EditInterviewPage() {
                 <button
                   type="button"
                   onClick={() => setGuestModalOpen(true)}
-                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
+                  className="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
                 >
                   Select Guest
                 </button>
@@ -198,6 +198,48 @@ export default function EditInterviewPage() {
             {/* End Time */}
             <FormField label="End Time">
               <FormInput name="end_time" control={control} type="time" />
+            </FormField>
+
+            {/* Interview Status */}
+            <FormField label="Interview Status">
+              <div className="md:w-3/4">
+                <select
+                  {...register("interview_status")}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Status</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+
+                {errors.interview_status && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.interview_status.message}
+                  </p>
+                )}
+              </div>
+            </FormField>
+
+            {/* Live Status */}
+            <FormField label="Live Status">
+              <div className="md:w-3/4">
+                <select
+                  {...register("live_status")}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Live Status</option>
+                  <option value="live">Live</option>
+                  <option value="recorded">Recorded</option>
+                  <option value="not_live">Not Live</option>
+                </select>
+
+                {errors.live_status && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.live_status.message}
+                  </p>
+                )}
+              </div>
             </FormField>
 
             {/* Google Drive */}

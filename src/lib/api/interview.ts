@@ -95,6 +95,21 @@ export const createInterview = async (
   return response.data.data;
 };
 
+// --------------------------------
+// CHECK OVERLAP
+// --------------------------------
+export const checkInterviewOverlap = async (params: {
+  guest_id: string;
+  host_id: string;
+  studio_id: string;
+  interview_date: string;
+  start_time: string;
+  end_time: string;
+}) => {
+  const response = await api.get("/interviews/check-overlap", { params });
+  return response.data; // { conflict: boolean, message?: string }
+};
+
 /**
  * --------------------------------
  * UPDATE INTERVIEW
