@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import api from "@/lib/axios";
 import { Button } from "@/components/ui/Button";
+import { Pagination } from "@/components/ui/Pagination";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -164,31 +165,11 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6">
-            <Button
-              variant="secondary"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="py-1 px-4 rounded-md bg-green-600 text-white"
-            >
-              Previous
-            </Button>
-
-            <span className="text-sm font-medium">
-              {currentPage} / {totalPages}
-            </span>
-
-            <Button
-              variant="secondary"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="py-1 px-4 rounded-md bg-green-600 text-white"
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

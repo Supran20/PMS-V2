@@ -10,6 +10,7 @@ import { Icon } from "@iconify/react";
 import { getUsers, deleteUser, User } from "@/lib/api/user";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10;
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -53,6 +57,19 @@ export default function UsersPage() {
     await deleteUser(user.id);
     fetchUsers();
   };
+
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+
+  const paginatedUsers = users.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [users]);
 
   if (loading) {
     return (
@@ -102,7 +119,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <tr
                       key={user.id}
                       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -142,6 +159,12 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <DeleteModal<User>
         open={deleteModalOpen}

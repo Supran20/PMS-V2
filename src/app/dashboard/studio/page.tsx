@@ -9,6 +9,7 @@ import { Icon } from "@iconify/react";
 import { getStudios, deleteStudio, Studio } from "@/lib/api/studio";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function StudioPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function StudioPage() {
   const [search, setSearch] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [studioToDelete, setStudioToDelete] = useState<Studio | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 5;
 
   const fetchStudios = async () => {
     setLoading(true);
@@ -64,6 +68,19 @@ export default function StudioPage() {
     await deleteStudio(studio.id);
     fetchStudios();
   };
+
+  const totalPages = Math.ceil(filteredStudios.length / ITEMS_PER_PAGE);
+
+  const paginatedStudios = filteredStudios.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [filteredStudios, currentPage, totalPages]);
 
   if (loading) {
     return (
@@ -131,7 +148,7 @@ export default function StudioPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudios.map((studio) => (
+                  {paginatedStudios.map((studio) => (
                     <tr
                       key={studio.id}
                       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -171,6 +188,12 @@ export default function StudioPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <DeleteModal<Studio>
         open={deleteModalOpen}

@@ -31,11 +31,12 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const [isSidebarOpen, setSidebarOpen] = React.useState(true);
 
-  /* 🔐 PROTECT ROUTE */
+  // Protect route
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/"); // redirect to login
+      router.replace("/");
     }
   }, [user, loading, router]);
 
@@ -49,20 +50,30 @@ export default function DashboardLayout({
 
   const displayName = user?.full_name || user?.email || "User";
 
-  const handleLogout = () => {
-    logout();
-  };
+  const handleLogout = () => logout();
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center">
+      <aside
+        className={cn(
+          "flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300",
+          isSidebarOpen ? "w-64" : "w-25",
+        )}
+      >
+        {/* Logo & Toggle */}
+        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/rst.png" alt="RST" width={110} height={50} />
+            <Image
+              src="/rst.png"
+              alt="RST"
+              width={isSidebarOpen ? 110 : 50}
+              height={50}
+            />
           </Link>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
             {SIDEBAR_TABS.map((tab) => {
@@ -83,7 +94,14 @@ export default function DashboardLayout({
                     )}
                   >
                     <Icon icon={tab.icon} className="text-xl flex-shrink-0" />
-                    {tab.label}
+                    <span
+                      className={cn(
+                        "transition-opacity duration-300",
+                        !isSidebarOpen && "opacity-0 overflow-hidden",
+                      )}
+                    >
+                      {tab.label}
+                    </span>
                   </Link>
                 </li>
               );
@@ -92,13 +110,21 @@ export default function DashboardLayout({
         </nav>
       </aside>
 
-      {/* Main content area */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky header */}
         <header className="sticky top-0 z-10 flex-shrink-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Podcast Management
-          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-md hover:bg-gray-200 cursor-pointer dark:hover:bg-gray-700"
+            >
+              <Icon icon="mdi:menu" className="text-xl" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Podcast Management
+            </h1>
+          </div>
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700">
               <Icon
@@ -119,7 +145,6 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>

@@ -11,6 +11,7 @@ import { getInterviews, deleteInterview, Interview } from "@/lib/api/interview";
 
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function InterviewsPage() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function InterviewsPage() {
   const [interviewToDelete, setInterviewToDelete] = useState<Interview | null>(
     null,
   );
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10;
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -143,6 +147,19 @@ export default function InterviewsPage() {
     }
   };
 
+  const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
+
+  const paginatedInterviews = filteredInterviews.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [filteredInterviews, currentPage, totalPages]);
+
   /**
    * ------------------------------
    * Loading State
@@ -230,7 +247,7 @@ export default function InterviewsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInterviews.map((interview) => (
+                  {paginatedInterviews.map((interview) => (
                     <tr
                       key={interview.id}
                       className="border-b text-xs border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -297,6 +314,12 @@ export default function InterviewsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Delete Modal */}
       <DeleteModal<Interview>

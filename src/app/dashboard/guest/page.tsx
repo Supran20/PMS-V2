@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
@@ -13,6 +13,7 @@ import { getGuests, deleteGuest, approveGuest, Guest } from "@/lib/api/guest";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function GuestsPage() {
   const router = useRouter();
@@ -23,6 +24,9 @@ export default function GuestsPage() {
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [guestToApprove, setGuestToApprove] = useState<Guest | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10;
 
   const { user } = useAuth();
   const isAdmin = user?.roles?.includes("Admin");
@@ -98,6 +102,19 @@ export default function GuestsPage() {
     setApproveModalOpen(true);
   };
 
+  const totalPages = Math.ceil(filteredGuests.length / ITEMS_PER_PAGE);
+
+  const paginatedGuests = filteredGuests.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [filteredGuests, currentPage, totalPages]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -172,7 +189,7 @@ export default function GuestsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredGuests.map((guest) => (
+                  {paginatedGuests.map((guest) => (
                     <tr
                       key={guest.id}
                       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -237,6 +254,12 @@ export default function GuestsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Delete Modal */}
       <DeleteModal<Guest>

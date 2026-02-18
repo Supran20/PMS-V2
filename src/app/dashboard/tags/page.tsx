@@ -10,6 +10,7 @@ import { Icon } from "@iconify/react";
 import { getTags, deleteTag, Tag } from "@/lib/api/tags";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function TagsPage() {
   const router = useRouter();
@@ -18,6 +19,9 @@ export default function TagsPage() {
   const [search, setSearch] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 5;
 
   const fetchTags = async () => {
     setLoading(true);
@@ -64,6 +68,19 @@ export default function TagsPage() {
     await deleteTag(tag.id);
     fetchTags();
   };
+
+  const totalPages = Math.ceil(filteredTags.length / ITEMS_PER_PAGE);
+
+  const paginatedTags = filteredTags.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [filteredTags, currentPage, totalPages]);
 
   if (loading) {
     return (
@@ -126,7 +143,7 @@ export default function TagsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTags.map((tag) => (
+                  {paginatedTags.map((tag) => (
                     <tr
                       key={tag.id}
                       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -163,6 +180,12 @@ export default function TagsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <DeleteModal<Tag>
         open={deleteModalOpen}

@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 /* ================= VALIDATION SCHEMA ================= */
 const loginSchema = z.object({
@@ -23,6 +24,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const router = useRouter();
+  const { refreshUser } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +55,12 @@ const LoginPage = () => {
       if (res.accessToken && res.refreshToken) {
         localStorage.setItem("accessToken", res.accessToken);
         localStorage.setItem("refreshToken", res.refreshToken);
+
+        await refreshUser();
+
         router.push("/dashboard");
+        toast.success("Login successful");
+
         return;
       }
     } catch (err) {

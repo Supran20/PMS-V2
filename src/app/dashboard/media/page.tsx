@@ -12,6 +12,7 @@ import { getTags } from "@/lib/api/tags";
 import { getMediaUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function MediaPage() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function MediaPage() {
   const [filterTagId, setFilterTagId] = useState<string>("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10;
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -69,6 +73,23 @@ export default function MediaPage() {
     await deleteMedia(item.id);
     fetchMedia();
   };
+
+  const totalPages = Math.ceil(filteredMedia.length / ITEMS_PER_PAGE);
+
+  const paginatedMedia = filteredMedia.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [filteredMedia, currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterTagId]);
 
   const isImage = (type: string) => type?.startsWith("image/") ?? false;
 
@@ -130,7 +151,7 @@ export default function MediaPage() {
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {filteredMedia.map((item) => (
+              {paginatedMedia.map((item) => (
                 <div
                   key={item.id}
                   className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800 hover:shadow-lg transition-shadow"
@@ -184,6 +205,12 @@ export default function MediaPage() {
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <DeleteModal<Media>
         open={deleteModalOpen}
