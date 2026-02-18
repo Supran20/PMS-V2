@@ -132,7 +132,7 @@ const OTPPage = () => {
       <Card className="w-full max-w-md border border-primary-border shadow-lg p-6">
         <CardHeader className="text-center">
           <Image
-            src="/microphone.png"
+            src="/rst.png"
             alt="Logo"
             width={120}
             height={40}

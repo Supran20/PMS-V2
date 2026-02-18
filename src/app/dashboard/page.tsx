@@ -69,10 +69,10 @@ export default function DashboardPage() {
             >
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50 dark:bg-blue-900/30">
                     <Icon
                       icon={section.icon}
-                      className="text-2xl text-blue-600 dark:text-blue-400"
+                      className="text-2xl text-red-600 dark:text-red-400"
                     />
                   </div>
                   <div>

@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@theme {
+  --text-xs: 14px;
+  --text-vxs: 12px;
+  /* Red-color */
+  --color-red-50: #fde9ea;
+  --color-red-100: #f9babc;
+  --color-red-200: #f6989c;
+  --color-red-300: #f2696f;
+  --color-red-400: #f04c53;
+  --color-red-500: #ec1f28;
+  --color-red-600: #d71c24;
+  --color-red-700: #a8161c;
+  --color-red-800: #821116;
+  --color-red-900: #630d11;
+}

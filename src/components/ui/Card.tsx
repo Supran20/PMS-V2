@@ -18,7 +18,7 @@ export const Card: React.FC<CardProps> = ({
     default:
       "bg-bg-card border-border-card text-text-primary dark:bg-bg-card dark:border-border-card dark:text-text-primary",
     elevated:
-      "bg-bg-card border-border-card shadow-lg text-text-primary dark:bg-bg-card dark:border-border-card dark:text-text-primary dark:shadow-xl",
+      "bg-bg-card border-border-card shadow-sm text-text-primary dark:bg-bg-card dark:border-border-card dark:text-text-primary dark:shadow-xl",
   };
 
   return (

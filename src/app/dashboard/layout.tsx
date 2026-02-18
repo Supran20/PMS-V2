@@ -78,8 +78,8 @@ export default function DashboardLayout({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700",
+                        ? "bg-red-50 dark:bg-blue-900/30 text-red-700 dark:text-red-300"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700",
                     )}
                   >
                     <Icon icon={tab.icon} className="text-xl flex-shrink-0" />
