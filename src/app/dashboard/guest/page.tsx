@@ -28,8 +28,12 @@ export default function GuestsPage() {
 
   const ITEMS_PER_PAGE = 10;
 
-  const { user } = useAuth();
-  const isAdmin = user?.roles?.includes("Admin");
+  const { hasPermission } = useAuth();
+  const canApproveGuest = hasPermission("guest.auto_approve");
+
+  const canAddGuest = hasPermission("guest.create");
+  const canEditGuest = hasPermission("guest.update");
+  const canDeleteGuest = hasPermission("guest.delete");
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -135,7 +139,9 @@ export default function GuestsPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Guests
         </h2>
-        <AddButton href="/dashboard/guest/add" label="Add Guest" />
+        {canAddGuest && (
+          <AddButton href="/dashboard/guest/add" label="Add Guest" />
+        )}
       </div>
 
       {/* Search */}
@@ -218,7 +224,7 @@ export default function GuestsPage() {
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {/* Approve Button */}
-                          {!guest.approved && isAdmin && (
+                          {!guest.approved && canApproveGuest && (
                             <button
                               onClick={() => handleApproveClick(guest)}
                               className="p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
@@ -230,20 +236,26 @@ export default function GuestsPage() {
                               />
                             </button>
                           )}
-                          <button
-                            onClick={() => handleEditClick(guest)}
-                            className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Edit"
-                          >
-                            <Icon icon="mdi:pencil" className="text-xl" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(guest)}
-                            className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            title="Delete"
-                          >
-                            <Icon icon="mdi:delete" className="text-xl" />
-                          </button>
+
+                          {canEditGuest && (
+                            <button
+                              onClick={() => handleEditClick(guest)}
+                              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="Edit"
+                            >
+                              <Icon icon="mdi:pencil" className="text-xl" />
+                            </button>
+                          )}
+
+                          {canDeleteGuest && (
+                            <button
+                              onClick={() => handleDeleteClick(guest)}
+                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Delete"
+                            >
+                              <Icon icon="mdi:delete" className="text-xl" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

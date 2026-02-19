@@ -9,12 +9,14 @@ interface User {
   email: string;
   name?: string;
   roles: string[];
+  permissions: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   refreshUser: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -22,6 +24,11 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    return user.permissions?.includes(permission) ?? false;
+  };
 
   const refreshUser = async () => {
     try {
@@ -47,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

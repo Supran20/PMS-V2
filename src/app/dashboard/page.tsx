@@ -11,6 +11,7 @@ const DASHBOARD_SECTIONS = [
     title: "Users",
     description: "Manage podcast users and permissions",
     href: "/dashboard/users",
+    requiredPermission: "user.manage",
     icon: "mdi:account-group",
   },
   {
@@ -46,7 +47,7 @@ const DASHBOARD_SECTIONS = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const displayName = user?.full_name || user?.email || "User";
 
   return (
@@ -61,7 +62,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {DASHBOARD_SECTIONS.map((section) => (
+        {DASHBOARD_SECTIONS.filter((tab) => {
+          if (!tab.requiredPermission) return true;
+          return hasPermission(tab.requiredPermission);
+        }).map((section) => (
           <Link key={section.href} href={section.href}>
             <Card
               variant="elevated"

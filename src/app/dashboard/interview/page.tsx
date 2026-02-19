@@ -12,9 +12,11 @@ import { getInterviews, deleteInterview, Interview } from "@/lib/api/interview";
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
+import { useAuth } from "@/context/AuthContext";
 
 export default function InterviewsPage() {
   const router = useRouter();
+  const { hasPermission } = useAuth();
 
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,10 @@ export default function InterviewsPage() {
     null,
   );
   const [currentPage, setCurrentPage] = useState(1);
+
+  const canAddInterview = hasPermission("interview.create");
+  const canEditInterview = hasPermission("interview.update");
+  const canDeleteInterview = hasPermission("interview.delete");
 
   const ITEMS_PER_PAGE = 10;
 
@@ -185,7 +191,12 @@ export default function InterviewsPage() {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Interviews
         </h2>
-        <AddButton href="/dashboard/interview/add" label="Schedule Interview" />
+        {canAddInterview && (
+          <AddButton
+            href="/dashboard/interview/add"
+            label="Schedule Interview"
+          />
+        )}
       </div>
 
       {/* Search + Table */}
@@ -289,21 +300,25 @@ export default function InterviewsPage() {
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditClick(interview)}
-                            className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Edit"
-                          >
-                            <Icon icon="mdi:pencil" className="text-xl" />
-                          </button>
+                          {canEditInterview && (
+                            <button
+                              onClick={() => handleEditClick(interview)}
+                              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              title="Edit"
+                            >
+                              <Icon icon="mdi:pencil" className="text-xl" />
+                            </button>
+                          )}
 
-                          <button
-                            onClick={() => handleDeleteClick(interview)}
-                            className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            title="Delete"
-                          >
-                            <Icon icon="mdi:delete" className="text-xl" />
-                          </button>
+                          {canDeleteInterview && (
+                            <button
+                              onClick={() => handleDeleteClick(interview)}
+                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Delete"
+                            >
+                              <Icon icon="mdi:delete" className="text-xl" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -11,6 +11,7 @@ import { getUsers, deleteUser, User } from "@/lib/api/user";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function UsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { hasPermission, loading: authLoading } = useAuth();
 
   const ITEMS_PER_PAGE = 10;
 
@@ -36,8 +39,15 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("user.manage")) {
+      router.replace("/dashboard");
+      return;
+    }
+
     fetchUsers();
-  }, []);
+  }, [authLoading]);
 
   const handleEditClick = (user: User) => {
     router.push(`/dashboard/users/edit/${user.id}`);
@@ -71,7 +81,7 @@ export default function UsersPage() {
     }
   }, [users]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">

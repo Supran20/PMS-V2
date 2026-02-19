@@ -21,6 +21,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -31,6 +32,9 @@ export default function AddGuestPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const { hasPermission, loading: authLoading } = useAuth();
 
   const {
     register,
@@ -46,17 +50,28 @@ export default function AddGuestPage() {
   const fullName = watch("full_name");
 
   useEffect(() => {
+    if (authLoading) return;
+
+    // Redirect if user doesn't have permission
+    if (!hasPermission("guest.create")) {
+      router.replace("/dashboard/guest");
+      return;
+    }
+
+    // Fetch users only after permission check
     const fetchUsers = async () => {
       try {
         const data = await getUsers();
         setUsers(data);
       } catch {
         toast.error("Failed to load users");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [authLoading, hasPermission, router]);
 
   const onSubmit = async (data: CreateGuestInput) => {
     setSubmitting(true);
@@ -70,6 +85,14 @@ export default function AddGuestPage() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading || loading) {
+    return (
+      <p className="p-6">
+        {authLoading ? "Checking permissions..." : "Loading data..."}
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-6">

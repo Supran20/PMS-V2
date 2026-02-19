@@ -21,6 +21,7 @@ import { FormField } from "@/components/ui/FormField";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -37,6 +38,8 @@ export default function EditGuestPage() {
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [guest, setGuest] = useState<Guest | null>(null);
 
+  const { hasPermission, loading: authLoading } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -51,9 +54,18 @@ export default function EditGuestPage() {
 
   const fullName = watch("full_name");
 
-  // Fetch guest
+  // Redirect if user doesn't have permission
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("guest.update")) {
+      router.replace("/dashboard/guest");
+      return;
+    }
+
+    // Only fetch data if permission is ok
     const fetchGuest = async () => {
+      setLoading(true);
       try {
         const data = await getGuestBySlug(slug);
         setGuest(data);
@@ -82,10 +94,7 @@ export default function EditGuestPage() {
     };
 
     fetchGuest();
-  }, [slug, reset]);
 
-  // Fetch users
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const data = await getUsers();
@@ -94,9 +103,8 @@ export default function EditGuestPage() {
         toast.error("Failed to load users");
       }
     };
-
     fetchUsers();
-  }, []);
+  }, [authLoading, hasPermission, router, slug, reset, setValue]);
 
   const onSubmit = async (data: UpdateGuestInput) => {
     setSubmitting(true);
@@ -111,10 +119,13 @@ export default function EditGuestPage() {
     }
   };
 
-  if (loading) {
-    return <p className="p-6">Loading...</p>;
+  if (authLoading || loading) {
+    return (
+      <p className="p-6">
+        {authLoading ? "Checking permissions..." : "Loading guest..."}
+      </p>
+    );
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}

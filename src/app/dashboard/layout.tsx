@@ -10,8 +10,17 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 const SIDEBAR_TABS = [
-  { label: "Overview", href: "/dashboard", icon: "mdi:view-dashboard" },
-  { label: "Users", href: "/dashboard/users", icon: "mdi:account-group" },
+  {
+    label: "Overview",
+    href: "/dashboard",
+    icon: "mdi:view-dashboard",
+  },
+  {
+    label: "Users",
+    href: "/dashboard/users",
+    icon: "mdi:account-group",
+    requiredPermission: "user.manage",
+  },
   { label: "Media", href: "/dashboard/media", icon: "mdi:video" },
   { label: "Tags", href: "/dashboard/tags", icon: "mdi:tag-multiple" },
   { label: "Studio", href: "/dashboard/studio", icon: "mdi:microphone" },
@@ -30,7 +39,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = React.useState(true);
 
   // Protect route
@@ -76,7 +85,10 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
-            {SIDEBAR_TABS.map((tab) => {
+            {SIDEBAR_TABS.filter((tab) => {
+              if (!tab.requiredPermission) return true;
+              return hasPermission(tab.requiredPermission);
+            }).map((tab) => {
               const isActive =
                 tab.href === "/dashboard"
                   ? pathname === "/dashboard"
