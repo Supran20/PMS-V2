@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
+import { getMediaUrl } from "@/lib/utils";
 
 export default function GuestsPage() {
   const router = useRouter();
@@ -113,6 +114,9 @@ export default function GuestsPage() {
     currentPage * ITEMS_PER_PAGE,
   );
 
+  const isImage = (type?: string | null) =>
+    type ? type.startsWith("image/") : false;
+
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages || 1);
@@ -166,102 +170,106 @@ export default function GuestsPage() {
 
           {/* Table */}
           {filteredGuests.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
-              {search.trim()
-                ? "No guests match your search"
-                : "No guests found"}
+            <p className="text-gray-600 dark:text-gray-400 py-12 text-center">
+              No guests found
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Full Name
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Designation
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Phone
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Approved
-                    </th>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {paginatedGuests.map((guest) => (
+                <div
+                  key={guest.id}
+                  className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800 hover:shadow-lg transition-shadow"
+                >
+                  {/* Image */}
+                  <div className="aspect-square relative">
+                    {guest.profileImage && isImage(guest.profileImage.type) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={getMediaUrl(guest.profileImage.path)}
+                        alt={guest.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                        <Icon
+                          icon="mdi:account"
+                          className="text-4xl text-gray-500"
+                        />
+                      </div>
+                    )}
 
-                    <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedGuests.map((guest) => (
-                    <tr
-                      key={guest.id}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                    {/* Overlay Actions */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      {/* Edit */}
+                      {canEditGuest && (
+                        <button
+                          onClick={() => handleEditClick(guest)}
+                          className="p-2 rounded-lg bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Icon icon="mdi:pencil" className="text-xl" />
+                        </button>
+                      )}
+
+                      {/* Delete */}
+                      {canDeleteGuest && (
+                        <button
+                          onClick={() => handleDeleteClick(guest)}
+                          className="p-2 rounded-lg bg-white text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                          title="Delete"
+                        >
+                          <Icon icon="mdi:delete" className="text-xl" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Name + Designation */}
+                  <div className="p-3 flex items-center justify-between gap-2">
+                    {/* Name + Designation */}
+                    <div className="min-w-0">
+                      <p className="text-vxs font-semibold text-gray-900 dark:text-gray-100 ">
                         {guest.full_name}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {guest.designation ?? "-"}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {guest.phone ?? "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {guest.approved ? (
-                          <span className="text-green-600 dark:text-green-400 font-medium">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="text-red-600 dark:text-red-400 font-medium">
-                            No
-                          </span>
-                        )}
-                      </td>
+                      </p>
+                      <p className="text-vxs text-gray-500 dark:text-gray-400 truncate">
+                        {guest.designation ?? "—"}
+                      </p>
+                    </div>
 
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Approve Button */}
-                          {!guest.approved && canApproveGuest && (
-                            <button
-                              onClick={() => handleApproveClick(guest)}
-                              className="p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                              title="Approve"
-                            >
-                              <Icon
-                                icon="mdi:check-circle"
-                                className="text-xl"
-                              />
-                            </button>
-                          )}
-
-                          {canEditGuest && (
-                            <button
-                              onClick={() => handleEditClick(guest)}
-                              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title="Edit"
-                            >
-                              <Icon icon="mdi:pencil" className="text-xl" />
-                            </button>
-                          )}
-
-                          {canDeleteGuest && (
-                            <button
-                              onClick={() => handleDeleteClick(guest)}
-                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Delete"
-                            >
-                              <Icon icon="mdi:delete" className="text-xl" />
-                            </button>
-                          )}
+                    <div>
+                      {guest.approved ? (
+                        <div
+                          className="p-2 rounded-lg text-green-500"
+                          title="Approved"
+                        >
+                          <Icon icon="mdi:check-circle" className="text-lg" />
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      ) : canApproveGuest ? (
+                        <button
+                          onClick={() => handleApproveClick(guest)}
+                          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-green-500 transition-colors"
+                          title="Approve Guest"
+                        >
+                          <Icon
+                            icon="mdi:check-circle-outline"
+                            className="text-lg"
+                          />
+                        </button>
+                      ) : (
+                        <div
+                          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                          title="Not approved"
+                        >
+                          <Icon
+                            icon="mdi:check-circle-outline"
+                            className="text-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

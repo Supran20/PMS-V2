@@ -160,9 +160,9 @@ export default function MediaPage() {
                     {isImage(item.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={getMediaUrl(item.path)}
+                        src={getMediaUrl(item.path)}  
                         alt={item.media_name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover"  
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
