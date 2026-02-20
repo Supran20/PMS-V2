@@ -34,7 +34,11 @@ function SortableList<T>({
   children,
 }: SortableListProps<T>) {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // require user to move 5px before starting drag
+      },
+    }),
     useSensor(KeyboardSensor),
   );
 
@@ -75,7 +79,7 @@ function SortableList<T>({
         items={items.map(getId)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-4">{items.map((item) => children(item))}</div>
+        <>{items.map((item) => children(item))}</>
       </SortableContext>
     </DndContext>
   );

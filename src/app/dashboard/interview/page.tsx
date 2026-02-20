@@ -7,12 +7,20 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 
-import { getInterviews, deleteInterview, Interview } from "@/lib/api/interview";
+import {
+  getInterviews,
+  deleteInterview,
+  reorderInterviews,
+  Interview,
+} from "@/lib/api/interview";
 
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
+import SortableItem from "@/components/sortable/SortableItem";
+import SortableList from "@/components/sortable/SortableList";
+import { listeners } from "process";
 
 export default function InterviewsPage() {
   const router = useRouter();
@@ -62,6 +70,16 @@ export default function InterviewsPage() {
         return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       default:
         return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
+    }
+  };
+
+  const handleReorder = async (items: Interview[]) => {
+    try {
+      const orderedIds = items.map((i) => i.id);
+      await reorderInterviews(orderedIds);
+    } catch {
+      toast.error("Failed to update order");
+      throw new Error("Reorder failed");
     }
   };
 
@@ -234,6 +252,7 @@ export default function InterviewsPage() {
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
                       Guest
                     </th>
+
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
                       Host
                     </th>
@@ -241,7 +260,7 @@ export default function InterviewsPage() {
                       Date
                     </th>
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                      Start
+                      Interview Time
                     </th>
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
                       End
@@ -258,71 +277,95 @@ export default function InterviewsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedInterviews.map((interview) => (
-                    <tr
-                      key={interview.id}
-                      className="border-b text-xs border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <td className="py-3 px-4 text-xs text-gray-900 dark:text-gray-100">
-                        {interview.guest?.full_name ?? "-"}
-                      </td>
-                      <td className="py-3 px-4 text-xs text-gray-600 dark:text-gray-400">
-                        {interview.host?.full_name ?? "-"}
-                      </td>
-                      <td className="py-3 px-4 text-xs text-gray-600 dark:text-gray-400">
-                        {interview.interview_date}
-                      </td>
-                      <td className="py-3 px-4 text-xs text-gray-600 dark:text-gray-400">
-                        {formatTimeTo12Hour(interview.start_time)}
-                      </td>
-                      <td className="py-3 px-4 text-xs text-gray-600 dark:text-gray-400">
-                        {formatTimeTo12Hour(interview.end_time)}
-                      </td>
-                      <td className="py-3 px-4 text-xs">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getInterviewStatusClass(
-                            interview.interview_status,
-                          )}`}
-                        >
-                          {interview.interview_status}
-                        </span>
-                      </td>
+                  <tr>
+                    <td colSpan={8} className="p-0">
+                      <SortableList
+                        items={paginatedInterviews}
+                        getId={(i) => i.id}
+                        onChange={(newItems) => {
+                          // update only current page slice
+                          const start = (currentPage - 1) * ITEMS_PER_PAGE;
+                          const updated = [...interviews];
+                          updated.splice(start, newItems.length, ...newItems);
+                          setInterviews(updated);
+                        }}
+                        onReorder={handleReorder}
+                      >
+                        {(interview) => (
+                          <SortableItem id={interview.id}>
+                            <div className="grid grid-cols-8 items-center border-b text-xs border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                              <div className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                                {interview.guest?.full_name ?? "-"}
+                              </div>
+                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                {interview.host?.full_name ?? "-"}
+                              </div>
+                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                {interview.interview_date}
+                              </div>
+                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                {formatTimeTo12Hour(interview.start_time)}
+                              </div>
+                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                {formatTimeTo12Hour(interview.end_time)}
+                              </div>
+                              <div className="py-3 px-4">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getInterviewStatusClass(
+                                    interview.interview_status,
+                                  )}`}
+                                >
+                                  {interview.interview_status}
+                                </span>
+                              </div>
+                              <div className="py-3 px-4">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getLiveStatusClass(
+                                    interview.live_status,
+                                  )}`}
+                                >
+                                  {interview.live_status?.replace("_", " ")}
+                                </span>
+                              </div>
+                              <div className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {canEditInterview && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditClick(interview);
+                                      }}
+                                      className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                    >
+                                      <Icon
+                                        icon="mdi:pencil"
+                                        className="text-xl"
+                                      />
+                                    </button>
+                                  )}
 
-                      <td className="py-3 px-4 text-xs">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getLiveStatusClass(
-                            interview.live_status,
-                          )}`}
-                        >
-                          {interview.live_status?.replace("_", " ")}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {canEditInterview && (
-                            <button
-                              onClick={() => handleEditClick(interview)}
-                              className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title="Edit"
-                            >
-                              <Icon icon="mdi:pencil" className="text-xl" />
-                            </button>
-                          )}
-
-                          {canDeleteInterview && (
-                            <button
-                              onClick={() => handleDeleteClick(interview)}
-                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Delete"
-                            >
-                              <Icon icon="mdi:delete" className="text-xl" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                                  {canDeleteInterview && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteClick(interview);
+                                      }}
+                                      className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    >
+                                      <Icon
+                                        icon="mdi:delete"
+                                        className="text-xl"
+                                      />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </SortableItem>
+                        )}
+                      </SortableList>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
