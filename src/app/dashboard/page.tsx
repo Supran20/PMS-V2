@@ -5,6 +5,10 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getUsers } from "@/lib/api/user";
+import { getGuests } from "@/lib/api/guest";
+import { getInterviews } from "@/lib/api/interview";
 
 const DASHBOARD_SECTIONS = [
   {
@@ -48,6 +52,40 @@ const DASHBOARD_SECTIONS = [
 
 export default function DashboardPage() {
   const { user, hasPermission } = useAuth();
+  const [hostCount, setHostCount] = useState(0);
+  const [guestCount, setGuestCount] = useState(0);
+  const [interviewCount, setInterviewCount] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const fetchOverviewStats = async () => {
+      try {
+        setLoadingStats(true);
+
+        const [users, guests, interviews] = await Promise.all([
+          getUsers(),
+          getGuests(),
+          getInterviews(),
+        ]);
+
+        // Count Hosts (role_name === "Host")
+        const hosts = users.filter((user) =>
+          user.roles?.some((role) => role.role_name === "Host"),
+        );
+
+        setHostCount(hosts.length);
+        setGuestCount(guests.length);
+        setInterviewCount(interviews.length);
+      } catch (error) {
+        console.error("Failed to load overview stats", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchOverviewStats();
+  }, []);
+
   const displayName = user?.full_name || user?.email || "User";
 
   return (
@@ -59,6 +97,63 @@ export default function DashboardPage() {
         <p className="mt-1 text-gray-600 dark:text-gray-400">
           Manage your podcast content from the dashboard
         </p>
+      </div>
+
+      {/* Overview Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Hosts */}
+        <Card className="border-gray-200 dark:border-gray-700">
+          <CardContent className="flex items-center justify-between p-6">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Total Hosts
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {loadingStats ? "—" : hostCount}
+              </h3>
+            </div>
+            <Icon
+              icon="mdi:account-tie"
+              className="text-3xl text-blue-600 dark:text-blue-400"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Guests */}
+        <Card className="border-gray-200 dark:border-gray-700">
+          <CardContent className="flex items-center justify-between p-6">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Total Guests
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {loadingStats ? "—" : guestCount}
+              </h3>
+            </div>
+            <Icon
+              icon="mdi:account-voice"
+              className="text-3xl text-green-600 dark:text-green-400"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Interviews */}
+        <Card className="border-gray-200 dark:border-gray-700">
+          <CardContent className="flex items-center justify-between p-6">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Total Interviews
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {loadingStats ? "—" : interviewCount}
+              </h3>
+            </div>
+            <Icon
+              icon="mdi:microphone"
+              className="text-3xl text-purple-600 dark:text-purple-400"
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
