@@ -112,6 +112,19 @@ export const checkInterviewOverlap = async (params: {
 
 /**
  * --------------------------------
+ * REORDER INTERVIEW
+ * --------------------------------
+ */
+export const reorderInterviews = async (orderedIds: string[]) => {
+  const response = await api.patch("/interviews/reorder", {
+    orderedIds,
+  });
+
+  return response.data;
+};
+
+/**
+ * --------------------------------
  * UPDATE INTERVIEW
  * --------------------------------
  */
