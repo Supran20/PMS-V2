@@ -5,10 +5,11 @@ import { z } from "zod";
  * CREATE GUEST VALIDATION
  * --------------------------------
  */
-const optionalUrl = z.preprocess(
-  (val) => (val === "" ? undefined : val),
-  z.string().url().optional(),
-);
+const optionalUrl = z
+  .string()
+  .url()
+  .optional()
+  .or(z.literal(""));
 
 export const createGuestSchema = z.object({
   full_name: z.string().min(1, "Guest name is required"),
