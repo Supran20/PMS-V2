@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   getInterviews,
   deleteInterview,
+  updateInterview,
   reorderInterviews,
   Interview,
 } from "@/lib/api/interview";
@@ -171,6 +172,29 @@ export default function InterviewsPage() {
     }
   };
 
+  const handleStatusChange = async (
+    id: string,
+    field: "interview_status" | "live_status",
+    value: string,
+  ) => {
+    try {
+      // Optimistic UI update
+      setInterviews((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
+      );
+
+      // Call API
+      await updateInterview(id, { [field]: value as any });
+
+      toast.success("Interview updated successfully");
+    } catch (err) {
+      toast.error("Failed to update interview");
+
+      // Rollback UI change on error
+      fetchInterviews();
+    }
+  };
+
   const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
 
   const paginatedInterviews = filteredInterviews.slice(
@@ -248,7 +272,6 @@ export default function InterviewsPage() {
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Guest
                     </th>
-
                     <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Host
                     </th>
@@ -306,22 +329,81 @@ export default function InterviewsPage() {
                                 {formatTimeTo12Hour(interview.end_time)}
                               </div>
                               <div className="py-3 px-4">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getInterviewStatusClass(
+                                <div
+                                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getInterviewStatusClass(
                                     interview.interview_status,
                                   )}`}
                                 >
-                                  {interview.interview_status}
-                                </span>
+                                  <select
+                                    value={interview.interview_status}
+                                    onChange={async (e) =>
+                                      await handleStatusChange(
+                                        interview.id,
+                                        "interview_status",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                                  >
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="scheduled"
+                                    >
+                                      Scheduled
+                                    </option>
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="completed"
+                                    >
+                                      Completed
+                                    </option>
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="cancelled"
+                                    >
+                                      Cancelled
+                                    </option>
+                                  </select>
+                                </div>
                               </div>
+
                               <div className="py-3 px-4">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getLiveStatusClass(
+                                <div
+                                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getLiveStatusClass(
                                     interview.live_status,
                                   )}`}
                                 >
-                                  {interview.live_status?.replace("_", " ")}
-                                </span>
+                                  <select
+                                    value={interview.live_status}
+                                    onChange={async (e) =>
+                                      await handleStatusChange(
+                                        interview.id,
+                                        "live_status",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                                  >
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="live"
+                                    >
+                                      Live
+                                    </option>
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="recorded"
+                                    >
+                                      Recorded
+                                    </option>
+                                    <option
+                                      className="bg-gray-100 text-gray-700"
+                                      value="not_live"
+                                    >
+                                      Not Live
+                                    </option>
+                                  </select>
+                                </div>
                               </div>
                               <div className="py-3 px-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
