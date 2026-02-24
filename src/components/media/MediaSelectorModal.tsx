@@ -95,9 +95,9 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
       <div className="bg-white rounded-xl w-full max-w-4xl p-6 space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Select Media</h2>
+          <h2 className="text-lg font-semibold text-gray-700 ">Select Media</h2>
           <button onClick={onClose}>
-            <Icon icon="mdi:close" className="w-6 h-6" />
+            <Icon icon="mdi:close" className="w-6 h-6 text-red-500" />
           </button>
         </div>
 
@@ -107,13 +107,13 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
             placeholder="Search media..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-3 py-2 border rounded"
+            className="flex-1 px-3 placeholder:text-gray-400 text-gray-800 py-2 border rounded"
           />
 
           <select
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
-            className="px-3 py-2 border rounded"
+            className="px-3 py-2 border rounded text-gray-700"
           >
             <option value="">All Tags</option>
             {tags.map((tag) => (
@@ -159,7 +159,7 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
                 )}
               </div>
 
-              <p className="text-xs mt-1 truncate">{m.media_name}</p>
+              <p className="text-xs mt-1 text-gray-600">{m.media_name}</p>
             </div>
           ))}
         </div>
@@ -176,4 +176,3 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
 };
 
 export default MediaSelectorModal;
-

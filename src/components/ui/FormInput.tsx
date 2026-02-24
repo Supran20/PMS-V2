@@ -40,7 +40,7 @@ export function FormInput<T extends FieldValues>({
                 onBlur?.();
               }}
               className={`w-full px-3 py-2 text-sm rounded-md border border-gray-300 
-              bg-gray-50 
+              bg-gray-50 placeholder:text-gray-500 text-gray-800
               focus:ring-2 focus:ring-blue-500 ${className}`}
             />
           ) : (
@@ -53,8 +53,8 @@ export function FormInput<T extends FieldValues>({
                 onBlur?.();
               }}
               className={`w-full px-3 py-2 text-sm rounded-md border border-gray-300 
-              bg-gray-50 
-              focus:ring-2 focus:ring-blue-500 ${className}`}
+              bg-gray-50 placeholder:text-gray-500 text-gray-800
+              focus:ring-1 focus:ring-red-400 ${className}`}
             />
           )}
 
@@ -68,4 +68,3 @@ export function FormInput<T extends FieldValues>({
     />
   );
 }
-
