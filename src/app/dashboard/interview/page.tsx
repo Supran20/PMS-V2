@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   getInterviews,
   deleteInterview,
+  updateInterview,
   reorderInterviews,
   Interview,
 } from "@/lib/api/interview";
@@ -171,6 +172,29 @@ export default function InterviewsPage() {
     }
   };
 
+  const handleStatusChange = async (
+    id: string,
+    field: "interview_status" | "live_status",
+    value: string,
+  ) => {
+    try {
+      // Optimistic UI update
+      setInterviews((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
+      );
+
+      // Call API
+      await updateInterview(id, { [field]: value as any });
+
+      toast.success("Interview updated successfully");
+    } catch (err) {
+      toast.error("Failed to update interview");
+
+      // Rollback UI change on error
+      fetchInterviews();
+    }
+  };
+
   const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
 
   const paginatedInterviews = filteredInterviews.slice(
@@ -284,7 +308,7 @@ export default function InterviewsPage() {
                   >
                     {(interview) => (
                       <SortableItem id={interview.id}>
-                        <div className="grid grid-cols-8 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
+                        <div className="grid cursor-pointer grid-cols-8 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
                           <div className=" text-vxs text-gray-600">
                             {interview.guest?.full_name ?? "-"}
                           </div>
