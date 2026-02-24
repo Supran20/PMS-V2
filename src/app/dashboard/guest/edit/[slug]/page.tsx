@@ -156,7 +156,7 @@ export default function EditGuestPage() {
                 control={control}
                 placeholder="e.g. john-doe"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Leave blank and blur Full Name to auto-fill.
               </p>
             </FormField>
@@ -205,14 +205,9 @@ export default function EditGuestPage() {
               <div className="md:w-3/4">
                 <select
                   {...register("referred_by")}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option
-                    value=""
-                    className="w-full px-3 py-2 text-sm  text-gray-100 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
-                  >
-                    Select User
-                  </option>
+                  <option value="">Select User</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.full_name}
@@ -228,7 +223,7 @@ export default function EditGuestPage() {
               <div className="md:w-3/4 flex items-start gap-4">
                 {selectedMedia?.path && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
                       Current Image
                     </p>
 
@@ -236,14 +231,14 @@ export default function EditGuestPage() {
                     <img
                       src={`${API_BASE_URL}${selectedMedia.path}`}
                       alt="Profile"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                     />
                   </div>
                 )}
                 <Button
                   type="button"
                   variant="secondary"
-                  className="border border-gray-300 dark:border-gray-600 rounded-md"
+                  className="border border-gray-300 rounded-md"
                   onClick={() => setMediaModalOpen(true)}
                 >
                   Change Image
@@ -267,21 +262,21 @@ export default function EditGuestPage() {
                   name="social_media.facebook"
                   control={control}
                   placeholder="Facebook URL"
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 />
 
                 <FormInput<UpdateGuestInput>
                   name="social_media.github"
                   control={control}
                   placeholder="GitHub URL"
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 />
 
                 <FormInput<UpdateGuestInput>
                   name="social_media.instagram"
                   control={control}
                   placeholder="Instagram URL"
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>

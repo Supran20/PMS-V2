@@ -88,12 +88,12 @@ const LoginPage = () => {
     <div className="min-h-screen bg-bg-primary">
       <div className="flex items-center justify-center py-16">
         <div className="w-full lg:w-1/2 flex items-center justify-center">
-          <Card className="w-full max-w-md border border-primary-border">
+          <Card className="w-full max-w-md border border-gray-400 shadow-lg">
             <CardHeader className="text-center pb-4">
               <div className="flex items-center justify-center mb-4">
                 <Image src="/rst.png" alt="RST Logo" width={120} height={40} />
               </div>
-              <p className="text-gray-600 dark:text-gray-300 text-md font-medium">
+              <p className="text-gray-600 text-md font-medium">
                 Please sign in to access the dashboard
               </p>
             </CardHeader>
@@ -102,13 +102,13 @@ const LoginPage = () => {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700  mb-2">
                     Email
                   </label>
                   <input
                     type="email"
                     {...register("email")}
-                    className="w-full px-4 py-3 rounded-md border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50  text-gray-900 "
                     placeholder="Enter your email"
                   />
                   {errors.email && (
@@ -120,20 +120,20 @@ const LoginPage = () => {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700  mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       {...register("password")}
-                      className="w-full px-4 py-3 pr-11 rounded-md border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-3 pr-11 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50  text-gray-900"
                       placeholder="Enter your password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                     >
                       {showPassword ? (
                         <Icon icon="ion:eye" className="text-lg" />
@@ -168,3 +168,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

@@ -126,7 +126,7 @@ export default function GuestsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Guests
         </h2>
         <div className="flex justify-center items-center py-16">
@@ -140,7 +140,7 @@ export default function GuestsPage() {
     <div className="space-y-6">
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Guests
         </h2>
         {canAddGuest && (
@@ -163,14 +163,14 @@ export default function GuestsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, designation or phone..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Table */}
           {filteredGuests.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 py-12 text-center">
+            <p className="text-gray-600 py-12 text-center">
               No guests found
             </p>
           ) : (
@@ -178,7 +178,7 @@ export default function GuestsPage() {
               {paginatedGuests.map((guest) => (
                 <div
                   key={guest.id}
-                  className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800 hover:shadow-lg transition-shadow"
+                  className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
                   <div className="aspect-square relative">
@@ -190,7 +190,7 @@ export default function GuestsPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
                         <Icon
                           icon="mdi:account"
                           className="text-4xl text-gray-500"
@@ -228,10 +228,10 @@ export default function GuestsPage() {
                   <div className="p-3 flex items-center justify-between gap-2">
                     {/* Name + Designation */}
                     <div className="min-w-0">
-                      <p className="text-vxs font-semibold text-gray-900 dark:text-gray-100 ">
+                      <p className="text-vxs font-semibold text-gray-900 ">
                         {guest.full_name}
                       </p>
-                      <p className="text-vxs text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-vxs text-gray-500 truncate">
                         {guest.designation ?? "—"}
                       </p>
                     </div>
@@ -247,7 +247,7 @@ export default function GuestsPage() {
                       ) : canApproveGuest ? (
                         <button
                           onClick={() => handleApproveClick(guest)}
-                          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-green-500 transition-colors"
+                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
                           title="Approve Guest"
                         >
                           <Icon
@@ -257,7 +257,7 @@ export default function GuestsPage() {
                         </button>
                       ) : (
                         <div
-                          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                          className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
                           title="Not approved"
                         >
                           <Icon
@@ -305,3 +305,4 @@ export default function GuestsPage() {
     </div>
   );
 }
+

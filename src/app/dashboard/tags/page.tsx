@@ -85,7 +85,7 @@ export default function TagsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Tags
         </h2>
         <div className="flex justify-center items-center py-16">
@@ -98,7 +98,7 @@ export default function TagsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Tags
         </h2>
         <AddButton href="/dashboard/tags/add" label="Add Tag" />
@@ -117,27 +117,27 @@ export default function TagsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by tag name or slug..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {filteredTags.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
+            <p className="text-gray-600 py-8 text-center">
               {search.trim() ? "No tags match your search" : "No tags found"}
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Tag Name
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Slug
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">
                       Actions
                     </th>
                   </tr>
@@ -146,26 +146,26 @@ export default function TagsPage() {
                   {paginatedTags.map((tag) => (
                     <tr
                       key={tag.id}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      className="border-b border-gray-100 hover:bg-gray-50"
                     >
-                      <td className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                      <td className="py-3 px-4 text-gray-900">
                         {tag.tag_name}
                       </td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                      <td className="py-3 px-4 text-gray-600">
                         {tag.slug}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleEditClick(tag)}
-                            className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Edit"
                           >
                             <Icon icon="mdi:pencil" className="text-xl" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(tag)}
-                            className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                             title="Delete"
                           >
                             <Icon icon="mdi:delete" className="text-xl" />
@@ -197,3 +197,4 @@ export default function TagsPage() {
     </div>
   );
 }
+

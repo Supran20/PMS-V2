@@ -96,7 +96,7 @@ export default function MediaPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Media
         </h2>
         <div className="flex justify-center items-center py-16">
@@ -109,7 +109,7 @@ export default function MediaPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900">
           Media
         </h2>
         <AddButton href="/dashboard/media/add" label="Add Media" />
@@ -128,13 +128,13 @@ export default function MediaPage() {
                 placeholder="Search by media name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <select
               value={filterTagId}
               onChange={(e) => setFilterTagId(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[180px]"
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[180px]"
             >
               <option value="">All tags</option>
               {tags.map((tag) => (
@@ -146,7 +146,7 @@ export default function MediaPage() {
           </div>
 
           {filteredMedia.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 py-12 text-center">
+            <p className="text-gray-600 py-12 text-center">
               No media found
             </p>
           ) : (
@@ -154,7 +154,7 @@ export default function MediaPage() {
               {paginatedMedia.map((item) => (
                 <div
                   key={item.id}
-                  className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800 hover:shadow-lg transition-shadow"
+                  className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   <div className="aspect-square relative">
                     {isImage(item.type) ? (
@@ -165,7 +165,7 @@ export default function MediaPage() {
                         className="w-full h-full object-cover"  
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
                         <Icon
                           icon="mdi:file"
                           className="text-4xl text-gray-500"
@@ -190,11 +190,11 @@ export default function MediaPage() {
                     </div>
                   </div>
                   <div className="p-2">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {item.media_name}
                     </p>
                     {item.tag && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-xs text-gray-500 truncate">
                         {item.tag.tag_name}
                       </p>
                     )}
@@ -222,3 +222,4 @@ export default function MediaPage() {
     </div>
   );
 }
+
