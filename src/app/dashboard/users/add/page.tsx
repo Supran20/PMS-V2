@@ -24,14 +24,21 @@ export default function AddUserPage() {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       status: "active",
       role_name: "Staff",
+      enable_otp_login: false,
+      otp_in_mail: false,
+      otp_in_sms: false,
     },
   });
+
+  const enableOtp = watch("enable_otp_login");
 
   const onSubmit = async (data: CreateUserInput) => {
     setSubmitting(true);
@@ -46,6 +53,8 @@ export default function AddUserPage() {
         profile_image: data.profile_image,
         mobile_number: data.mobile_number,
         enable_otp_login: data.enable_otp_login,
+        otp_in_mail: data.otp_in_mail,
+        otp_in_sms: data.otp_in_sms,
       });
       toast.success("User created successfully");
       router.push("/dashboard/users");
@@ -100,7 +109,7 @@ export default function AddUserPage() {
             <FormField label="Status" required>
               <select
                 {...register("status")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300  bg-gray-50  text-gray-400  focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -115,7 +124,7 @@ export default function AddUserPage() {
             <FormField label="Role" required>
               <select
                 {...register("role_name")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300  bg-gray-50  text-gray-400  focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="Admin">Admin</option>
                 <option value="Host">Host</option>
@@ -127,6 +136,62 @@ export default function AddUserPage() {
                 </p>
               )}
             </FormField>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("enable_otp_login")}
+                id="enable_otp_login"
+                className="rounded border-gray-300"
+              />
+              <label
+                htmlFor="enable_otp_login"
+                className="text-sm font-medium text-gray-700"
+              >
+                Enable OTP Login
+              </label>
+            </div>
+            {errors.enable_otp_login && (
+              <p className="text-red-600 text-sm">
+                {errors.enable_otp_login.message}
+              </p>
+            )}
+
+            {enableOtp && (
+              <FormField label="OTP Method (Select One)" required>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_mail") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", true);
+                        setValue("otp_in_sms", false);
+                      }}
+                    />
+                    Email
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_sms") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", false);
+                        setValue("otp_in_sms", true);
+                      }}
+                    />
+                    SMS
+                  </label>
+                </div>
+
+                {errors.otp_in_mail && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.otp_in_mail.message}
+                  </p>
+                )}
+              </FormField>
+            )}
 
             {/* Submit */}
             <FormActions
@@ -141,4 +206,3 @@ export default function AddUserPage() {
     </div>
   );
 }
-

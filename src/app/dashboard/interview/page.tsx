@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   getInterviews,
   deleteInterview,
+  updateInterview,
   reorderInterviews,
   Interview,
 } from "@/lib/api/interview";
@@ -171,6 +172,29 @@ export default function InterviewsPage() {
     }
   };
 
+  const handleStatusChange = async (
+    id: string,
+    field: "interview_status" | "live_status",
+    value: string,
+  ) => {
+    try {
+      // Optimistic UI update
+      setInterviews((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
+      );
+
+      // Call API
+      await updateInterview(id, { [field]: value as any });
+
+      toast.success("Interview updated successfully");
+    } catch (err) {
+      toast.error("Failed to update interview");
+
+      // Rollback UI change on error
+      fetchInterviews();
+    }
+  };
+
   const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
 
   const paginatedInterviews = filteredInterviews.slice(
@@ -242,128 +266,178 @@ export default function InterviewsPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+              <div>
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="grid grid-cols-8 gap-4 bg-gray-100 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
+                    <div className="text-left  text-vxs font-medium text-gray-700">
                       Guest
-                    </th>
-
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Host
-                    </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Date
-                    </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Interview Time
-                    </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       End
-                    </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Interview Status
-                    </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Live Status
-                    </th>
-                    <th className="text-right text-sm py-3 px-4 font-medium text-gray-700">
+                    </div>
+                    <div className="text-left text-vxs  font-medium text-gray-700">
                       Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colSpan={8} className="p-0">
-                      <SortableList
-                        items={paginatedInterviews}
-                        getId={(i) => i.id}
-                        onChange={(newItems) => {
-                          // update only current page slice
-                          const start = (currentPage - 1) * ITEMS_PER_PAGE;
-                          const updated = [...interviews];
-                          updated.splice(start, newItems.length, ...newItems);
-                          setInterviews(updated);
-                        }}
-                        onReorder={handleReorder}
-                      >
-                        {(interview) => (
-                          <SortableItem id={interview.id}>
-                            <div className="grid grid-cols-8 items-center border-b text-xs border-gray-100 hover:bg-gray-50/50">
-                              <div className="py-3 px-4 text-gray-900">
-                                {interview.guest?.full_name ?? "-"}
-                              </div>
-                              <div className="py-3 px-4 text-gray-600">
-                                {interview.host?.full_name ?? "-"}
-                              </div>
-                              <div className="py-3 px-4 text-gray-600">
-                                {interview.interview_date}
-                              </div>
-                              <div className="py-3 px-4 text-gray-600">
-                                {formatTimeTo12Hour(interview.start_time)}
-                              </div>
-                              <div className="py-3 px-4 text-gray-600">
-                                {formatTimeTo12Hour(interview.end_time)}
-                              </div>
-                              <div className="py-3 px-4">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getInterviewStatusClass(
-                                    interview.interview_status,
-                                  )}`}
+                    </div>
+                  </div>
+                  <SortableList
+                    items={paginatedInterviews}
+                    getId={(i) => i.id}
+                    onChange={(newItems) => {
+                      // update only current page slice
+                      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+                      const updated = [...interviews];
+                      updated.splice(start, newItems.length, ...newItems);
+                      setInterviews(updated);
+                    }}
+                    onReorder={handleReorder}
+                  >
+                    {(interview) => (
+                      <SortableItem id={interview.id}>
+                        <div className="grid cursor-pointer grid-cols-8 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
+                          <div className=" text-vxs text-gray-600">
+                            {interview.guest?.full_name ?? "-"}
+                          </div>
+                          <div className=" text-vxs text-gray-600">
+                            {interview.host?.full_name ?? "-"}
+                          </div>
+                          <div className=" text-vxs text-gray-600">
+                            {" "}
+                            {interview.interview_date}
+                          </div>
+                          <div className=" text-vxs text-gray-600">
+                            {formatTimeTo12Hour(interview.start_time)}
+                          </div>
+                          <div className=" text-vxs text-gray-600">
+                            {" "}
+                            {formatTimeTo12Hour(interview.end_time)}
+                          </div>
+                          <div className="">
+                            <div
+                              className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getInterviewStatusClass(
+                                interview.interview_status,
+                              )}`}
+                            >
+                              <select
+                                value={interview.interview_status}
+                                onChange={async (e) =>
+                                  await handleStatusChange(
+                                    interview.id,
+                                    "interview_status",
+                                    e.target.value,
+                                  )
+                                }
+                                className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                              >
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="scheduled"
                                 >
-                                  {interview.interview_status}
-                                </span>
-                              </div>
-                              <div className="py-3 px-4">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getLiveStatusClass(
-                                    interview.live_status,
-                                  )}`}
+                                  Scheduled
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="completed"
                                 >
-                                  {interview.live_status?.replace("_", " ")}
-                                </span>
-                              </div>
-                              <div className="py-3 px-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {canEditInterview && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditClick(interview);
-                                      }}
-                                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                    >
-                                      <Icon
-                                        icon="mdi:pencil"
-                                        className="text-xl"
-                                      />
-                                    </button>
-                                  )}
-
-                                  {canDeleteInterview && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteClick(interview);
-                                      }}
-                                      className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      <Icon
-                                        icon="mdi:delete"
-                                        className="text-xl"
-                                      />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                                  Completed
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="cancelled"
+                                >
+                                  Cancelled
+                                </option>
+                              </select>
                             </div>
-                          </SortableItem>
-                        )}
-                      </SortableList>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                          </div>
+
+                          <div className="">
+                            <div
+                              className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getLiveStatusClass(
+                                interview.live_status,
+                              )}`}
+                            >
+                              <select
+                                value={interview.live_status}
+                                onChange={async (e) =>
+                                  await handleStatusChange(
+                                    interview.id,
+                                    "live_status",
+                                    e.target.value,
+                                  )
+                                }
+                                className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                              >
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="live"
+                                >
+                                  Live
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="recorded"
+                                >
+                                  Recorded
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="not_live"
+                                >
+                                  Not Live
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="">
+                            <div className="flex items-center justify-start gap-2">
+                              {canEditInterview && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditClick(interview);
+                                  }}
+                                  className=" rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                >
+                                  <Icon icon="mdi:pencil" className="text-xl" />
+                                </button>
+                              )}
+
+                              {canDeleteInterview && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteClick(interview);
+                                  }}
+                                  className=" rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Icon icon="mdi:delete" className="text-xl" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </SortableItem>
+                    )}
+                  </SortableList>
+                </div>
+              </div>
+              <br />
+              <hr />
             </div>
           )}
         </CardContent>

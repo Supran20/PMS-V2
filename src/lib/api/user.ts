@@ -15,10 +15,14 @@ export interface UserPayload {
   profile_image?: string;
   mobile_number?: string;
   enable_otp_login?: boolean;
+  otp_in_mail?: boolean;
+  otp_in_sms?: boolean;
   role_name?: "Admin" | "Host" | "Staff";
 }
 
 export interface User {
+  otp_in_sms: boolean;
+  otp_in_mail: boolean;
   id: string;
   full_name: string;
   username: string;
@@ -73,7 +77,7 @@ export const createUser = async (payload: UserPayload): Promise<User> => {
  */
 export const updateUser = async (
   id: string,
-  payload: Partial<UserPayload>
+  payload: Partial<UserPayload>,
 ): Promise<User> => {
   const response = await api.put(`/users/${id}`, payload);
   return response.data.data;

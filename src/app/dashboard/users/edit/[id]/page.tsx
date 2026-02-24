@@ -29,10 +29,19 @@ export default function EditUserPage() {
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      enable_otp_login: false,
+      otp_in_mail: false,
+      otp_in_sms: false,
+    },
   });
+
+  const enableOtp = watch("enable_otp_login");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -50,6 +59,8 @@ export default function EditUserPage() {
             "Staff",
           mobile_number: user.mobile_number ?? undefined,
           enable_otp_login: user.enable_otp_login ?? false,
+          otp_in_mail: user.otp_in_mail ?? false,
+          otp_in_sms: user.otp_in_sms ?? false,
         });
       } catch {
         toast.error("Failed to load user");
@@ -72,6 +83,8 @@ export default function EditUserPage() {
         role_name: data.role_name,
         mobile_number: data.mobile_number,
         enable_otp_login: data.enable_otp_login,
+        otp_in_mail: data.otp_in_mail,
+        otp_in_sms: data.otp_in_sms,
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
       });
@@ -182,6 +195,42 @@ export default function EditUserPage() {
               <p className="text-red-600 text-sm">
                 {errors.enable_otp_login.message}
               </p>
+            )}
+
+            {enableOtp && (
+              <FormField label="OTP Method (Select One)" required>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_mail") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", true);
+                        setValue("otp_in_sms", false);
+                      }}
+                    />
+                    Email
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_sms") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", false);
+                        setValue("otp_in_sms", true);
+                      }}
+                    />
+                    SMS
+                  </label>
+                </div>
+
+                {errors.otp_in_mail && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.otp_in_mail.message}
+                  </p>
+                )}
+              </FormField>
             )}
 
             {/* Buttons */}

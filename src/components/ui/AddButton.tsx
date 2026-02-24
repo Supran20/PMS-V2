@@ -19,7 +19,7 @@ export function AddButton({
     <Link href={href}>
       <Button
         variant="primary"
-        className={`flex items-center gap-2 shadow-lg border-gray-200 rounded-md ${className}`}
+        className={`flex items-center gap-2 shadow-lg border-gray-200 text-gray-600 rounded-md ${className}`}
       >
         <Icon icon={icon} className="text-xl" />
         {label}
@@ -27,4 +27,3 @@ export function AddButton({
     </Link>
   );
 }
-

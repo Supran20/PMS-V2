@@ -30,8 +30,8 @@ const GuestSelectModal = ({ open, guests, onClose, onSelect }: Props) => {
       <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg p-6 space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Select Guest</h3>
-          <button onClick={onClose} className="text-gray-500">
+          <h3 className="text-lg font-semibold  text-gray-600">Select Guest</h3>
+          <button onClick={onClose} className=" text-red-500">
             ✕
           </button>
         </div>
@@ -42,7 +42,7 @@ const GuestSelectModal = ({ open, guests, onClose, onSelect }: Props) => {
           placeholder="Search by name or designation..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 py-2 border rounded-md"
+          className="w-full px-3 py-2 border rounded-md placeholder:text-gray-400 text-gray-800"
         />
 
         {/* List */}
@@ -54,7 +54,7 @@ const GuestSelectModal = ({ open, guests, onClose, onSelect }: Props) => {
               className="p-3 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
             >
               <div>
-                <p className="font-medium">{guest.full_name}</p>
+                <p className="font-medium  text-gray-700">{guest.full_name}</p>
                 <p className="text-xs text-gray-500">
                   {guest.designation || "-"}
                 </p>
@@ -78,4 +78,3 @@ const GuestSelectModal = ({ open, guests, onClose, onSelect }: Props) => {
 };
 
 export default GuestSelectModal;
-
