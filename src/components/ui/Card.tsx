@@ -16,9 +16,9 @@ export const Card: React.FC<CardProps> = ({
 
   const variantClasses = {
     default:
-      "bg-bg-card border-border-card text-text-primary dark:bg-bg-card dark:border-border-card dark:text-text-primary",
+      "bg-bg-card border-border-card text-text-primary",
     elevated:
-      "bg-bg-card border-border-card shadow-sm text-text-primary dark:bg-bg-card dark:border-border-card dark:text-text-primary dark:shadow-xl",
+      "bg-bg-card border-border-card shadow-sm text-text-primary",
   };
 
   return (
@@ -26,7 +26,7 @@ export const Card: React.FC<CardProps> = ({
       className={cn(
         baseClasses,
         variantClasses[variant],
-        "hover:shadow-md dark:hover:shadow-lg",
+        "hover:shadow-md",
         className,
       )}
       {...props}
@@ -71,3 +71,4 @@ export const CardFooter: React.FC<CardFooterProps> = ({
     {children}
   </div>
 );
+

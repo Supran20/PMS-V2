@@ -182,7 +182,7 @@ export default function AddInterviewPage() {
               <div className="md:w-3/4">
                 <select
                   {...register("host_id")}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Host</option>
                   {hosts.map((host) => (
@@ -199,7 +199,7 @@ export default function AddInterviewPage() {
               <div className="md:w-3/4">
                 <select
                   {...register("studio_id")}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Studio</option>
                   {studios.map((studio) => (
@@ -283,3 +283,4 @@ export default function AddInterviewPage() {
     </div>
   );
 }
+

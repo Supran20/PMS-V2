@@ -80,7 +80,7 @@ export default function AddTagPage() {
                 control={control}
                 placeholder="e.g. technology"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Leave blank and blur Tag Name to auto-fill from name.
               </p>
             </FormField>
@@ -98,3 +98,4 @@ export default function AddTagPage() {
     </div>
   );
 }
+

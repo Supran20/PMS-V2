@@ -63,13 +63,13 @@ export default function InterviewsPage() {
   const getInterviewStatusClass = (status?: string | null) => {
     switch (status) {
       case "scheduled":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+        return "bg-blue-100 text-blue-700";
       case "completed":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+        return "bg-green-100 text-green-700";
       case "cancelled":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-red-100 text-red-700";
       default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -89,13 +89,13 @@ export default function InterviewsPage() {
   const getLiveStatusClass = (status?: string | null) => {
     switch (status) {
       case "live":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-red-100 text-red-700";
       case "recorded":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
+        return "bg-purple-100 text-purple-700";
       case "not_live":
-        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
+        return "bg-gray-100 text-gray-700";
       default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -192,9 +192,7 @@ export default function InterviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Interviews
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -206,9 +204,7 @@ export default function InterviewsPage() {
     <div className="space-y-6">
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Interviews
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
         {canAddInterview && (
           <AddButton
             href="/dashboard/interview/add"
@@ -232,14 +228,14 @@ export default function InterviewsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by guest, host, status..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Table */}
           {filteredInterviews.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 py-8 text-center">
+            <p className="text-gray-600 py-8 text-center">
               {search.trim()
                 ? "No interviews match your search"
                 : "No interviews found"}
@@ -248,30 +244,30 @@ export default function InterviewsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Guest
                     </th>
 
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Host
                     </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Date
                     </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Interview Time
                     </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       End
                     </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Interview Status
                     </th>
-                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-left text-sm py-3 px-4 font-medium text-gray-700">
                       Live Status
                     </th>
-                    <th className="text-right text-sm py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                    <th className="text-right text-sm py-3 px-4 font-medium text-gray-700">
                       Actions
                     </th>
                   </tr>
@@ -293,20 +289,20 @@ export default function InterviewsPage() {
                       >
                         {(interview) => (
                           <SortableItem id={interview.id}>
-                            <div className="grid grid-cols-8 items-center border-b text-xs border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                              <div className="py-3 px-4 text-gray-900 dark:text-gray-100">
+                            <div className="grid grid-cols-8 items-center border-b text-xs border-gray-100 hover:bg-gray-50/50">
+                              <div className="py-3 px-4 text-gray-900">
                                 {interview.guest?.full_name ?? "-"}
                               </div>
-                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                              <div className="py-3 px-4 text-gray-600">
                                 {interview.host?.full_name ?? "-"}
                               </div>
-                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                              <div className="py-3 px-4 text-gray-600">
                                 {interview.interview_date}
                               </div>
-                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                              <div className="py-3 px-4 text-gray-600">
                                 {formatTimeTo12Hour(interview.start_time)}
                               </div>
-                              <div className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                              <div className="py-3 px-4 text-gray-600">
                                 {formatTimeTo12Hour(interview.end_time)}
                               </div>
                               <div className="py-3 px-4">
@@ -335,7 +331,7 @@ export default function InterviewsPage() {
                                         e.stopPropagation();
                                         handleEditClick(interview);
                                       }}
-                                      className="p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                                     >
                                       <Icon
                                         icon="mdi:pencil"
@@ -350,7 +346,7 @@ export default function InterviewsPage() {
                                         e.stopPropagation();
                                         handleDeleteClick(interview);
                                       }}
-                                      className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                      className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                                     >
                                       <Icon
                                         icon="mdi:delete"

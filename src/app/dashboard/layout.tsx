@@ -62,16 +62,16 @@ export default function DashboardLayout({
   const handleLogout = () => logout();
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
       <aside
         className={cn(
-          "flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300",
+          "flex-shrink-0 bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
           isSidebarOpen ? "w-64" : "w-25",
         )}
       >
         {/* Logo & Toggle */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-200 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Image
               src="/rst.png"
@@ -101,8 +101,8 @@ export default function DashboardLayout({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-red-50 dark:bg-blue-900/30 text-red-700 dark:text-red-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700",
+                        ? "bg-red-50 text-red-700"
+                        : "text-gray-700 hover:bg-gray-100",
                     )}
                   >
                     <Icon icon={tab.icon} className="text-xl flex-shrink-0" />
@@ -124,32 +124,32 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-10 flex-shrink-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 shadow-sm">
+        <header className="sticky top-0 z-10 flex-shrink-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-md hover:bg-gray-200 cursor-pointer dark:hover:bg-gray-700"
+              className="p-2 rounded-md hover:bg-gray-200 cursor-pointer"
             >
               <Icon icon="mdi:menu" className="text-xl" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h1 className="text-lg font-semibold text-gray-800">
               Podcast Management
             </h1>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
               <Icon
                 icon="mdi:account-circle"
-                className="text-2xl text-gray-600 dark:text-gray-400"
+                className="text-2xl text-gray-600"
               />
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              <span className="text-sm font-medium text-gray-800">
                 {displayName}
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <Icon icon="mdi:logout" className="text-lg" />
               Logout

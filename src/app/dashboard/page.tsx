@@ -91,10 +91,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-2xl font-bold text-gray-900">
           Welcome back, {displayName}
         </h2>
-        <p className="mt-1 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-gray-600">
           Manage your podcast content from the dashboard
         </p>
       </div>
@@ -102,56 +102,44 @@ export default function DashboardPage() {
       {/* Overview Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Hosts */}
-        <Card className="border-gray-200 dark:border-gray-700">
+        <Card className="border-gray-200">
           <CardContent className="flex items-center justify-between p-6">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Hosts
-              </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-sm text-gray-500">Total Hosts</p>
+              <h3 className="text-2xl font-bold text-gray-900">
                 {loadingStats ? "—" : hostCount}
               </h3>
             </div>
-            <Icon
-              icon="mdi:account-tie"
-              className="text-3xl text-blue-600 dark:text-blue-400"
-            />
+            <Icon icon="mdi:account-tie" className="text-3xl text-blue-600" />
           </CardContent>
         </Card>
 
         {/* Guests */}
-        <Card className="border-gray-200 dark:border-gray-700">
+        <Card className="border-gray-200">
           <CardContent className="flex items-center justify-between p-6">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Guests
-              </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-sm text-gray-500">Total Guests</p>
+              <h3 className="text-2xl font-bold text-gray-900">
                 {loadingStats ? "—" : guestCount}
               </h3>
             </div>
             <Icon
               icon="mdi:account-voice"
-              className="text-3xl text-green-600 dark:text-green-400"
+              className="text-3xl text-green-600"
             />
           </CardContent>
         </Card>
 
         {/* Interviews */}
-        <Card className="border-gray-200 dark:border-gray-700">
+        <Card className="border-gray-200">
           <CardContent className="flex items-center justify-between p-6">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Interviews
-              </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-sm text-gray-500">Total Interviews</p>
+              <h3 className="text-2xl font-bold text-gray-900">
                 {loadingStats ? "—" : interviewCount}
               </h3>
             </div>
-            <Icon
-              icon="mdi:microphone"
-              className="text-3xl text-purple-600 dark:text-purple-400"
-            />
+            <Icon icon="mdi:microphone" className="text-3xl text-purple-600" />
           </CardContent>
         </Card>
       </div>
@@ -164,28 +152,28 @@ export default function DashboardPage() {
           <Link key={section.href} href={section.href}>
             <Card
               variant="elevated"
-              className="h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer border-gray-200 dark:border-gray-700"
+              className="h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer border-gray-200"
             >
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50 dark:bg-blue-900/30">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50">
                     <Icon
                       icon={section.icon}
-                      className="text-2xl text-red-600 dark:text-red-400"
+                      className="text-2xl text-red-600"
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="font-semibold text-gray-900">
                       {section.title}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {section.description}
                     </p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <span className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                <span className="text-sm font-medium text-blue-600 flex items-center gap-1">
                   Go to {section.title}
                   <Icon icon="mdi:chevron-right" className="text-lg" />
                 </span>

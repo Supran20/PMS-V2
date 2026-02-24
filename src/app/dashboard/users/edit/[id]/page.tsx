@@ -136,7 +136,7 @@ export default function EditUserPage() {
             <FormField label="Status" required>
               <select
                 {...register("status")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -151,7 +151,7 @@ export default function EditUserPage() {
             <FormField label="Role" required>
               <select
                 {...register("role_name")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="Admin">Admin</option>
                 <option value="Host">Host</option>
@@ -169,11 +169,11 @@ export default function EditUserPage() {
                 type="checkbox"
                 {...register("enable_otp_login")}
                 id="enable_otp_login"
-                className="rounded border-gray-300 dark:border-gray-600"
+                className="rounded border-gray-300"
               />
               <label
                 htmlFor="enable_otp_login"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="text-sm font-medium text-gray-700"
               >
                 Enable OTP Login
               </label>

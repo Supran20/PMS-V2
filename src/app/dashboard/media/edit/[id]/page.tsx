@@ -107,14 +107,14 @@ export default function EditMediaPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {currentPath && isImage(currentType) && (
               <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">
                   Current Image
                 </p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getMediaUrl(currentPath)}
                   alt="Current"
-                  className="w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                 />
               </div>
             )}
@@ -136,7 +136,7 @@ export default function EditMediaPage() {
                     shouldValidate: false,
                   })
                 }
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-300"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
               />
               {file && (
                 <p className="text-sm text-gray-500 mt-1">
@@ -151,7 +151,7 @@ export default function EditMediaPage() {
             <FormField label="Tag">
               <select
                 {...register("tag_id")}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">No tag</option>
                 {tags.map((tag) => (

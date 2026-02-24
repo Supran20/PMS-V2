@@ -22,7 +22,7 @@ export function FormActions({
         <Button
           type="button"
           variant="secondary"
-          className="border border-gray-300 dark:border-gray-600 rounded-md"
+          className="border border-gray-300 rounded-md"
         >
           Cancel
         </Button>
@@ -39,3 +39,4 @@ export function FormActions({
     </div>
   );
 }
+
