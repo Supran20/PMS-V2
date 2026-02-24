@@ -268,7 +268,7 @@ export default function InterviewsPage() {
             <div className="overflow-x-auto">
               <div>
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="grid grid-cols-8 gap-4 bg-gray-50 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
+                  <div className="grid grid-cols-8 gap-4 bg-gray-100 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
                     <div className="text-left  text-vxs font-medium text-gray-700">
                       Guest
                     </div>
@@ -326,23 +326,82 @@ export default function InterviewsPage() {
                             {" "}
                             {formatTimeTo12Hour(interview.end_time)}
                           </div>
-                          <div>
-                            <span
-                              className={`px-2 py-1 rounded-full  text-vxs font-medium capitalize ${getInterviewStatusClass(
+                          <div className="">
+                            <div
+                              className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getInterviewStatusClass(
                                 interview.interview_status,
                               )}`}
                             >
-                              {interview.interview_status}
-                            </span>
+                              <select
+                                value={interview.interview_status}
+                                onChange={async (e) =>
+                                  await handleStatusChange(
+                                    interview.id,
+                                    "interview_status",
+                                    e.target.value,
+                                  )
+                                }
+                                className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                              >
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="scheduled"
+                                >
+                                  Scheduled
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="completed"
+                                >
+                                  Completed
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="cancelled"
+                                >
+                                  Cancelled
+                                </option>
+                              </select>
+                            </div>
                           </div>
-                          <div>
-                            <span
-                              className={`px-2 py-1 rounded-full  text-vxs font-medium capitalize ${getLiveStatusClass(
+
+                          <div className="">
+                            <div
+                              className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getLiveStatusClass(
                                 interview.live_status,
                               )}`}
                             >
-                              {interview.live_status?.replace("_", " ")}
-                            </span>
+                              <select
+                                value={interview.live_status}
+                                onChange={async (e) =>
+                                  await handleStatusChange(
+                                    interview.id,
+                                    "live_status",
+                                    e.target.value,
+                                  )
+                                }
+                                className="bg-transparent border-none focus:outline-none text-xs font-medium capitalize cursor-pointer"
+                              >
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="live"
+                                >
+                                  Live
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="recorded"
+                                >
+                                  Recorded
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
+                                  value="not_live"
+                                >
+                                  Not Live
+                                </option>
+                              </select>
+                            </div>
                           </div>
                           <div className="">
                             <div className="flex items-center justify-start gap-2">
