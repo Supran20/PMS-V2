@@ -7,7 +7,6 @@ import { z } from "zod";
  */
 const baseUserSchema = z.object({
   full_name: z.string().min(3),
-  username: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(8),
   status: z.enum(["active", "inactive"]).optional(),

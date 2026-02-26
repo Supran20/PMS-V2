@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
+import { ChangePasswordModal } from "@/components/ui/ChangePasswordModal";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -20,6 +21,10 @@ export default function UsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [userToChangePassword, setUserToChangePassword] = useState<User | null>(
+    null,
+  );
 
   const { user: currentUser, hasPermission, loading: authLoading } = useAuth();
 
@@ -73,9 +78,19 @@ export default function UsersPage() {
     fetchUsers();
   };
 
+  const handlePasswordClick = (user: User) => {
+    setUserToChangePassword(user);
+    setPasswordModalOpen(true);
+  };
+
+  const handlePasswordClose = () => {
+    setPasswordModalOpen(false);
+    setUserToChangePassword(null);
+  };
+
   const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
 
-  const paginatedUsers = users.slice(
+  const   paginatedUsers = users.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
   );
@@ -122,7 +137,7 @@ export default function UsersPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Role
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Actions
                     </th>
                   </tr>
@@ -140,8 +155,17 @@ export default function UsersPage() {
                       <td className="py-3 px-4 text-gray-600">
                         {user.roles?.[0]?.role_name}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-3 px-4 ">
+                        <div className="flex items-center justify-start gap-2">
+                          {hasPermission("user.manage") && ( // Only Admin sees password icon
+                            <button
+                              onClick={() => handlePasswordClick(user)}
+                              className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
+                              title="Change Password"
+                            >
+                              <Icon icon="mdi:key" className="text-xl" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEditClick(user)}
                             className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
@@ -182,6 +206,12 @@ export default function UsersPage() {
         onClose={handleDeleteClose}
         onConfirm={handleDeleteConfirm}
         titleKey="full_name"
+      />
+
+      <ChangePasswordModal
+        open={passwordModalOpen}
+        userId={userToChangePassword?.id ?? null}
+        onClose={handlePasswordClose}
       />
     </div>
   );
