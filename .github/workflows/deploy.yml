@@ -18,8 +18,9 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            source ~/.bashrc
             cd /srv/app/Frontend
-            git pull origin main
+            git pull origin frontend
             pnpm install
             pnpm build
             pm2 restart 3
