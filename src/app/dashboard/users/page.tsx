@@ -21,7 +21,7 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { hasPermission, loading: authLoading } = useAuth();
+  const { user: currentUser, hasPermission, loading: authLoading } = useAuth();
 
   const ITEMS_PER_PAGE = 10;
 
@@ -64,6 +64,11 @@ export default function UsersPage() {
   };
 
   const handleDeleteConfirm = async (user: User) => {
+    if (currentUser?.id === user.id) {
+      toast.error("You cannot delete your own account");
+      return;
+    }
+
     await deleteUser(user.id);
     fetchUsers();
   };
@@ -84,9 +89,7 @@ export default function UsersPage() {
   if (authLoading || loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Users
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Users</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -97,18 +100,14 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Users
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Users</h2>
         <AddButton href="/dashboard/users/add" label="Add User" />
       </div>
 
       <Card className="shadow-lg bg-white border-none py-5">
         <CardContent>
           {users.length === 0 ? (
-            <p className="text-gray-600 py-8 text-center">
-              No users found
-            </p>
+            <p className="text-gray-600 py-8 text-center">No users found</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -137,9 +136,7 @@ export default function UsersPage() {
                       <td className="py-3 px-4 text-gray-900">
                         {user.full_name}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {user.email}
-                      </td>
+                      <td className="py-3 px-4 text-gray-600">{user.email}</td>
                       <td className="py-3 px-4 text-gray-600">
                         {user.roles?.[0]?.role_name}
                       </td>
@@ -152,13 +149,16 @@ export default function UsersPage() {
                           >
                             <Icon icon="mdi:pencil" className="text-xl" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteClick(user)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                            title="Delete"
-                          >
-                            <Icon icon="mdi:delete" className="text-xl" />
-                          </button>
+                          {hasPermission("user.manage") &&
+                            currentUser?.id !== user.id && (
+                              <button
+                                onClick={() => handleDeleteClick(user)}
+                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete"
+                              >
+                                <Icon icon="mdi:delete" className="text-xl" />
+                              </button>
+                            )}
                         </div>
                       </td>
                     </tr>
@@ -186,4 +186,3 @@ export default function UsersPage() {
     </div>
   );
 }
-
