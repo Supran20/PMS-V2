@@ -8,7 +8,6 @@ import api from "@/lib/axios";
 
 export interface UserPayload {
   full_name: string;
-  username: string;
   email: string;
   password?: string;
   status?: "active" | "inactive";
@@ -25,7 +24,6 @@ export interface User {
   otp_in_mail: boolean;
   id: string;
   full_name: string;
-  username: string;
   email: string;
   status: string;
   profile_image?: string | null;
