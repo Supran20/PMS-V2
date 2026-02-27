@@ -80,14 +80,6 @@ export default function AddUserPage() {
               />
             </FormField>
 
-            <FormField label="Username" required>
-              <FormInput<CreateUserInput>
-                name="username"
-                control={control}
-                placeholder="e.g. johndoe"
-              />
-            </FormField>
-
             <FormField label="Email" required>
               <FormInput<CreateUserInput>
                 name="email"

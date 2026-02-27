@@ -77,7 +77,6 @@ export default function EditUserPage() {
     try {
       await updateUser(id, {
         full_name: data.full_name,
-        username: data.username,
         email: data.email,
         status: data.status,
         role_name: data.role_name,
@@ -117,14 +116,6 @@ export default function EditUserPage() {
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
-              />
-            </FormField>
-
-            <FormField label="Username" required>
-              <FormInput<UpdateUserInput>
-                name="username"
-                control={control}
-                placeholder="e.g. johndoe"
               />
             </FormField>
 
