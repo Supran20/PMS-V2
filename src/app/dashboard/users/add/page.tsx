@@ -45,7 +45,6 @@ export default function AddUserPage() {
     try {
       await createUser({
         full_name: data.full_name,
-        username: data.username,
         email: data.email,
         password: data.password,
         status: data.status,

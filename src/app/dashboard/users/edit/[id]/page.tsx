@@ -51,7 +51,6 @@ export default function EditUserPage() {
         const user = await getUserById(id);
         reset({
           full_name: user.full_name,
-          username: user.username,
           email: user.email,
           status: (user.status as "active" | "inactive") ?? "active",
           role_name:
