@@ -126,9 +126,7 @@ export default function GuestsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Guests
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Guests</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -140,9 +138,7 @@ export default function GuestsPage() {
     <div className="space-y-6">
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Guests
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Guests</h2>
         {canAddGuest && (
           <AddButton href="/dashboard/guest/add" label="Add Guest" />
         )}
@@ -151,6 +147,7 @@ export default function GuestsPage() {
       {/* Search */}
       <Card className="shadow-lg bg-white border-none py-5">
         {/* <CardHeader>Guest Management</CardHeader> */}
+
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">
@@ -170,9 +167,7 @@ export default function GuestsPage() {
 
           {/* Table */}
           {filteredGuests.length === 0 ? (
-            <p className="text-gray-600 py-12 text-center">
-              No guests found
-            </p>
+            <p className="text-gray-600 py-12 text-center">No guests found</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {paginatedGuests.map((guest) => (
@@ -181,7 +176,7 @@ export default function GuestsPage() {
                   className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
-                  <div className="aspect-square relative">
+                  <div className="aspect-square relative ">
                     {guest.profileImage && isImage(guest.profileImage.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -225,49 +220,51 @@ export default function GuestsPage() {
                   </div>
 
                   {/* Name + Designation */}
-                  <div className="p-3 flex items-center justify-between gap-2">
-                    {/* Name + Designation */}
-                    <div className="min-w-0">
-                      <p className="text-vxs font-semibold text-gray-900 ">
-                        {guest.full_name}
-                      </p>
-                      <p className="text-vxs text-gray-500 truncate">
-                        {guest.designation ?? "—"}
-                      </p>
-                    </div>
+                  <Link href={`/dashboard/guest/view/${guest.slug}`}>
+                    <div className="p-3 flex items-center justify-between gap-2">
+                      {/* Name + Designation */}
+                      <div className="min-w-0">
+                        <p className="text-vxs font-semibold text-gray-900 ">
+                          {guest.full_name}
+                        </p>
+                        <p className="text-vxs text-gray-500 truncate">
+                          {guest.designation ?? "—"}
+                        </p>
+                      </div>
 
-                    <div>
-                      {guest.approved ? (
-                        <div
-                          className="p-2 rounded-lg text-green-500"
-                          title="Approved"
-                        >
-                          <Icon icon="mdi:check-circle" className="text-lg" />
-                        </div>
-                      ) : canApproveGuest ? (
-                        <button
-                          onClick={() => handleApproveClick(guest)}
-                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
-                          title="Approve Guest"
-                        >
-                          <Icon
-                            icon="mdi:check-circle-outline"
-                            className="text-lg"
-                          />
-                        </button>
-                      ) : (
-                        <div
-                          className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
-                          title="Not approved"
-                        >
-                          <Icon
-                            icon="mdi:check-circle-outline"
-                            className="text-lg"
-                          />
-                        </div>
-                      )}
+                      <div>
+                        {guest.approved ? (
+                          <div
+                            className="p-2 rounded-lg text-green-500"
+                            title="Approved"
+                          >
+                            <Icon icon="mdi:check-circle" className="text-lg" />
+                          </div>
+                        ) : canApproveGuest ? (
+                          <button
+                            onClick={() => handleApproveClick(guest)}
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
+                            title="Approve Guest"
+                          >
+                            <Icon
+                              icon="mdi:check-circle-outline"
+                              className="text-lg"
+                            />
+                          </button>
+                        ) : (
+                          <div
+                            className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
+                            title="Not approved"
+                          >
+                            <Icon
+                              icon="mdi:check-circle-outline"
+                              className="text-lg"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -305,4 +302,3 @@ export default function GuestsPage() {
     </div>
   );
 }
-

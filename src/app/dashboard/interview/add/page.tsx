@@ -13,6 +13,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { FormActions } from "@/components/ui/FormActions";
 import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
+import { useSearchParams } from "next/navigation";
 
 import {
   createInterviewSchema,
@@ -37,6 +38,9 @@ export default function AddInterviewPage() {
   const [hosts, setHosts] = useState<User[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const guestIdFromUrl = searchParams.get("guest_id");
 
   const {
     register,
@@ -68,19 +72,23 @@ export default function AddInterviewPage() {
           getGuests(),
           getUsers(),
           getStudios(),
-          getInterviews(),
         ]);
 
         setGuests(guestData);
         setHosts(userData);
         setStudios(studioData);
+
+        // 🔥 AUTO-SELECT GUEST IF PASSED IN URL
+        if (guestIdFromUrl) {
+          setValue("guest_id", guestIdFromUrl, { shouldValidate: true });
+        }
       } catch {
         toast.error("Failed to load form data");
       }
     };
 
     fetchData();
-  }, []);
+  }, [guestIdFromUrl, setValue]);
 
   /**
    * -------------------------
@@ -155,13 +163,15 @@ export default function AddInterviewPage() {
             {/* Guest */}
             <FormField label="Guest" required>
               <div className="md:w-3/4 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setGuestModalOpen(true)}
-                  className="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
-                >
-                  Select Guest
-                </button>
+                {!guestIdFromUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setGuestModalOpen(true)}
+                    className="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
+                  >
+                    Select Guest
+                  </button>
+                )}
 
                 {selectedGuest && (
                   <p className="text-sm text-green-600">
@@ -283,4 +293,3 @@ export default function AddInterviewPage() {
     </div>
   );
 }
-

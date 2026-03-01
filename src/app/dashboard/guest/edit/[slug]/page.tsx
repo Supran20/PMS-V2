@@ -78,6 +78,7 @@ export default function EditGuestPage() {
           referred_by: data.referred_by,
 
           social_media: data.social_media ?? {},
+          tag_id: data.profileImage?.tag_id ?? "",
         });
 
         if (data.profileImage?.path) {
