@@ -17,6 +17,7 @@ export function ChangePasswordModal({
   onClose,
 }: ChangePasswordModalProps) {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [updating, setUpdating] = useState(false);
 
   if (!open || !userId) return null;
@@ -27,11 +28,19 @@ export function ChangePasswordModal({
       return;
     }
 
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     try {
       setUpdating(true);
+
       await updateUser(userId, { password });
+
       toast.success("Password updated successfully");
       setPassword("");
+      setConfirmPassword("");
       onClose();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update password");
@@ -50,9 +59,17 @@ export function ChangePasswordModal({
         <input
           type="password"
           placeholder="Enter new password"
-          className="w-full border border-gray-300 rounded-md p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 rounded-md p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Re-enter new password"
+          className="w-full border border-gray-300 rounded-md p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
         <div className="flex justify-end gap-3">

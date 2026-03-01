@@ -90,8 +90,25 @@ export const getGuestBySlug = async (slug: string): Promise<Guest> => {
  * CREATE GUEST
  * --------------------------------
  */
-export const createGuest = async (payload: GuestPayload): Promise<Guest> => {
-  const response = await api.post("/guests", payload);
+export const createGuest = async (payload: any): Promise<Guest> => {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+
+    if (key === "social_media") {
+      formData.append(key, JSON.stringify(value));
+    } else if (key === "file") {
+      formData.append("file", value as File);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+
+  const response = await api.post("/guests", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return response.data.data;
 };
 
@@ -102,9 +119,26 @@ export const createGuest = async (payload: GuestPayload): Promise<Guest> => {
  */
 export const updateGuestBySlug = async (
   slug: string,
-  payload: Partial<GuestPayload>,
+  payload: any,
 ): Promise<Guest> => {
-  const response = await api.put(`/guests/slug/${slug}`, payload);
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+
+    if (key === "social_media") {
+      formData.append(key, JSON.stringify(value));
+    } else if (key === "file") {
+      formData.append("file", value as File);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+
+  const response = await api.put(`/guests/slug/${slug}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return response.data.data;
 };
 

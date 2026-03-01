@@ -17,7 +17,7 @@ export function FormField({
     <div
       className={`flex flex-col md:flex-row md:items-start gap-2 md:gap-4 ${className}`}
     >
-      <label className="md:w-1/4 text-sm font-semibold text-gray-700 pt-2">
+      <label className="md:w-1/4 text-sm   font-semibold text-gray-700 pt-2">
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
