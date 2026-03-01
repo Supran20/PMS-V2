@@ -5,11 +5,7 @@ import { z } from "zod";
  * CREATE GUEST VALIDATION
  * --------------------------------
  */
-const optionalUrl = z
-  .string()
-  .url()
-  .optional()
-  .or(z.literal(""));
+const optionalUrl = z.string().url().optional().or(z.literal(""));
 
 export const createGuestSchema = z.object({
   full_name: z.string().min(1, "Guest name is required"),
@@ -29,8 +25,10 @@ export const createGuestSchema = z.object({
   email: z.string().email().optional().nullable(),
   phone: z.string().optional().nullable(),
 
-  profile_image: z.string().uuid().optional().nullable(),
   referred_by: z.string().uuid().optional().nullable(),
+
+  tag_id: z.string().uuid().optional().nullable(),
+  file: z.any().optional(),
 });
 
 export type CreateGuestInput = z.infer<typeof createGuestSchema>;

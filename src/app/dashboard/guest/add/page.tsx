@@ -15,24 +15,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { getUsers, User } from "@/lib/api/user";
-import MediaSelectorModal from "@/components/media/MediaSelectorModal";
 import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { getTags } from "@/lib/api/tags";
 
 export default function AddGuestPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [mediaModalOpen, setMediaModalOpen] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { hasPermission, loading: authLoading } = useAuth();
 
@@ -72,6 +69,20 @@ export default function AddGuestPage() {
 
     fetchUsers();
   }, [authLoading, hasPermission, router]);
+
+  useEffect(() => {
+    getTags()
+      .then(setTags)
+      .catch(() => setTags([]));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const onSubmit = async (data: CreateGuestInput) => {
     setSubmitting(true);
@@ -174,7 +185,7 @@ export default function AddGuestPage() {
               <div className="md:w-3/4">
                 <select
                   {...register("referred_by")}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  className="w-80 px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
                 >
                   <option
                     value=""
@@ -192,27 +203,53 @@ export default function AddGuestPage() {
             </FormField>
 
             {/* Profile Image */}
-            <FormField label="Profile Image">
-              <div className="md:w-3/4 flex items-start gap-4">
-                {selectedMedia && (
-                  <div className="mb-4">
+            <FormField label="Profile Image" required>
+              <div className="space-y-4">
+                {/* File Upload */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setValue("file", file, { shouldValidate: true });
+
+                    const previewUrl = URL.createObjectURL(file);
+                    setImagePreview(previewUrl);
+                  }}
+                  className="w-80 px-4 py-1 rounded-lg border text-xs border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
+                />
+
+                {/* 🔥 Image Preview */}
+                {imagePreview && (
+                  <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">
-                      Current Image
+                      Image Preview
                     </p>
+
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`${API_BASE_URL}${selectedMedia.path}`}
+                      src={imagePreview}
+                      alt="Preview"
                       className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                     />
                   </div>
                 )}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="border border-gray-300 rounded-md"
-                  onClick={() => setMediaModalOpen(true)}
+
+                <br />
+                {/* Tag Select */}
+                <select
+                  {...register("tag_id")}
+                  className="w-80 px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
                 >
-                  Select Image
-                </Button>
+                  <option value="">No tag</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.tag_name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </FormField>
 
@@ -252,17 +289,6 @@ export default function AddGuestPage() {
           </form>
         </CardContent>
       </Card>
-
-      <MediaSelectorModal
-        open={mediaModalOpen}
-        onClose={() => setMediaModalOpen(false)}
-        onSelect={(media) => {
-          setSelectedMedia(media);
-          setValue("profile_image", media.id);
-          setMediaModalOpen(false);
-        }}
-      />
     </div>
   );
 }
-
