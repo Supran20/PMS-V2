@@ -74,16 +74,6 @@ export default function InterviewsPage() {
     }
   };
 
-  const handleReorder = async (items: Interview[]) => {
-    try {
-      const orderedIds = items.map((i) => i.id);
-      await reorderInterviews(orderedIds);
-    } catch {
-      toast.error("Failed to update order");
-      throw new Error("Reorder failed");
-    }
-  };
-
   /**
    * Live Status Badge Colors
    */
@@ -97,6 +87,16 @@ export default function InterviewsPage() {
         return "bg-gray-100 text-gray-700";
       default:
         return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const handleReorder = async (items: Interview[]) => {
+    try {
+      const orderedIds = items.map((i) => i.id);
+      await reorderInterviews(orderedIds);
+    } catch {
+      toast.error("Failed to update order");
+      throw new Error("Reorder failed");
     }
   };
 

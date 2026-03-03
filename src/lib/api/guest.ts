@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import type { Interview } from "@/lib/api/interview";
 
 /**
  * --------------------------------
@@ -25,6 +26,7 @@ export interface Media {
   media_name: string;
   path: string;
   type: string;
+  tag_id?: string | null;
 }
 
 export interface Guest {
@@ -45,6 +47,18 @@ export interface Guest {
 
   profile_image: string | null;
   profileImage?: Media | null;
+
+  referrer?: {
+    id: string;
+    full_name: string;
+  } | null;
+
+  approver?: {
+    id: string;
+    full_name: string;
+  } | null;
+
+  interviews?: Interview[];
 
   created_by: string | null;
   updated_by: string | null;
