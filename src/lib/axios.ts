@@ -30,7 +30,7 @@ api.interceptors.response.use(
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("temp_token");
 
-        window.location.href = "/login";
+        window.location.href = "/";
       }
     }
     return Promise.reject(error);

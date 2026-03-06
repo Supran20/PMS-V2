@@ -14,7 +14,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { getUsers, User } from "@/lib/api/user";
+import { getUsers, getHostUser, User } from "@/lib/api/user";
 import { FormInput } from "@/components/ui/FormInput";
 import { FormField } from "@/components/ui/FormField";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -35,8 +35,11 @@ export default function EditGuestPage() {
   const [guest, setGuest] = useState<Guest | null>(null);
   const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [hostusers, setHostUsers] = useState<User[]>([]);
 
   const { hasPermission, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const isHostUser = user?.roles?.includes("Host");
 
   const {
     register,
@@ -76,6 +79,7 @@ export default function EditGuestPage() {
           email: data.email,
           phone: data.phone,
           referred_by: data.referred_by,
+          host_id: data.host_id ?? "",
 
           social_media: data.social_media ?? {},
           tag_id: data.profileImage?.tag_id ?? "",
@@ -96,8 +100,13 @@ export default function EditGuestPage() {
 
     const fetchUsers = async () => {
       try {
-        const data = await getUsers();
-        setUsers(data);
+        const [allUsers, hosts] = await Promise.all([
+          getUsers(),
+          getHostUser(),
+        ]);
+
+        setUsers(allUsers);
+        setHostUsers(hosts);
       } catch {
         toast.error("Failed to load users");
       }
@@ -122,6 +131,10 @@ export default function EditGuestPage() {
   const onSubmit = async (data: UpdateGuestInput) => {
     setSubmitting(true);
     try {
+      if (isHostUser && user) {
+        data.host_id = user.id;
+      }
+
       await updateGuestBySlug(slug, data);
       toast.success("Guest updated successfully");
       router.push("/dashboard/guest");
@@ -229,6 +242,24 @@ export default function EditGuestPage() {
                 </select>
               </div>
             </FormField>
+
+            {!isHostUser && (
+              <FormField label="Choose Host" required>
+                <div className="md:w-3/4">
+                  <select
+                    {...register("host_id")}
+                    className="w-80 px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Host</option>
+                    {hostusers.map((host) => (
+                      <option key={host.id} value={host.id}>
+                        {host.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormField>
+            )}
 
             {/* Profile Image */}
             <FormField label="Profile Image" required>

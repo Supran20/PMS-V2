@@ -7,6 +7,11 @@ import { z } from "zod";
  */
 const optionalUrl = z.string().url().optional().or(z.literal(""));
 
+export const notesSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional().nullable(),
+});
+
 export const createGuestSchema = z.object({
   full_name: z.string().min(1, "Guest name is required"),
   designation: z.string().optional().nullable(),
@@ -26,6 +31,9 @@ export const createGuestSchema = z.object({
   phone: z.string().optional().nullable(),
 
   referred_by: z.string().uuid().optional().nullable(),
+  notes: z.array(notesSchema).optional().nullable(),
+
+  host_id: z.string().uuid().optional().nullable(),
 
   tag_id: z.string().uuid().optional().nullable(),
   file: z.any().optional(),

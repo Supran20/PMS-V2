@@ -13,7 +13,7 @@ export interface InterviewPayload {
   interview_date: string;
   start_time: string;
   end_time?: string;
-  interview_status?: "scheduled" | "completed" | "cancelled";
+  interview_status?: "scheduled" | "completed" | "cancelled" | "postponed";
   live_status?: "live" | "recorded" | "not_live";
   google_drive_link?: string | null;
   youtube_link?: string | null;
@@ -30,7 +30,7 @@ export interface Interview {
   start_time: string;
   end_time: string | null;
 
-  interview_status: "scheduled" | "completed" | "cancelled";
+  interview_status: "scheduled" | "completed" | "cancelled" | "postponed";
   live_status: "live" | "recorded" | "not_live";
 
   google_drive_link: string | null;
@@ -46,6 +46,7 @@ export interface Interview {
     id: string;
     full_name: string;
     email: string;
+    slug: string;
   };
 
   host?: {
