@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { getGuestBySlug, Guest, updateGuestBySlug } from "@/lib/api/guest";
+import {
+  getGuestNotesByGuest,
+  createGuestNote,
+  updateGuestNote,
+  deleteGuestNote,
+  GuestNote,
+} from "@/lib/api/guest_note";
+
 import { getMediaUrl } from "@/lib/utils";
 import { getInterviews, Interview } from "@/lib/api/interview";
 import { AddButton } from "@/components/ui/AddButton";
@@ -23,7 +31,7 @@ import Button from "@mui/material/Button";
 
 import { FormField } from "@/components/ui/FormField";
 
-interface Note {
+interface NoteForm {
   title: string;
   description?: string | null;
 }
@@ -39,15 +47,18 @@ export default function GuestViewPage() {
   const [error, setError] = useState(false);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [tabValue, setTabValue] = useState(0);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newNote, setNewNote] = useState<Note>({ title: "", description: "" });
-  const [savingNote, setSavingNote] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingNote, setEditingNote] = useState<Note>({
+  const [notes, setNotes] = useState<any[]>([]);
+  const [newNote, setNewNote] = useState({
     title: "",
     description: "",
   });
+  const [savingNote, setSavingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
+  const [editingNote, setEditingNote] = useState<NoteForm>({
+    title: "",
+    description: "",
+  });
   const canAddInterview = hasPermission("interview.create");
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -61,7 +72,8 @@ export default function GuestViewPage() {
       try {
         const guestData = await getGuestBySlug(slug);
         setGuest(guestData);
-        setNotes(guestData.notes ?? []);
+        const guestNotes = await getGuestNotesByGuest(guestData.id);
+        setNotes(guestNotes);
 
         const allInterviews = await getInterviews();
         const filtered = allInterviews.filter(
@@ -115,21 +127,25 @@ export default function GuestViewPage() {
   };
 
   const handleAddNote = async () => {
+    if (!guest) return;
     if (!newNote.title.trim()) return;
 
-    const updatedNotes = [...notes, newNote];
     setSavingNote(true);
 
     try {
-      const updatedGuest = await updateGuestBySlug(slug, {
-        notes: updatedNotes,
+      const created = await createGuestNote({
+        guest_id: guest.id,
+        title: newNote.title,
+        description: newNote.description,
       });
 
-      setGuest((prev) =>
-        prev ? { ...prev, notes: updatedGuest.notes ?? [] } : prev,
-      );
-      setNotes(updatedGuest.notes ?? []);
-      setNewNote({ title: "", description: "" });
+      const guestNotes = await getGuestNotesByGuest(guest.id);
+      setNotes(guestNotes);
+
+      setNewNote({
+        title: "",
+        description: "",
+      });
 
       toast.success("Note added successfully");
     } catch (err) {
@@ -140,54 +156,50 @@ export default function GuestViewPage() {
     }
   };
 
-  const handleDeleteNote = async (index: number) => {
-    const updatedNotes = [...notes];
-    updatedNotes.splice(index, 1);
-
+  const handleDeleteNote = async (noteId: string) => {
     setSavingNote(true);
+
     try {
-      const updatedGuest = await updateGuestBySlug(slug, {
-        notes: updatedNotes.length ? updatedNotes : null,
-      });
-      setGuest((prev) =>
-        prev ? { ...prev, notes: updatedGuest.notes ?? [] } : prev,
-      );
-      setNotes(updatedGuest.notes ?? []);
+      await deleteGuestNote(noteId);
+
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+
       toast.success("Note deleted successfully");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete Note");
+    } catch {
+      toast.error("Failed to delete note");
     } finally {
       setSavingNote(false);
     }
   };
 
-  const handleEditNote = (index: number) => {
-    setEditingIndex(index);
-    setEditingNote(notes[index]);
+  // const handleEditNote = (index: number) => {
+  //   setEditingIndex(index);
+  //   setEditingNote(notes[index]);
+  // };
+
+  const handleEditStart = (note: GuestNote) => {
+    setEditingNoteId(note.id);
+    setEditingNote({
+      title: note.title,
+      description: note.description,
+    });
   };
 
-  const handleSaveNote = async (index: number) => {
-    const updatedNotes = [...notes];
-    updatedNotes[index] = editingNote;
+  const handleSaveNote = async () => {
+    if (!editingNoteId) return;
 
     setSavingNote(true);
 
     try {
-      const updatedGuest = await updateGuestBySlug(slug, {
-        notes: updatedNotes,
-      });
+      const updated = await updateGuestNote(editingNoteId, editingNote);
 
-      setGuest((prev) =>
-        prev ? { ...prev, notes: updatedGuest.notes ?? [] } : prev,
+      setNotes((prev) =>
+        prev.map((n) => (n.id === editingNoteId ? updated : n)),
       );
 
-      setNotes(updatedGuest.notes ?? []);
-      setEditingIndex(null);
-
+      setEditingNoteId(null);
       toast.success("Note updated successfully");
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to update note");
     } finally {
       setSavingNote(false);
@@ -450,31 +462,38 @@ export default function GuestViewPage() {
             </div>
           )}
 
-          {tabValue == 1 && (
-            <div className="bg-white rounded-lg border border-gray-50 shadow-sm p-4 space-y-6">
-              {/* Add Note Form */}
-              <div className="flex flex-col gap-2 mb-4">
+          {tabValue === 1 && (
+            <div className="bg-white rounded-lg border border-gray-50 shadow-sm p-4">
+              {/* Add Note */}
+              <div className="flex flex-col gap-3 mb-4">
                 <FormField label="Title" required>
                   <input
-                    type="text"
-                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
                     value={newNote.title}
                     onChange={(e) =>
                       setNewNote({ ...newNote, title: e.target.value })
                     }
+                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
+              bg-gray-50 text-gray-800
+              focus:ring-2 focus:ring-blue-500"
                   />
                 </FormField>
 
                 <FormField label="Description">
                   <textarea
                     rows={3}
-                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
                     value={newNote.description || ""}
                     onChange={(e) =>
-                      setNewNote({ ...newNote, description: e.target.value })
+                      setNewNote({
+                        ...newNote,
+                        description: e.target.value,
+                      })
                     }
+                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
+              bg-gray-50 text-gray-800
+              focus:ring-2 focus:ring-blue-500"
                   />
                 </FormField>
+
                 <button
                   onClick={handleAddNote}
                   disabled={savingNote}
@@ -484,99 +503,130 @@ export default function GuestViewPage() {
                 </button>
               </div>
 
-              {/* Notes Accordion */}
+              {/* Notes List */}
               {notes.length === 0 ? (
                 <p className="text-sm text-gray-500">No notes found.</p>
               ) : (
                 <div className="space-y-2">
-                  {notes.map((note, idx) => (
-                    <Accordion key={idx}>
-                      <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls={`panel-${idx}-content`}
-                        id={`panel-${idx}-header`}
-                      >
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {note.title}
-                        </Typography>
+                  {notes.map((note) => (
+                    <Accordion key={note.id}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography fontWeight={500}>{note.title}</Typography>
                       </AccordionSummary>
 
                       <AccordionDetails>
-                        {editingIndex === idx ? (
-                          <div className="flex flex-col gap-3 w-full">
+                        {editingNoteId === note.id ? (
+                          <div className="flex flex-col gap-3">
                             <input
-                              type="text"
                               value={editingNote.title}
-                              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
                               onChange={(e) =>
                                 setEditingNote({
                                   ...editingNote,
                                   title: e.target.value,
                                 })
                               }
+                              className="w-full px-3 py-2 text-sm border bg-gray-50 rounded-md"
                             />
 
                             <textarea
                               rows={3}
                               value={editingNote.description || ""}
-                              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
                               onChange={(e) =>
                                 setEditingNote({
                                   ...editingNote,
                                   description: e.target.value,
                                 })
                               }
+                              className="w-full px-3 py-2 text-sm border bg-gray-50 rounded-md"
                             />
                           </div>
                         ) : (
-                          <Typography
-                            sx={{
-                              whiteSpace: "pre-line",
-                              fontSize: "14px",
-                              color: "#4b5563",
-                            }}
-                          >
-                            {note.description || "No description"}
-                          </Typography>
+                          <div className="space-y-3">
+                            <Typography
+                              sx={{
+                                whiteSpace: "pre-line",
+                                fontSize: "14px",
+                                color: "#4b5563",
+                              }}
+                            >
+                              {note.description || "No description"}
+                            </Typography>
+
+                            {/* <div className="text-xs flex gap-2 text-gray-500 border-t pt-2 space-y-1">
+                              <div>
+                                Created by:{" "}
+                                <span className="font-medium">
+                                  {note.creator?.full_name}
+                                </span>
+                              </div>
+
+                              <div>
+                                Updated by:{" "}
+                                <span className="font-medium">
+                                  {note.updater?.full_name}
+                                </span>
+                              </div>
+                            </div> */}
+                          </div>
                         )}
                       </AccordionDetails>
 
-                      <AccordionActions>
-                        {editingIndex === idx ? (
-                          <>
-                            <Button
-                              size="small"
-                              onClick={() => handleSaveNote(idx)}
-                              disabled={savingNote}
-                            >
-                              Save
-                            </Button>
+                      <AccordionActions className="flex justify-between items-center px-4 pb-3">
+                        {/* LEFT SIDE (Metadata) */}
+                        <div className="text-xs text-gray-500 flex gap-4">
+                          <div>
+                            Created by:{" "}
+                            <span className="font-medium">
+                              {note.creator?.full_name}
+                            </span>
+                          </div>
 
-                            <Button
-                              size="small"
-                              onClick={() => setEditingIndex(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              size="small"
-                              onClick={() => handleEditNote(idx)}
-                            >
-                              Edit
-                            </Button>
+                          <div>
+                            Updated by:{" "}
+                            <span className="font-medium">
+                              {note.updater?.full_name}
+                            </span>
+                          </div>
+                        </div>
 
-                            <Button
-                              color="error"
-                              size="small"
-                              onClick={() => handleDeleteNote(idx)}
-                            >
-                              Delete
-                            </Button>
-                          </>
-                        )}
+                        {/* RIGHT SIDE (Buttons) */}
+                        <div className="flex gap-2">
+                          {editingNoteId === note.id ? (
+                            <>
+                              <Button
+                                size="small"
+                                onClick={handleSaveNote}
+                                disabled={savingNote}
+                              >
+                                Save
+                              </Button>
+
+                              <Button
+                                size="small"
+                                onClick={() => setEditingNoteId(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                size="small"
+                                onClick={() => handleEditStart(note)}
+                              >
+                                Edit
+                              </Button>
+
+                              <Button
+                                color="error"
+                                size="small"
+                                onClick={() => handleDeleteNote(note.id)}
+                              >
+                                Delete
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </AccordionActions>
                     </Accordion>
                   ))}
