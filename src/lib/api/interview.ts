@@ -46,6 +46,7 @@ export interface Interview {
     id: string;
     full_name: string;
     email: string;
+    slug: string;
   };
 
   host?: {

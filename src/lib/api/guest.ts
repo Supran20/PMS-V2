@@ -14,11 +14,13 @@ export interface GuestPayload {
   bio?: string | null;
 
   social_media?: Record<string, any> | null;
+  notes: { title: string; description: string } | null;
   email?: string | null;
   phone?: string | null;
 
   profile_image?: string | null;
   referred_by?: string | null;
+  host_id: string;
 }
 
 export interface Media {
@@ -38,12 +40,14 @@ export interface Guest {
   bio: string | null;
 
   social_media: Record<string, any> | null;
+  notes: { title: string; description: string }[] | null;
   email: string | null;
   phone: string | null;
 
   approved: boolean;
   approved_by: string | null;
   referred_by: string | null;
+  host_id: string;
 
   profile_image: string | null;
   profileImage?: Media | null;
@@ -140,7 +144,7 @@ export const updateGuestBySlug = async (
   Object.entries(payload).forEach(([key, value]) => {
     if (value === null || value === undefined) return;
 
-    if (key === "social_media") {
+    if (key === "social_media" || key === "notes") {
       formData.append(key, JSON.stringify(value));
     } else if (key === "file") {
       formData.append("file", value as File);
@@ -155,7 +159,6 @@ export const updateGuestBySlug = async (
 
   return response.data.data;
 };
-
 /**
  * --------------------------------
  * APPROVE GUEST (Admin Only)

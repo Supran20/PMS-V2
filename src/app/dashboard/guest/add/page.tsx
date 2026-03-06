@@ -14,7 +14,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { getUsers, User } from "@/lib/api/user";
+import { getUsers, getHostUser, User } from "@/lib/api/user";
 import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -27,11 +27,15 @@ export default function AddGuestPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [hostusers, setHostUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { hasPermission, loading: authLoading } = useAuth();
+
+  const { user } = useAuth();
+  const isHostUser = user?.roles?.includes("Host");
 
   const {
     register,
@@ -49,17 +53,20 @@ export default function AddGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // Redirect if user doesn't have permission
     if (!hasPermission("guest.create")) {
       router.replace("/dashboard/guest");
       return;
     }
 
-    // Fetch users only after permission check
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getUsers();
-        setUsers(data);
+        const [allUsers, hosts] = await Promise.all([
+          getUsers(), // for referred_by
+          getHostUser(), // for host dropdown
+        ]);
+
+        setUsers(allUsers);
+        setHostUsers(hosts);
       } catch {
         toast.error("Failed to load users");
       } finally {
@@ -67,7 +74,7 @@ export default function AddGuestPage() {
       }
     };
 
-    fetchUsers();
+    fetchData();
   }, [authLoading, hasPermission, router]);
 
   useEffect(() => {
@@ -87,6 +94,9 @@ export default function AddGuestPage() {
   const onSubmit = async (data: CreateGuestInput) => {
     setSubmitting(true);
     try {
+      if (isHostUser && user) {
+        data.host_id = user.id;
+      }
       await createGuest(data);
       toast.success("Guest created successfully");
       router.push("/dashboard/guest");
@@ -201,6 +211,24 @@ export default function AddGuestPage() {
                 </select>
               </div>
             </FormField>
+
+            {!isHostUser && (
+              <FormField label="Choose Host" required>
+                <div className="md:w-3/4">
+                  <select
+                    {...register("host_id")}
+                    className="w-80 px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Host</option>
+                    {hostusers.map((host) => (
+                      <option key={host.id} value={host.id}>
+                        {host.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormField>
+            )}
 
             {/* Profile Image */}
             <FormField label="Profile Image" required>

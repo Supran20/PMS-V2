@@ -69,6 +69,8 @@ export default function InterviewsPage() {
         return "bg-green-100 text-green-700";
       case "cancelled":
         return "bg-red-100 text-red-700";
+      case "postponed":
+        return "bg-yellow-100 text-yellow-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -308,9 +310,19 @@ export default function InterviewsPage() {
                   >
                     {(interview) => (
                       <SortableItem id={interview.id}>
-                        <div className="grid cursor-pointer grid-cols-8 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
-                          <div className=" text-vxs text-gray-600">
-                            {interview.guest?.full_name ?? "-"}
+                        <div className="grid grid-cols-8 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
+                          <div className="text-vxs text-gray-600">
+                            {interview.guest ? (
+                              <Link
+                                href={`/dashboard/guest/view/${interview.guest.slug}`}
+                                className=" hover:text-blue-600 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {interview.guest.full_name}
+                              </Link>
+                            ) : (
+                              "-"
+                            )}
                           </div>
                           <div className=" text-vxs text-gray-600">
                             {interview.host?.full_name ?? "-"}
@@ -357,6 +369,12 @@ export default function InterviewsPage() {
                                 </option>
                                 <option
                                   className="bg-gray-100 text-gray-700"
+                                  value="postponed"
+                                >
+                                  Postponed
+                                </option>
+                                <option
+                                  className="bg-gray-100 text-gray-700"
                                   value="cancelled"
                                 >
                                   Cancelled
@@ -364,7 +382,6 @@ export default function InterviewsPage() {
                               </select>
                             </div>
                           </div>
-
                           <div className="">
                             <div
                               className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getLiveStatusClass(

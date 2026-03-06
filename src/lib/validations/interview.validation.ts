@@ -23,7 +23,9 @@ export const createInterviewSchema = z.object({
 
   end_time: z.string().regex(timeRegex, "Invalid end time format").optional(),
 
-  interview_status: z.enum(["scheduled", "completed", "cancelled"]).optional(),
+  interview_status: z
+    .enum(["scheduled", "completed", "cancelled", "postponed"])
+    .optional(),
 
   live_status: z.enum(["live", "recorded", "not_live"]).optional(),
 

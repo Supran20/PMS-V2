@@ -27,7 +27,7 @@ import {
   Interview,
 } from "@/lib/api/interview";
 import { getGuests, Guest } from "@/lib/api/guest";
-import { getUsers, User } from "@/lib/api/user";
+import { getHostUser, User } from "@/lib/api/user";
 import { getStudios, Studio } from "@/lib/api/studio";
 
 export default function AddInterviewPage() {
@@ -70,7 +70,7 @@ export default function AddInterviewPage() {
       try {
         const [guestData, userData, studioData] = await Promise.all([
           getGuests(),
-          getUsers(),
+          getHostUser(),
           getStudios(),
         ]);
 
@@ -89,6 +89,22 @@ export default function AddInterviewPage() {
 
     fetchData();
   }, [guestIdFromUrl, setValue]);
+
+  useEffect(() => {
+    if (!selectedGuest) return;
+
+    if (selectedGuest.host_id) {
+      // Auto set host from guest
+      setValue("host_id", selectedGuest.host_id, {
+        shouldValidate: true,
+      });
+    } else {
+      // If guest has no host → clear host selection
+      setValue("host_id", "", {
+        shouldValidate: true,
+      });
+    }
+  }, [selectedGuest, setValue]);
 
   /**
    * -------------------------

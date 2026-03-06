@@ -22,7 +22,7 @@ import {
 import { getInterviewById, updateInterview } from "@/lib/api/interview";
 
 import { getGuests, Guest } from "@/lib/api/guest";
-import { getUsers, User } from "@/lib/api/user";
+import { getHostUser, User } from "@/lib/api/user";
 import { getStudios, Studio } from "@/lib/api/studio";
 
 export default function EditInterviewPage() {
@@ -62,7 +62,7 @@ export default function EditInterviewPage() {
         const [interview, guestData, userData, studioData] = await Promise.all([
           getInterviewById(id),
           getGuests(),
-          getUsers(),
+          getHostUser(),
           getStudios(),
         ]);
 
@@ -210,6 +210,7 @@ export default function EditInterviewPage() {
                   <option value="">Select Status</option>
                   <option value="scheduled">Scheduled</option>
                   <option value="completed">Completed</option>
+                  <option value="postponed">Postponed</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
 
