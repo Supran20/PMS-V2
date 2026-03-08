@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Icon } from "@iconify/react";
 import { toast } from "sonner";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
 import {
   getInterviews,
@@ -35,6 +38,7 @@ export default function InterviewsPage() {
     null,
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [tabValue, setTabValue] = useState(0);
 
   const canAddInterview = hasPermission("interview.create");
   const canEditInterview = hasPermission("interview.update");
@@ -92,6 +96,29 @@ export default function InterviewsPage() {
     }
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+    setCurrentPage(1);
+  };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const todayInterviews = useMemo(
+    () => interviews.filter((i) => i.interview_date === today),
+    [interviews, today],
+  );
+
+  const upcomingInterviews = useMemo(
+    () => interviews.filter((i) => i.interview_date > today),
+    [interviews, today],
+  );
+
+  const tabInterviews = useMemo(() => {
+    if (tabValue === 0) return todayInterviews;
+    if (tabValue === 1) return upcomingInterviews;
+    return interviews;
+  }, [tabValue, todayInterviews, upcomingInterviews, interviews]);
+
   const handleReorder = async (items: Interview[]) => {
     try {
       const orderedIds = items.map((i) => i.id);
@@ -130,19 +157,18 @@ export default function InterviewsPage() {
    * ------------------------------
    */
   const filteredInterviews = useMemo(() => {
-    if (!search.trim()) return interviews;
+    if (!search.trim()) return tabInterviews;
 
     const q = search.toLowerCase();
 
-    return interviews.filter(
+    return tabInterviews.filter(
       (i) =>
         i.guest?.full_name.toLowerCase().includes(q) ||
         i.host?.full_name.toLowerCase().includes(q) ||
         i.interview_status?.toLowerCase().includes(q) ||
         i.live_status?.toLowerCase().includes(q),
     );
-  }, [interviews, search]);
-
+  }, [tabInterviews, search]);
   /**
    * ------------------------------
    * Actions
@@ -239,6 +265,18 @@ export default function InterviewsPage() {
         )}
       </div>
 
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="interview tabs"
+        >
+          <Tab label="Today" />
+          <Tab label="Upcoming" />
+          <Tab label="All Interviews" />
+        </Tabs>
+      </Box>
+
       {/* Search + Table */}
       <Card className="shadow-sm bg-white border-none py-5">
         <CardContent>
@@ -267,7 +305,7 @@ export default function InterviewsPage() {
                 : "No interviews found"}
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto ">
               <div>
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="grid grid-cols-8 gap-4 bg-gray-100 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
@@ -454,7 +492,7 @@ export default function InterviewsPage() {
                 </div>
               </div>
               <br />
-              <hr />
+              {/* <hr /> */}
             </div>
           )}
         </CardContent>

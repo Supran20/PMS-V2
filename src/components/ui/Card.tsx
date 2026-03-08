@@ -15,10 +15,8 @@ export const Card: React.FC<CardProps> = ({
     "rounded-lg border transition-all duration-300 animate-fade-in";
 
   const variantClasses = {
-    default:
-      "bg-bg-card border-border-card text-text-primary",
-    elevated:
-      "bg-bg-card border-border-card shadow-sm text-text-primary",
+    default: "bg-bg-card border-border-card text-text-primary",
+    elevated: "bg-bg-card border-border-card shadow-sm text-text-primary",
   };
 
   return (
@@ -55,7 +53,7 @@ export const CardContent: React.FC<CardContentProps> = ({
   children,
   ...props
 }) => (
-  <div className={cn("p-6 pt-0", className)} {...props}>
+  <div className={cn("px-6 pt-6 pb-0 ", className)} {...props}>
     {children}
   </div>
 );
@@ -71,4 +69,3 @@ export const CardFooter: React.FC<CardFooterProps> = ({
     {children}
   </div>
 );
-
