@@ -154,7 +154,7 @@ const LoginPage = () => {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="w-full py-3 text-white bg-blue-800 hover:bg-blue-900 transition-all rounded-md"
+                  className="w-full py-3 text-white bg-blue-800 hover:bg-blue-900 transition-all rounded-md mb-5"
                 >
                   Sign In
                 </Button>
@@ -168,4 +168,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

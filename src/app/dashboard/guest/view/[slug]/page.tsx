@@ -472,9 +472,10 @@ export default function GuestViewPage() {
                     onChange={(e) =>
                       setNewNote({ ...newNote, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
+                    className="w-full px-3 py-2 text-sm  rounded-md border border-gray-300 
               bg-gray-50 text-gray-800
-              focus:ring-2 focus:ring-blue-500"
+              focus:border-gray-300 focus:outline-0"
+                    placeholder="Enter title..."
                   />
                 </FormField>
 
@@ -490,7 +491,8 @@ export default function GuestViewPage() {
                     }
                     className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
               bg-gray-50 text-gray-800
-              focus:ring-2 focus:ring-blue-500"
+              focus:border-gray-300 focus:outline-0"
+                    placeholder="Enter description..."
                   />
                 </FormField>
 
@@ -525,7 +527,9 @@ export default function GuestViewPage() {
                                   title: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 text-sm border bg-gray-50 rounded-md"
+                              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
+              bg-gray-50 text-gray-800
+              focus:border-gray-300 focus:outline-0"
                             />
 
                             <textarea
@@ -537,7 +541,9 @@ export default function GuestViewPage() {
                                   description: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 text-sm border bg-gray-50 rounded-md"
+                              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 
+              bg-gray-50 text-gray-800
+              focus:border-gray-300 focus:outline-0"
                             />
                           </div>
                         ) : (
@@ -571,9 +577,9 @@ export default function GuestViewPage() {
                         )}
                       </AccordionDetails>
 
-                      <AccordionActions className="flex justify-between items-center px-4 pb-3">
+                      <AccordionActions className="flex justify-between px-4 items-center  pb-3">
                         {/* LEFT SIDE (Metadata) */}
-                        <div className="text-xs text-gray-500 flex gap-4">
+                        <div className="text-xs flex-1 text-gray-500 flex gap-4">
                           <div>
                             Created by:{" "}
                             <span className="font-medium">

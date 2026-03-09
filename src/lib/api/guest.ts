@@ -46,6 +46,10 @@ export interface Guest {
 
   approved: boolean;
   approved_by: string | null;
+
+  record: boolean;
+  status: "not_started" | "contacted" | "follow_up" | "confirmed";
+
   referred_by: string | null;
   host_id: string;
 
@@ -166,6 +170,32 @@ export const updateGuestBySlug = async (
  */
 export const approveGuest = async (id: string): Promise<Guest> => {
   const response = await api.patch(`/guests/${id}/approve`);
+  return response.data.data;
+};
+
+/**
+ * --------------------------------
+ * TOGGLE RECORD
+ * --------------------------------
+ */
+export const toggleRecordGuest = async (
+  slug: string,
+  record: boolean,
+): Promise<Guest> => {
+  const response = await api.put(`/guests/slug/${slug}`, { record });
+  return response.data.data;
+};
+
+/**
+ * --------------------------------
+ * STATUS
+ * --------------------------------
+ */
+export const updateGuestStatus = async (
+  slug: string,
+  status: "not_started" | "contacted" | "follow_up" | "confirmed",
+): Promise<Guest> => {
+  const response = await api.put(`/guests/slug/${slug}`, { status });
   return response.data.data;
 };
 

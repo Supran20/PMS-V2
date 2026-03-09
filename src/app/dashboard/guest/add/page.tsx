@@ -22,6 +22,7 @@ import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { getTags } from "@/lib/api/tags";
+import { z } from "zod";
 
 export default function AddGuestPage() {
   const router = useRouter();
@@ -44,11 +45,15 @@ export default function AddGuestPage() {
     watch,
     control,
     formState: { errors },
-  } = useForm<CreateGuestInput>({
+  } = useForm({
     resolver: zodResolver(createGuestSchema),
+    defaultValues: {
+      record: false,
+    },
   });
 
   const fullName = watch("full_name");
+  const recordValue = watch("record");
 
   useEffect(() => {
     if (authLoading) return;
@@ -127,7 +132,7 @@ export default function AddGuestPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Full Name */}
             <FormField label="Full Name" required>
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
@@ -142,7 +147,7 @@ export default function AddGuestPage() {
 
             {/* Slug */}
             <FormField label="Slug" required>
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="slug"
                 control={control}
                 placeholder="e.g. john-doe"
@@ -154,7 +159,7 @@ export default function AddGuestPage() {
 
             {/* Designation */}
             <FormField label="Designation">
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="designation"
                 control={control}
                 placeholder="e.g. CEO of Acme Corp"
@@ -163,7 +168,7 @@ export default function AddGuestPage() {
 
             {/* Email */}
             <FormField label="Email">
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="email"
                 control={control}
                 placeholder="e.g. john@example.com"
@@ -172,7 +177,7 @@ export default function AddGuestPage() {
 
             {/* Phone */}
             <FormField label="Phone">
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="phone"
                 control={control}
                 placeholder="e.g. +1234567890"
@@ -181,7 +186,7 @@ export default function AddGuestPage() {
 
             {/* Bio */}
             <FormField label="Bio">
-              <FormInput<CreateGuestInput>
+              <FormInput
                 name="bio"
                 control={control}
                 placeholder="Short bio about the guest"
@@ -278,28 +283,43 @@ export default function AddGuestPage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Record Guest */}
+                <FormField label="Record this guest?">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={recordValue || false}
+                      onChange={(e) => setValue("record", e.target.checked)}
+                      className="w-4 h-4 accent-blue-600"
+                    />
+                    <span className="text-sm text-gray-600">
+                      Mark this guest as a record candidate
+                    </span>
+                  </div>
+                </FormField>
               </div>
             </FormField>
 
             {/* Social Media */}
             <FormField label="Social Media Profiles">
               <div className="md:w-3/4 space-y-2">
-                <FormInput<CreateGuestInput>
+                <FormInput
                   name="social_media.linkedin"
                   control={control}
                   placeholder="LinkedIn URL"
                 />
-                <FormInput<CreateGuestInput>
+                <FormInput
                   name="social_media.facebook"
                   control={control}
                   placeholder="Facebook URL"
                 />
-                <FormInput<CreateGuestInput>
+                <FormInput
                   name="social_media.github"
                   control={control}
                   placeholder="GitHub URL"
                 />
-                <FormInput<CreateGuestInput>
+                <FormInput
                   name="social_media.instagram"
                   control={control}
                   placeholder="Instagram URL"

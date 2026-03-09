@@ -29,6 +29,11 @@ export const createGuestSchema = z.object({
     .nullable(),
   email: z.string().email().optional().nullable(),
   phone: z.string().optional().nullable(),
+  status: z
+    .enum(["not_started", "contacted", "follow_up", "confirmed"])
+    .optional(),
+
+  record: z.boolean().default(false),
 
   referred_by: z.string().uuid().optional().nullable(),
   notes: z.array(notesSchema).optional().nullable(),

@@ -9,12 +9,22 @@ import { DeleteModal } from "@/components/ui/DeleteModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 import { Icon } from "@iconify/react";
-import { getGuests, deleteGuest, approveGuest, Guest } from "@/lib/api/guest";
+import {
+  getGuests,
+  deleteGuest,
+  approveGuest,
+  Guest,
+  toggleRecordGuest,
+  updateGuestStatus,
+} from "@/lib/api/guest";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { getMediaUrl } from "@/lib/utils";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
 export default function GuestsPage() {
   const router = useRouter();
@@ -26,6 +36,7 @@ export default function GuestsPage() {
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [guestToApprove, setGuestToApprove] = useState<Guest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [tabValue, setTabValue] = useState(0);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -53,16 +64,45 @@ export default function GuestsPage() {
     fetchGuests();
   }, []);
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+    setCurrentPage(1);
+  };
+
+  const pendingGuests = useMemo(
+    () => guests.filter((g) => !g.approved && !g.record),
+    [guests],
+  );
+
+  const approvedGuests = useMemo(
+    () => guests.filter((g) => g.approved),
+    [guests],
+  );
+
+  const recordGuests = useMemo(
+    () => guests.filter((g) => g.record && !g.approved),
+    [guests],
+  );
+
+  const tabGuests = useMemo(() => {
+    if (tabValue === 0) return pendingGuests;
+    if (tabValue === 1) return approvedGuests;
+    if (tabValue === 2) return recordGuests;
+    return guests;
+  }, [tabValue, pendingGuests, approvedGuests, recordGuests, guests]);
+
   const filteredGuests = useMemo(() => {
-    if (!search.trim()) return guests;
+    if (!search.trim()) return tabGuests;
+
     const q = search.toLowerCase();
-    return guests.filter(
+
+    return tabGuests.filter(
       (g) =>
         g.full_name.toLowerCase().includes(q) ||
         (g.designation?.toLowerCase().includes(q) ?? false) ||
         (g.phone?.toLowerCase().includes(q) ?? false),
     );
-  }, [guests, search]);
+  }, [tabGuests, search]);
 
   const handleApproveConfirm = async (guest: Guest) => {
     try {
@@ -74,6 +114,16 @@ export default function GuestsPage() {
     } finally {
       setApproveModalOpen(false);
       setGuestToApprove(null);
+    }
+  };
+
+  const handleRecordToggle = async (guest: Guest) => {
+    try {
+      await toggleRecordGuest(guest.slug, !guest.record);
+      toast.success("Record status updated");
+      fetchGuests();
+    } catch {
+      toast.error("Failed to update record status");
     }
   };
 
@@ -123,6 +173,37 @@ export default function GuestsPage() {
     }
   }, [filteredGuests, currentPage, totalPages]);
 
+  const handleStatusChange = async (
+    slug: string,
+    status: "not_started" | "contacted" | "follow_up" | "confirmed",
+  ) => {
+    try {
+      setGuests((prev) =>
+        prev.map((g) => (g.slug === slug ? { ...g, status } : g)),
+      );
+
+      await updateGuestStatus(slug, status);
+
+      toast.success("Guest status updated");
+    } catch {
+      toast.error("Failed to update status");
+      fetchGuests();
+    }
+  };
+
+  const getStatusClass = (status?: string) => {
+    switch (status) {
+      case "contacted":
+        return "bg-blue-100 text-blue-700";
+      case "follow_up":
+        return "bg-yellow-100 text-yellow-700";
+      case "confirmed":
+        return "bg-green-100 text-green-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -143,6 +224,19 @@ export default function GuestsPage() {
           <AddButton href="/dashboard/guest/add" label="Add Guest" />
         )}
       </div>
+
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="guest tabs"
+        >
+          <Tab label="Pending" />
+          <Tab label="Approved" />
+          <Tab label="Record" />
+          <Tab label="All Guests" />
+        </Tabs>
+      </Box>
 
       {/* Search */}
       <Card className="shadow-lg bg-white border-none py-5">
@@ -220,51 +314,109 @@ export default function GuestsPage() {
                   </div>
 
                   {/* Name + Designation */}
-                  <Link href={`/dashboard/guest/view/${guest.slug}`}>
-                    <div className="p-3 flex items-center justify-between gap-2">
-                      {/* Name + Designation */}
-                      <div className="min-w-0">
+                  <div className="p-3 flex items-start justify-between gap-2">
+                    {/* Name + Designation */}
+                    <div className="min-w-0">
+                      <Link href={`/dashboard/guest/view/${guest.slug}`}>
                         <p className="text-vxs font-semibold text-gray-900 ">
                           {guest.full_name}
                         </p>
                         <p className="text-vxs text-gray-500 truncate">
                           {guest.designation ?? "—"}
                         </p>
-                      </div>
+                      </Link>
 
-                      <div>
-                        {guest.approved ? (
-                          <div
-                            className="p-2 rounded-lg text-green-500"
-                            title="Approved"
+                      {tabValue === 1 && (
+                        <div
+                          className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
+                            guest.status,
+                          )}`}
+                        >
+                          <select
+                            value={guest.status}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                guest.slug,
+                                e.target.value as
+                                  | "not_started"
+                                  | "contacted"
+                                  | "follow_up"
+                                  | "confirmed",
+                              )
+                            }
+                            className="bg-transparent border-none focus:outline-none text-vxs font-medium capitalize cursor-pointer"
                           >
-                            <Icon icon="mdi:check-circle" className="text-lg" />
-                          </div>
-                        ) : canApproveGuest ? (
-                          <button
-                            onClick={() => handleApproveClick(guest)}
-                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
-                            title="Approve Guest"
-                          >
-                            <Icon
-                              icon="mdi:check-circle-outline"
-                              className="text-lg"
-                            />
-                          </button>
-                        ) : (
-                          <div
-                            className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
-                            title="Not approved"
-                          >
-                            <Icon
-                              icon="mdi:check-circle-outline"
-                              className="text-lg"
-                            />
-                          </div>
-                        )}
-                      </div>
+                            <option
+                              className="bg-gray-100 text-gray-700"
+                              value="not_started"
+                            >
+                              Not Started
+                            </option>
+                            <option
+                              className="bg-gray-100 text-gray-700"
+                              value="contacted"
+                            >
+                              Contacted
+                            </option>
+                            <option
+                              className="bg-gray-100 text-gray-700"
+                              value="follow_up"
+                            >
+                              Follow Up
+                            </option>
+                            <option
+                              className="bg-gray-100 text-gray-700"
+                              value="confirmed"
+                            >
+                              Confirmed
+                            </option>
+                          </select>
+                        </div>
+                      )}
                     </div>
-                  </Link>
+                    {/* </Link> */}
+
+                    <div>
+                      {tabValue === 2 ? (
+                        <button
+                          onClick={() => handleRecordToggle(guest)}
+                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-red-500 transition-colors"
+                          title="Remove from Record"
+                        >
+                          <Icon icon="mdi:record-circle" className="text-lg" />
+                        </button>
+                      ) : guest.approved ? (
+                        <div
+                          className="p-2 rounded-lg text-green-500"
+                          title="Approved"
+                        >
+                          <Icon icon="mdi:check-circle" className="text-lg" />
+                        </div>
+                      ) : canApproveGuest ? (
+                        <button
+                          onClick={() => handleApproveClick(guest)}
+                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
+                          title="Approve Guest"
+                        >
+                          <Icon
+                            icon="mdi:check-circle-outline"
+                            className="text-lg"
+                          />
+                        </button>
+                      ) : (
+                        <div
+                          className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
+                          title="Not approved"
+                        >
+                          <Icon
+                            icon="mdi:check-circle-outline"
+                            className="text-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* </Link> */}
                 </div>
               ))}
             </div>

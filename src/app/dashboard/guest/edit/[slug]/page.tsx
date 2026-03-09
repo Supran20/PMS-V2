@@ -54,6 +54,7 @@ export default function EditGuestPage() {
   });
 
   const fullName = watch("full_name");
+  const recordValue = watch("record");
 
   // Redirect if user doesn't have permission
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function EditGuestPage() {
           phone: data.phone,
           referred_by: data.referred_by,
           host_id: data.host_id ?? "",
+          record: data.record ?? false,
 
           social_media: data.social_media ?? {},
           tag_id: data.profileImage?.tag_id ?? "",
@@ -311,6 +313,21 @@ export default function EditGuestPage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Record Guest */}
+                <FormField label="Record this guest?">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={recordValue || false}
+                      onChange={(e) => setValue("record", e.target.checked)}
+                      className="w-4 h-4 accent-blue-600"
+                    />
+                    <span className="text-sm text-gray-600">
+                      Mark this guest as a record candidate
+                    </span>
+                  </div>
+                </FormField>
               </div>
             </FormField>
 
