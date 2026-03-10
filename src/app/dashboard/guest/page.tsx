@@ -85,9 +85,10 @@ export default function GuestsPage() {
   );
 
   const tabGuests = useMemo(() => {
-    if (tabValue === 0) return pendingGuests;
-    if (tabValue === 1) return approvedGuests;
-    if (tabValue === 2) return recordGuests;
+    if (tabValue === 0) return guests;
+    if (tabValue === 1) return pendingGuests;
+    if (tabValue === 2) return approvedGuests;
+    if (tabValue === 3) return recordGuests;
     return guests;
   }, [tabValue, pendingGuests, approvedGuests, recordGuests, guests]);
 
@@ -231,10 +232,10 @@ export default function GuestsPage() {
           onChange={handleTabChange}
           aria-label="guest tabs"
         >
+          <Tab label="All Guests" />
           <Tab label="Pending" />
           <Tab label="Approved" />
           <Tab label="Record" />
-          <Tab label="All Guests" />
         </Tabs>
       </Box>
 
@@ -377,7 +378,7 @@ export default function GuestsPage() {
                     {/* </Link> */}
 
                     <div>
-                      {tabValue === 2 ? (
+                      {tabValue === 3 ? (
                         <button
                           onClick={() => handleRecordToggle(guest)}
                           className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-red-500 transition-colors"

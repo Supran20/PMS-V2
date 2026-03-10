@@ -15,19 +15,43 @@ export const createInterviewSchema = z.object({
   host_id: z.string().uuid("Invalid host ID"),
   studio_id: z.string().uuid("Invalid studio ID"),
 
-  interview_date: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: "Invalid interview date",
-  }),
+  interview_date: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid interview date",
+    })
+    .optional()
+    .nullable(),
 
-  start_time: z.string().regex(timeRegex, "Invalid start time format"),
+  start_time: z
+    .string()
+    .regex(timeRegex, "Invalid start time format")
+    .optional()
+    .nullable(),
 
-  end_time: z.string().regex(timeRegex, "Invalid end time format").optional(),
+  end_time: z
+    .string()
+    .regex(timeRegex, "Invalid end time format")
+    .optional()
+    .nullable(),
 
   interview_status: z
     .enum(["scheduled", "completed", "cancelled", "postponed"])
     .optional(),
 
   live_status: z.enum(["live", "recorded", "not_live"]).optional(),
+
+  status: z
+    .enum([
+      "scheduled",
+      "postponed",
+      "cancelled",
+      "recorded",
+      "editing",
+      "post_editing",
+      "published",
+    ])
+    .optional(),
 
   google_drive_link: z.string().url("Invalid URL").optional().nullable(),
   youtube_link: z

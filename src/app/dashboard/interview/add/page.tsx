@@ -255,15 +255,6 @@ export default function AddInterviewPage() {
               />
             </FormField>
 
-            {/* End Time */}
-            <FormField label="End Time" required>
-              <FormInput<CreateInterviewInput>
-                name="end_time"
-                control={control}
-                type="time"
-              />
-            </FormField>
-
             {/* Google Drive */}
             <FormField label="Google Drive Link">
               <FormInput<CreateInterviewInput>
