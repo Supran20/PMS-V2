@@ -13,13 +13,18 @@ import { FormInput } from "@/components/ui/FormInput";
 import { FormActions } from "@/components/ui/FormActions";
 import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
+import { DeleteModal } from "@/components/ui/DeleteModal";
 
 import {
   updateInterviewSchema,
   UpdateInterviewInput,
 } from "@/lib/validations/interview.validation";
 
-import { getInterviewById, updateInterview } from "@/lib/api/interview";
+import {
+  getInterviewById,
+  updateInterview,
+  deleteInterview,
+} from "@/lib/api/interview";
 
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getHostUser, User } from "@/lib/api/user";
@@ -36,6 +41,7 @@ export default function EditInterviewPage() {
   const [hosts, setHosts] = useState<User[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const {
     register,
@@ -108,6 +114,42 @@ export default function EditInterviewPage() {
       toast.error("Failed to update interview");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this interview?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setSubmitting(true);
+
+      await deleteInterview(id);
+
+      toast.success("Interview deleted successfully");
+
+      router.push("/dashboard/interview");
+    } catch {
+      toast.error("Failed to delete interview");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      setSubmitting(true);
+      await deleteInterview(id);
+      toast.success("Interview deleted successfully");
+      router.push("/dashboard/interview");
+    } catch {
+      toast.error("Failed to delete interview");
+    } finally {
+      setSubmitting(false);
+      setDeleteModalOpen(false);
     }
   };
 
@@ -263,12 +305,35 @@ export default function EditInterviewPage() {
               </div>
             </FormField>
 
-            <FormActions
-              cancelHref="/dashboard/interview"
-              submitLabel="Update Interview"
-              loadingLabel="Updating..."
-              isSubmitting={submitting}
-            />
+            <div className="flex items-center gap-3 pt-4">
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/interview")}
+                className="px-4 py-2 text-sm rounded-md border"
+              >
+                Cancel
+              </button>
+
+              {/* Delete */}
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(true)}
+                className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700"
+                disabled={submitting}
+              >
+                Delete
+              </button>
+
+              {/* Update */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {submitting ? "Updating..." : "Update Interview"}
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -281,6 +346,13 @@ export default function EditInterviewPage() {
           setValue("guest_id", guest.id, { shouldValidate: true });
           setGuestModalOpen(false);
         }}
+      />
+      <DeleteModal
+        open={deleteModalOpen}
+        item={{ id }}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={async () => await handleConfirmDelete()}
+        itemName="Interview"
       />
     </div>
   );

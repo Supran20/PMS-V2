@@ -9,20 +9,23 @@ import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
+const INTERVIEW_STATUS_MENU = [
+  { label: "All", value: "" },
+  { label: "Scheduled", value: "scheduled" },
+  { label: "Recorded", value: "recorded" },
+  { label: "Edited", value: "editing" },
+  { label: "Post Editing", value: "post_editing" },
+  { label: "Published", value: "published" },
+  { label: "Postponed", value: "postponed" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
 const SIDEBAR_TABS = [
   {
     label: "Overview",
     href: "/dashboard",
     icon: "mdi:view-dashboard",
   },
-  {
-    label: "Users",
-    href: "/dashboard/users",
-    icon: "mdi:account-group",
-    requiredPermission: "user.manage",
-  },
-  { label: "Media", href: "/dashboard/media", icon: "mdi:video" },
-  { label: "Tags", href: "/dashboard/tags", icon: "mdi:tag-multiple" },
   { label: "Studio", href: "/dashboard/studio", icon: "mdi:microphone" },
   { label: "Guest", href: "/dashboard/guest", icon: "mdi:account-voice" },
   {
@@ -41,6 +44,9 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, loading, hasPermission } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = React.useState(true);
+  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const [interviewMenuOpen, setInterviewMenuOpen] = React.useState(false);
 
   // Protect route
   useEffect(() => {
@@ -48,6 +54,20 @@ export default function DashboardLayout({
       router.replace("/");
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (loading || !user) {
     return (
@@ -85,15 +105,61 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
-            {SIDEBAR_TABS.filter((tab) => {
-              if (!tab.requiredPermission) return true;
-              return hasPermission(tab.requiredPermission);
-            }).map((tab) => {
+            {SIDEBAR_TABS.map((tab) => {
+              const isInterview = tab.href === "/dashboard/interview";
+
+              if (isInterview) {
+                return (
+                  <li key={tab.href} className="relative">
+                    <button
+                      onClick={() => setInterviewMenuOpen((prev) => !prev)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 w-full"
+                    >
+                      <Icon icon={tab.icon} className="text-xl flex-shrink-0" />
+
+                      <span
+                        className={cn(
+                          "transition-opacity duration-300",
+                          !isSidebarOpen && "opacity-0 overflow-hidden",
+                        )}
+                      >
+                        {tab.label}
+                      </span>
+
+                      <Icon
+                        icon="mdi:chevron-down"
+                        className="ml-auto text-gray-400"
+                      />
+                    </button>
+
+                    {interviewMenuOpen && (
+                      <ul className="ml-8 mt-1 space-y-1">
+                        {INTERVIEW_STATUS_MENU.map((item) => (
+                          <li key={item.label}>
+                            <Link
+                              href={
+                                item.value
+                                  ? `/dashboard/interview?status=${item.value}`
+                                  : `/dashboard/interview`
+                              }
+                              className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
+                            >
+                              {item.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
               const isActive =
                 tab.href === "/dashboard"
                   ? pathname === "/dashboard"
                   : pathname === tab.href ||
                     pathname.startsWith(tab.href + "/");
+
               return (
                 <li key={tab.href}>
                   <Link
@@ -106,6 +172,7 @@ export default function DashboardLayout({
                     )}
                   >
                     <Icon icon={tab.icon} className="text-xl flex-shrink-0" />
+
                     <span
                       className={cn(
                         "transition-opacity duration-300",
@@ -137,8 +204,11 @@ export default function DashboardLayout({
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
+          <div className="flex items-center gap-4 relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
+            >
               <Icon
                 icon="mdi:account-circle"
                 className="text-2xl text-gray-600"
@@ -146,14 +216,48 @@ export default function DashboardLayout({
               <span className="text-sm font-medium text-gray-800">
                 {displayName}
               </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Icon icon="mdi:logout" className="text-lg" />
-              Logout
+              <Icon icon="mdi:chevron-down" className="text-gray-500" />
             </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                {hasPermission("user.manage") && (
+                  <Link
+                    href="/dashboard/users"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <Icon icon="mdi:account-group" className="text-lg" />
+                    Users
+                  </Link>
+                )}
+
+                <Link
+                  href="/dashboard/media"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Icon icon="mdi:video" className="text-lg" />
+                  Media
+                </Link>
+
+                <Link
+                  href="/dashboard/tags"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Icon icon="mdi:tag-multiple" className="text-lg" />
+                  Tags
+                </Link>
+
+                <div className="border-t my-1" />
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <Icon icon="mdi:logout" className="text-lg" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

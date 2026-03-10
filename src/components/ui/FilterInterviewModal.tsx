@@ -22,12 +22,14 @@ interface Props {
 
   selectedGuests: string[];
   selectedHosts: string[];
+  selectedStatuses: string[];
   dateFrom: string;
   dateTo: string;
 
   onApply: (filters: {
     guests: string[];
     hosts: string[];
+    statuses: string[];
     dateFrom: string;
     dateTo: string;
   }) => void;
@@ -40,12 +42,14 @@ export default function FilterInterviewModal({
   hosts,
   selectedGuests,
   selectedHosts,
+  selectedStatuses,
   dateFrom,
   dateTo,
   onApply,
 }: Props) {
   const [guestsSelected, setGuestsSelected] = useState<string[]>([]);
   const [hostsSelected, setHostsSelected] = useState<string[]>([]);
+  const [statusesSelected, setStatusesSelected] = useState<string[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
@@ -54,6 +58,7 @@ export default function FilterInterviewModal({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setGuestsSelected(selectedGuests);
       setHostsSelected(selectedHosts);
+      setStatusesSelected(selectedStatuses);
       setFrom(dateFrom);
       setTo(dateTo);
     }
@@ -90,6 +95,16 @@ export default function FilterInterviewModal({
 
   if (!open) return null;
 
+  const statusOptions = [
+    { value: "scheduled", label: "Scheduled" },
+    { value: "postponed", label: "Postponed" },
+    { value: "cancelled", label: "Cancelled" },
+    { value: "recorded", label: "Recorded" },
+    { value: "editing", label: "Editing" },
+    { value: "post_editing", label: "Post Editing" },
+    { value: "published", label: "Published" },
+  ];
+
   return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
@@ -125,6 +140,22 @@ export default function FilterInterviewModal({
             value={hostOptions.filter((o) => hostsSelected.includes(o.value))}
             onChange={(options) =>
               setHostsSelected(options ? options.map((o) => o.value) : [])
+            }
+          />
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <label className="text-sm font-medium mb-1 block">Status</label>
+          <Select
+            options={statusOptions}
+            placeholder="Select Status"
+            isMulti
+            value={statusOptions.filter((o) =>
+              statusesSelected.includes(o.value),
+            )}
+            onChange={(options) =>
+              setStatusesSelected(options ? options.map((o) => o.value) : [])
             }
           />
         </div>
@@ -166,6 +197,7 @@ export default function FilterInterviewModal({
               onApply({
                 guests: guestsSelected,
                 hosts: hostsSelected,
+                statuses: statusesSelected,
                 dateFrom: from,
                 dateTo: to,
               });

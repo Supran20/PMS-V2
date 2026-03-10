@@ -10,10 +10,11 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import FilterInterviewModal from "@/components/ui/FilterInterviewModal";
+import PostponeModal from "@/components/ui/PostPoneModal";
+import PublishModal from "@/components/ui/PublishModal";
 
 import {
   getInterviews,
-  deleteInterview,
   updateInterview,
   reorderInterviews,
   Interview,
@@ -23,12 +24,13 @@ import { getGuests } from "@/lib/api/guest";
 
 import { getHostUser } from "@/lib/api/user";
 
-import { DeleteModal } from "@/components/ui/DeleteModal";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
 import SortableItem from "@/components/sortable/SortableItem";
 import SortableList from "@/components/sortable/SortableList";
+import PostEditModal from "@/components/ui/PostEditModal";
+import { useSearchParams } from "next/navigation";
 
 export default function InterviewsPage() {
   const router = useRouter();
@@ -37,16 +39,12 @@ export default function InterviewsPage() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [interviewToDelete, setInterviewToDelete] = useState<Interview | null>(
-    null,
-  );
+
   const [currentPage, setCurrentPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
 
   const canAddInterview = hasPermission("interview.create");
   const canEditInterview = hasPermission("interview.update");
-  const canDeleteInterview = hasPermission("interview.delete");
 
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -64,6 +62,15 @@ export default function InterviewsPage() {
   const [postponeModalOpen, setPostponeModalOpen] = useState(false);
   const [interviewToPostpone, setInterviewToPostpone] =
     useState<Interview | null>(null);
+  const [postEditModalOpen, setPostEditModalOpen] = useState(false);
+  const [interviewToPostEdit, setInterviewToPostEdit] =
+    useState<Interview | null>(null);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [interviewToPublish, setInterviewToPublish] =
+    useState<Interview | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
+  const searchParams = useSearchParams();
 
   const ITEMS_PER_PAGE = 10;
 
@@ -117,6 +124,23 @@ export default function InterviewsPage() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(1);
+  };
+
+  //Modal Opening
+
+  const handlePostponeClick = (interview: Interview) => {
+    setInterviewToPostpone(interview);
+    setPostponeModalOpen(true);
+  };
+
+  const handlePostEditClick = (interview: Interview) => {
+    setInterviewToPostEdit(interview);
+    setPostEditModalOpen(true);
+  };
+
+  const handlePublishClick = (interview: Interview) => {
+    setInterviewToPublish(interview);
+    setPublishModalOpen(true);
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -193,6 +217,7 @@ export default function InterviewsPage() {
   const handleApplyFilters = (filters: any) => {
     setSelectedGuests(filters.guests ?? []);
     setSelectedHosts(filters.hosts ?? []);
+    setSelectedStatuses(filters.statuses ?? []);
     setDateFrom(filters.dateFrom);
     setDateTo(filters.dateTo);
   };
@@ -246,6 +271,16 @@ export default function InterviewsPage() {
       data = data.filter((i) => i.host && selectedHosts.includes(i.host.id));
     }
 
+    if (selectedStatuses.length > 0) {
+      data = data.filter(
+        (i) =>
+          i.status &&
+          selectedStatuses.some(
+            (status) => status.toLowerCase() === i.status.toLowerCase(),
+          ),
+      );
+    }
+
     if (dateFrom) {
       data = data.filter(
         (i) => i.interview_date && i.interview_date >= dateFrom,
@@ -257,7 +292,15 @@ export default function InterviewsPage() {
     }
 
     return data;
-  }, [tabInterviews, search, selectedGuests, selectedHosts, dateFrom, dateTo]);
+  }, [
+    tabInterviews,
+    search,
+    selectedGuests,
+    selectedHosts,
+    dateFrom,
+    dateTo,
+    selectedStatuses,
+  ]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -272,28 +315,6 @@ export default function InterviewsPage() {
     router.push(`/dashboard/interview/edit/${interview.id}`);
   };
 
-  const handleDeleteClick = (interview: Interview) => {
-    setInterviewToDelete(interview);
-    setDeleteModalOpen(true);
-  };
-
-  const handleDeleteClose = () => {
-    setDeleteModalOpen(false);
-    setInterviewToDelete(null);
-  };
-
-  const handleDeleteConfirm = async (interview: Interview) => {
-    try {
-      await deleteInterview(interview.id);
-      toast.success("Interview deleted successfully");
-      fetchInterviews();
-    } catch {
-      toast.error("Failed to delete interview");
-    } finally {
-      handleDeleteClose();
-    }
-  };
-
   const handleStatusChange = async (id: string, value: Interview["status"]) => {
     try {
       setInterviews((prev) =>
@@ -306,6 +327,94 @@ export default function InterviewsPage() {
     } catch {
       toast.error("Failed to update status");
       fetchInterviews();
+    }
+  };
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+
+    if (status) {
+      setSelectedStatuses([status]);
+    } else {
+      setSelectedStatuses([]);
+    }
+  }, [searchParams]);
+
+  const getDisplayStatus = (status?: string | null) => {
+    if (!status) return "-";
+
+    const map: Record<string, string> = {
+      editing: "Edited",
+      post_editing: "Post Editing",
+      scheduled: "Scheduled",
+      postponed: "Postponed",
+      cancelled: "Cancelled",
+      recorded: "Recorded",
+      published: "Published",
+    };
+
+    return map[status] ?? status;
+  };
+
+  const handlePostponeSubmit = async (
+    id: string,
+    date: string,
+    start_time: string,
+  ) => {
+    try {
+      await updateInterview(id, {
+        interview_date: date,
+        start_time,
+        status: "postponed",
+      });
+
+      toast.success("Interview updated");
+
+      setPostponeModalOpen(false);
+      setInterviewToPostpone(null);
+
+      fetchInterviews();
+    } catch {
+      toast.error("Failed to update interview");
+    }
+  };
+
+  const handlePostEditSubmit = async (
+    id: string,
+    google_drive_link: string,
+  ) => {
+    try {
+      await updateInterview(id, {
+        google_drive_link,
+        status: "post_editing",
+      });
+
+      toast.success("Drive link updated");
+
+      setPostEditModalOpen(false);
+      setInterviewToPostEdit(null);
+
+      fetchInterviews();
+    } catch {
+      toast.error("Failed to update drive link");
+    }
+  };
+
+  const handlePublishSubmit = async (id: string, youtube_link: string) => {
+    try {
+      await updateInterview(id, {
+        youtube_link,
+        status: "published",
+      });
+
+      toast.success("YouTube link updated");
+
+      setPublishModalOpen(false);
+      setInterviewToPublish(null);
+
+      fetchInterviews();
+    } catch {
+      toast.error("Failed to update YouTube link");
     }
   };
 
@@ -350,7 +459,6 @@ export default function InterviewsPage() {
           />
         )}
       </div>
-
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs
           value={tabValue}
@@ -362,7 +470,6 @@ export default function InterviewsPage() {
           <Tab label="Today" />
         </Tabs>
       </Box>
-
       {/* Search + Table */}
       <Card className="shadow-sm bg-white border-none py-5">
         <CardContent>
@@ -468,11 +575,11 @@ export default function InterviewsPage() {
                                 interview.status,
                               )}`}
                             >
-                              {interview.status.replace("_", " ")}
+                              {getDisplayStatus(interview.status)}
                             </span>
                           </div>
                           <div className="">
-                            <div className="flex items-center justify-start gap-2">
+                            <div className="flex items-center justify-start gap-3">
                               <div className="relative">
                                 <button
                                   onClick={(e) => {
@@ -496,7 +603,7 @@ export default function InterviewsPage() {
                                         : interview.id,
                                     );
                                   }}
-                                  className="rounded-lg text-gray-600 hover:bg-gray-100 transition-colors p-1"
+                                  className="rounded-lg text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors p-1"
                                 >
                                   <Icon
                                     icon="mdi:progress-clock"
@@ -532,17 +639,43 @@ export default function InterviewsPage() {
                                         >
                                           <button
                                             onClick={() => {
-                                              if (status !== "") {
+                                              if (status === "editing") {
+                                                handleStatusChange(
+                                                  interview.id,
+                                                  "editing",
+                                                );
+                                                handlePostEditClick(interview);
+                                              } else if (
+                                                status === "published"
+                                              ) {
+                                                handleStatusChange(
+                                                  interview.id,
+                                                  "published",
+                                                );
+                                                handlePublishClick(interview);
+                                              } else {
                                                 handleStatusChange(
                                                   interview.id,
                                                   status as Interview["status"],
                                                 );
-                                                setOpenStatusId(null);
                                               }
+
+                                              setOpenStatusId(null);
                                             }}
                                             className="flex justify-between items-center w-full text-left px-3 py-2 text-sm hover:bg-gray-100 capitalize"
                                           >
-                                            {status.replace("_", " ")}
+                                            <div className="flex items-center gap-2">
+                                              <span>
+                                                {getDisplayStatus(status)}
+                                              </span>
+
+                                              {interview.status === status && (
+                                                <Icon
+                                                  icon="mdi:check-circle"
+                                                  className="text-green-600 text-sm"
+                                                />
+                                              )}
+                                            </div>
 
                                             {status === "scheduled" && (
                                               <Icon
@@ -560,15 +693,36 @@ export default function InterviewsPage() {
                                                     <button
                                                       key={subStatus}
                                                       onClick={() => {
-                                                        handleStatusChange(
-                                                          interview.id,
-                                                          subStatus as Interview["status"],
-                                                        );
+                                                        if (
+                                                          subStatus ===
+                                                          "postponed"
+                                                        ) {
+                                                          handleStatusChange(
+                                                            interview.id,
+                                                            "postponed",
+                                                          );
+                                                          handlePostponeClick(
+                                                            interview,
+                                                          );
+                                                        } else {
+                                                          handleStatusChange(
+                                                            interview.id,
+                                                            "cancelled",
+                                                          );
+                                                        }
+
                                                         setOpenStatusId(null);
                                                       }}
-                                                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 capitalize"
+                                                      className="flex justify-between items-center w-full text-left px-3 py-2 text-sm hover:bg-gray-100 capitalize"
                                                     >
                                                       {subStatus}
+                                                      {interview.status ===
+                                                        subStatus && (
+                                                        <Icon
+                                                          icon="mdi:check-circle"
+                                                          className="text-green-600 text-sm"
+                                                        />
+                                                      )}
                                                     </button>
                                                   ),
                                                 )}
@@ -586,22 +740,41 @@ export default function InterviewsPage() {
                                     e.stopPropagation();
                                     handleEditClick(interview);
                                   }}
-                                  className=" rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                  className=" rounded-lg text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors"
                                 >
                                   <Icon icon="mdi:pencil" className="text-xl" />
                                 </button>
                               )}
-
-                              {canDeleteInterview && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteClick(interview);
-                                  }}
-                                  className=" rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                              {/* Google Drive Link */}
+                              {interview.google_drive_link && (
+                                <a
+                                  href={interview.google_drive_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-gray-600 hover:text-blue-600 transition"
                                 >
-                                  <Icon icon="mdi:delete" className="text-xl" />
-                                </button>
+                                  <Icon
+                                    icon="logos:google-drive"
+                                    className="text-xm"
+                                  />
+                                </a>
+                              )}
+
+                              {/* YouTube Link */}
+                              {interview.youtube_link && (
+                                <a
+                                  href={interview.youtube_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-gray-600 hover:text-red-600 transition"
+                                >
+                                  <Icon
+                                    icon="logos:youtube-icon"
+                                    className="text-xm"
+                                  />
+                                </a>
                               )}
                             </div>
                           </div>
@@ -617,13 +790,11 @@ export default function InterviewsPage() {
           )}
         </CardContent>
       </Card>
-
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
-
       <FilterInterviewModal
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
@@ -631,17 +802,28 @@ export default function InterviewsPage() {
         hosts={hosts}
         selectedGuests={selectedGuests}
         selectedHosts={selectedHosts}
+        selectedStatuses={selectedStatuses}
         dateFrom={dateFrom}
         dateTo={dateTo}
         onApply={handleApplyFilters}
       />
-
-      {/* Delete Modal */}
-      <DeleteModal<Interview>
-        open={deleteModalOpen}
-        item={interviewToDelete}
-        onClose={handleDeleteClose}
-        onConfirm={handleDeleteConfirm}
+      <PostponeModal
+        open={postponeModalOpen}
+        onClose={() => setPostponeModalOpen(false)}
+        interview={interviewToPostpone}
+        onSubmit={handlePostponeSubmit}
+      />
+      <PostEditModal
+        open={postEditModalOpen}
+        onClose={() => setPostEditModalOpen(false)}
+        interview={interviewToPostEdit}
+        onSubmit={handlePostEditSubmit}
+      />
+      <PublishModal
+        open={publishModalOpen}
+        onClose={() => setPublishModalOpen(false)}
+        interview={interviewToPublish}
+        onSubmit={handlePublishSubmit}
       />
     </div>
   );
