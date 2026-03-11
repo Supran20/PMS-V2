@@ -285,7 +285,7 @@ export default function AddGuestPage() {
                 </select>
 
                 {/* Record Guest */}
-                <FormField label="Record this guest?">
+                {/* <FormField label="Record this guest?">
                   <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
@@ -297,7 +297,7 @@ export default function AddGuestPage() {
                       Mark this guest as a record candidate
                     </span>
                   </div>
-                </FormField>
+                </FormField> */}
               </div>
             </FormField>
 

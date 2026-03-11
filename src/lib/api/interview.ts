@@ -10,11 +10,19 @@ export interface InterviewPayload {
   guest_id: string;
   host_id: string;
   studio_id: string;
-  interview_date: string;
-  start_time: string;
-  end_time?: string;
+  interview_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
   interview_status?: "scheduled" | "completed" | "cancelled" | "postponed";
   live_status?: "live" | "recorded" | "not_live";
+  status?:
+    | "scheduled"
+    | "postponed"
+    | "cancelled"
+    | "recorded"
+    | "editing"
+    | "post_editing"
+    | "published";
   google_drive_link?: string | null;
   youtube_link?: string | null;
 }
@@ -26,12 +34,20 @@ export interface Interview {
   host_id: string;
   studio_id: string;
 
-  interview_date: string;
-  start_time: string;
+  interview_date: string | null;
+  start_time: string | null;
   end_time: string | null;
 
   interview_status: "scheduled" | "completed" | "cancelled" | "postponed";
   live_status: "live" | "recorded" | "not_live";
+  status:
+    | "scheduled"
+    | "postponed"
+    | "cancelled"
+    | "recorded"
+    | "editing"
+    | "post_editing"
+    | "published";
 
   google_drive_link: string | null;
   youtube_link: string | null;
