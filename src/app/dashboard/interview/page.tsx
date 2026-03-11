@@ -69,10 +69,11 @@ export default function InterviewsPage() {
   const [interviewToPublish, setInterviewToPublish] =
     useState<Interview | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const searchParams = useSearchParams();
-
-  const ITEMS_PER_PAGE = 10;
+  const statusParam = searchParams.get("status");
+  const showTabs = !statusParam;
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -158,10 +159,11 @@ export default function InterviewsPage() {
   );
 
   const tabInterviews = useMemo(() => {
+    if (statusParam) return interviews;
     if (tabValue === 0) return interviews;
     if (tabValue === 1) return upcomingInterviews;
     return todayInterviews;
-  }, [tabValue, todayInterviews, upcomingInterviews, interviews]);
+  }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
 
   const handleReorder = async (items: Interview[]) => {
     try {
@@ -400,6 +402,28 @@ export default function InterviewsPage() {
     }
   };
 
+  const getYoutubeWatchUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+
+      if (
+        u.hostname.includes("youtube.com") &&
+        u.pathname.includes("/embed/")
+      ) {
+        const id = u.pathname.split("/embed/")[1];
+        return `https://www.youtube.com/watch?v=${id}`;
+      }
+
+      if (u.hostname === "youtu.be") {
+        return `https://www.youtube.com/watch?v=${u.pathname.slice(1)}`;
+      }
+
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
   const handlePublishSubmit = async (id: string, youtube_link: string) => {
     try {
       await updateInterview(id, {
@@ -418,11 +442,11 @@ export default function InterviewsPage() {
     }
   };
 
-  const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredInterviews.length / itemsPerPage);
 
   const paginatedInterviews = filteredInterviews.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -459,17 +483,19 @@ export default function InterviewsPage() {
           />
         )}
       </div>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="interview tabs"
-        >
-          <Tab label="All Interviews" />
-          <Tab label="Upcoming" />
-          <Tab label="Today" />
-        </Tabs>
-      </Box>
+      {showTabs && (
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="interview tabs"
+          >
+            <Tab label="All Interviews" />
+            <Tab label="Upcoming" />
+            <Tab label="Today" />
+          </Tabs>
+        </Box>
+      )}
       {/* Search + Table */}
       <Card className="shadow-sm bg-white border-none py-5">
         <CardContent>
@@ -535,7 +561,7 @@ export default function InterviewsPage() {
                     getId={(i) => i.id}
                     onChange={(newItems) => {
                       // update only current page slice
-                      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+                      const start = (currentPage - 1) * itemsPerPage;
                       const updated = [...interviews];
                       updated.splice(start, newItems.length, ...newItems);
                       setInterviews(updated);
@@ -558,7 +584,7 @@ export default function InterviewsPage() {
                               "-"
                             )}
                           </div>
-                          <div className=" text-vxs  text-gray-600">
+                          <div className=" text-vxs text-center  text-gray-600">
                             {interview.host?.full_name ?? "-"}
                           </div>
                           <div className=" text-vxs text-gray-600 text-center">
@@ -764,7 +790,9 @@ export default function InterviewsPage() {
                               {/* YouTube Link */}
                               {interview.youtube_link && (
                                 <a
-                                  href={interview.youtube_link}
+                                  href={getYoutubeWatchUrl(
+                                    interview.youtube_link,
+                                  )}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
@@ -793,7 +821,12 @@ export default function InterviewsPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
       <FilterInterviewModal
         open={filterOpen}

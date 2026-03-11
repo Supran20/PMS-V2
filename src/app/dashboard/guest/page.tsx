@@ -37,8 +37,7 @@ export default function GuestsPage() {
   const [guestToApprove, setGuestToApprove] = useState<Guest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
-
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const { hasPermission } = useAuth();
   const canApproveGuest = hasPermission("guest.auto_approve");
@@ -158,11 +157,11 @@ export default function GuestsPage() {
     setApproveModalOpen(true);
   };
 
-  const totalPages = Math.ceil(filteredGuests.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredGuests.length / itemsPerPage);
 
   const paginatedGuests = filteredGuests.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   const isImage = (type?: string | null) =>
@@ -428,7 +427,12 @@ export default function GuestsPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
 
       {/* Delete Modal */}

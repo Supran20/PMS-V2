@@ -123,7 +123,7 @@ export default function DashboardLayout({
                           !isSidebarOpen && "opacity-0 overflow-hidden",
                         )}
                       >
-                        {tab.label}
+                        {tab.label} 
                       </span>
 
                       <Icon
@@ -133,7 +133,12 @@ export default function DashboardLayout({
                     </button>
 
                     {interviewMenuOpen && (
-                      <ul className="ml-8 mt-1 space-y-1">
+                      <ul
+                        className={cn(
+                          "ml-8 mt-1 space-y-1 ",
+                          !isSidebarOpen && "ml-0 ",
+                        )}
+                      >
                         {INTERVIEW_STATUS_MENU.map((item) => (
                           <li key={item.label}>
                             <Link
@@ -142,7 +147,10 @@ export default function DashboardLayout({
                                   ? `/dashboard/interview?status=${item.value}`
                                   : `/dashboard/interview`
                               }
-                              className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
+                              className={cn(
+                                "block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md",
+                                !isSidebarOpen && "text-vxs",
+                              )}
                             >
                               {item.label}
                             </Link>
