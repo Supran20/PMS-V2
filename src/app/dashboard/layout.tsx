@@ -26,7 +26,7 @@ const SIDEBAR_TABS = [
     href: "/dashboard",
     icon: "mdi:view-dashboard",
   },
-  { label: "Studio", href: "/dashboard/studio", icon: "mdi:microphone" },
+
   { label: "Guest", href: "/dashboard/guest", icon: "mdi:account-voice" },
   {
     label: "Interview",
@@ -123,7 +123,7 @@ export default function DashboardLayout({
                           !isSidebarOpen && "opacity-0 overflow-hidden",
                         )}
                       >
-                        {tab.label} 
+                        {tab.label}
                       </span>
 
                       <Icon
@@ -238,6 +238,14 @@ export default function DashboardLayout({
                     Users
                   </Link>
                 )}
+
+                <Link
+                  href="/dashboard/studio"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Icon icon="mdi:microphone" className="text-lg" />
+                  Studio
+                </Link>
 
                 <Link
                   href="/dashboard/media"

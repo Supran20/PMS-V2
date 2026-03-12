@@ -13,6 +13,7 @@ import {
   getGuests,
   deleteGuest,
   approveGuest,
+  updateGuestBySlug,
   Guest,
   toggleRecordGuest,
   updateGuestStatus,
@@ -38,6 +39,8 @@ export default function GuestsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [guestToReject, setGuestToReject] = useState<Guest | null>(null);
 
   const { hasPermission } = useAuth();
   const canApproveGuest = hasPermission("guest.auto_approve");
@@ -69,7 +72,7 @@ export default function GuestsPage() {
   };
 
   const pendingGuests = useMemo(
-    () => guests.filter((g) => !g.approved && !g.record),
+    () => guests.filter((g) => !g.approved && !g.rejected),
     [guests],
   );
 
@@ -78,8 +81,8 @@ export default function GuestsPage() {
     [guests],
   );
 
-  const recordGuests = useMemo(
-    () => guests.filter((g) => g.record && !g.approved),
+  const rejectedGuests = useMemo(
+    () => guests.filter((g) => g.rejected),
     [guests],
   );
 
@@ -87,9 +90,10 @@ export default function GuestsPage() {
     if (tabValue === 0) return guests;
     if (tabValue === 1) return pendingGuests;
     if (tabValue === 2) return approvedGuests;
-    if (tabValue === 3) return recordGuests;
+    if (tabValue === 3) return rejectedGuests;
+
     return guests;
-  }, [tabValue, pendingGuests, approvedGuests, recordGuests, guests]);
+  }, [tabValue, pendingGuests, approvedGuests, rejectedGuests, guests]);
 
   const filteredGuests = useMemo(() => {
     if (!search.trim()) return tabGuests;
@@ -117,14 +121,22 @@ export default function GuestsPage() {
     }
   };
 
-  const handleRecordToggle = async (guest: Guest) => {
+  const handleRejectConfirm = async (guest: Guest) => {
     try {
-      await toggleRecordGuest(guest.slug, !guest.record);
-      toast.success("Record status updated");
+      await updateGuestBySlug(guest.slug, { rejected: true });
+      toast.success("Guest rejected successfully");
       fetchGuests();
     } catch {
-      toast.error("Failed to update record status");
+      toast.error("Failed to reject guest");
+    } finally {
+      setRejectModalOpen(false);
+      setGuestToReject(null);
     }
+  };
+
+  const handleRejectClick = (guest: Guest) => {
+    setGuestToReject(guest);
+    setRejectModalOpen(true);
   };
 
   const handleEditClick = (guest: Guest) => {
@@ -234,7 +246,7 @@ export default function GuestsPage() {
           <Tab label="All Guests" />
           <Tab label="Pending" />
           <Tab label="Approved" />
-          <Tab label="Record" />
+          <Tab label="Rejected" />
         </Tabs>
       </Box>
 
@@ -376,33 +388,48 @@ export default function GuestsPage() {
                     </div>
                     {/* </Link> */}
 
-                    <div>
-                      {tabValue === 3 ? (
-                        <button
-                          onClick={() => handleRecordToggle(guest)}
-                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-red-500 transition-colors"
-                          title="Remove from Record"
-                        >
-                          <Icon icon="mdi:record-circle" className="text-lg" />
-                        </button>
-                      ) : guest.approved ? (
+                    <div className="flex flex-col items-center gap-1">
+                      {/* Already Approved */}
+                      {guest.approved ? (
                         <div
                           className="p-2 rounded-lg text-green-500"
                           title="Approved"
                         >
                           <Icon icon="mdi:check-circle" className="text-lg" />
                         </div>
-                      ) : canApproveGuest ? (
-                        <button
-                          onClick={() => handleApproveClick(guest)}
-                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
-                          title="Approve Guest"
+                      ) : guest.rejected ? (
+                        <div
+                          className="p-2 rounded-lg text-red-500"
+                          title="Rejected"
                         >
-                          <Icon
-                            icon="mdi:check-circle-outline"
-                            className="text-lg"
-                          />
-                        </button>
+                          <Icon icon="mdi:close-circle" className="text-lg" />
+                        </div>
+                      ) : canApproveGuest ? (
+                        <>
+                          {/* Approve Button */}
+                          <button
+                            onClick={() => handleApproveClick(guest)}
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
+                            title="Approve Guest"
+                          >
+                            <Icon
+                              icon="mdi:check-circle-outline"
+                              className="text-lg"
+                            />
+                          </button>
+
+                          {/* Reject Button */}
+                          <button
+                            onClick={() => handleRejectClick(guest)}
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-red-500 transition-colors"
+                            title="Reject Guest"
+                          >
+                            <Icon
+                              icon="mdi:close-circle-outline"
+                              className="text-lg"
+                            />
+                          </button>
+                        </>
                       ) : (
                         <div
                           className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -455,6 +482,19 @@ export default function GuestsPage() {
         description={`Are you sure you want to approve ${guestToApprove?.full_name}?`}
         confirmText="Approve"
         confirmVariant="primary"
+      />
+      <ConfirmModal<Guest>
+        open={rejectModalOpen}
+        item={guestToReject}
+        onClose={() => {
+          setRejectModalOpen(false);
+          setGuestToReject(null);
+        }}
+        onConfirm={handleRejectConfirm}
+        title="Reject Guest"
+        description={`Are you sure you want to reject ${guestToReject?.full_name}?`}
+        confirmText="Reject"
+        confirmVariant="danger"
       />
     </div>
   );
