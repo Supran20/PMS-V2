@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   createInterviewSchema,
   CreateInterviewInput,
+  CreateInterviewOutput,
 } from "@/lib/validations/interview.validation";
 
 import {
@@ -56,12 +57,8 @@ export default function AddInterviewPage() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<CreateInterviewInput>({
+  } = useForm({
     resolver: zodResolver(createInterviewSchema),
-    defaultValues: {
-      interview_status: "scheduled",
-      live_status: "not_live",
-    },
   });
 
   const selectedGuest = guests.find((g) => g.id === watch("guest_id"));
@@ -154,7 +151,7 @@ export default function AddInterviewPage() {
    * Submit
    * -------------------------
    */
-  const onSubmit = async (data: CreateInterviewInput) => {
+  const onSubmit = async (data: CreateInterviewOutput) => {
     setSubmitting(true);
     try {
       // Check if episode exists

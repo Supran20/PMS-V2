@@ -19,8 +19,7 @@ export default function StudioPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [studioToDelete, setStudioToDelete] = useState<Studio | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const ITEMS_PER_PAGE = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const fetchStudios = async () => {
     setLoading(true);
@@ -69,11 +68,11 @@ export default function StudioPage() {
     fetchStudios();
   };
 
-  const totalPages = Math.ceil(filteredStudios.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredStudios.length / itemsPerPage);
 
   const paginatedStudios = filteredStudios.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -85,9 +84,7 @@ export default function StudioPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Studio
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Studio</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -98,9 +95,7 @@ export default function StudioPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Studio
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Studio</h2>
         <AddButton href="/dashboard/studio/add" label="Add Studio" />
       </div>
 
@@ -156,9 +151,7 @@ export default function StudioPage() {
                       <td className="py-3 px-4 text-gray-900">
                         {studio.studio_name}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {studio.slug}
-                      </td>
+                      <td className="py-3 px-4 text-gray-600">{studio.slug}</td>
                       <td className="py-3 px-4 text-gray-600 max-w-xs truncate">
                         {studio.address ?? "—"}
                       </td>
@@ -192,7 +185,12 @@ export default function StudioPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
 
       <DeleteModal<Studio>
@@ -205,4 +203,3 @@ export default function StudioPage() {
     </div>
   );
 }
-

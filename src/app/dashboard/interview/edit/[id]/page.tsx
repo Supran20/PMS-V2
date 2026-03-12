@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   updateInterviewSchema,
   UpdateInterviewInput,
+  UpdateInterviewOutput,
 } from "@/lib/validations/interview.validation";
 
 import {
@@ -132,30 +133,31 @@ export default function EditInterviewPage() {
    * --------------------------------
    */
   const onSubmit = async (data: UpdateInterviewInput) => {
+    const parsed = updateInterviewSchema.parse(data);
+    const formData: UpdateInterviewOutput = parsed;
+
     setSubmitting(true);
 
     try {
-      // Default episode if empty
-      if (!data.episode) data.episode = maxEpisode + 1;
+      if (!formData.episode) formData.episode = maxEpisode + 1;
 
-      // Check if episode already exists in other interviews
       const allInterviews = await getInterviews();
+
       const conflicting = allInterviews.find(
-        (i) => i.episode === data.episode && i.id !== id,
+        (i) => i.episode === formData.episode && i.id !== id,
       );
 
-      if (conflicting) {
-        if (conflicting.status === "published") {
-          toast.error("Can't assign interview with this episode number");
-        } else {
-          toast.error("Episode number already exists");
-        }
+      // only block published episode conflicts
+      if (conflicting?.status === "published") {
+        toast.error(
+          "Can't assign episode already used by a published interview",
+        );
         setSubmitting(false);
         return;
       }
 
-      // Proceed with update
-      await updateInterview(id, data);
+      await updateInterview(id, formData);
+
       toast.success("Interview updated successfully");
       router.push("/dashboard/interview");
     } catch (error: any) {

@@ -25,10 +25,9 @@ export default function UsersPage() {
   const [userToChangePassword, setUserToChangePassword] = useState<User | null>(
     null,
   );
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const { user: currentUser, hasPermission, loading: authLoading } = useAuth();
-
-  const ITEMS_PER_PAGE = 10;
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -88,11 +87,11 @@ export default function UsersPage() {
     setUserToChangePassword(null);
   };
 
-  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(users.length / itemsPerPage);
 
-  const   paginatedUsers = users.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+  const paginatedUsers = users.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -193,11 +192,15 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
-
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
 
       <DeleteModal<User>
