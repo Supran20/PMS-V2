@@ -15,6 +15,8 @@ export const createInterviewSchema = z.object({
   host_id: z.string().uuid("Invalid host ID"),
   studio_id: z.string().uuid("Invalid studio ID"),
 
+  episode: z.coerce.number().int().min(1).optional(),
+
   interview_date: z
     .string()
     .refine((val) => !isNaN(Date.parse(val)), {

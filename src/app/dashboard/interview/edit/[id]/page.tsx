@@ -14,6 +14,7 @@ import { FormActions } from "@/components/ui/FormActions";
 import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
 import { DeleteModal } from "@/components/ui/DeleteModal";
+import { useAuth } from "@/context/AuthContext";
 
 import {
   updateInterviewSchema,
@@ -24,6 +25,7 @@ import {
   getInterviewById,
   updateInterview,
   deleteInterview,
+  getInterviews,
 } from "@/lib/api/interview";
 
 import { getGuests, Guest } from "@/lib/api/guest";
@@ -42,6 +44,12 @@ export default function EditInterviewPage() {
   const [studios, setStudios] = useState<Studio[]>([]);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [maxEpisode, setMaxEpisode] = useState<number>(1);
+  const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
+  const [episodeInputEnabled, setEpisodeInputEnabled] = useState(false);
+
+  const { hasPermission } = useAuth();
+  const canEditInterview = hasPermission("interview.update");
 
   const {
     register,
@@ -80,11 +88,10 @@ export default function EditInterviewPage() {
           guest_id: interview.guest_id,
           host_id: interview.host_id,
           studio_id: interview.studio_id,
+          episode: interview.episode,
           interview_date: interview.interview_date,
           start_time: interview.start_time,
           end_time: interview.end_time ?? undefined,
-          interview_status: interview.interview_status,
-          live_status: interview.live_status,
           google_drive_link: interview.google_drive_link,
           youtube_link: interview.youtube_link,
         });
@@ -99,6 +106,26 @@ export default function EditInterviewPage() {
     if (id) fetchData();
   }, [id, reset, router]);
 
+  useEffect(() => {
+    const fetchEpisodes = async () => {
+      try {
+        const interviews = await getInterviews();
+        const episodes = interviews.map((i) => i.episode);
+        setExistingEpisodes(episodes);
+        const max = Math.max(...episodes, 0);
+        setMaxEpisode(max);
+
+        // Only set default episode if the form has no episode set yet
+        const currentEpisode = watch("episode");
+        if (!currentEpisode) {
+          setValue("episode", max + 1);
+        }
+      } catch {
+        toast.error("Failed to fetch episodes");
+      }
+    };
+    fetchEpisodes();
+  }, [setValue, watch]);
   /**
    * --------------------------------
    * Submit
@@ -106,12 +133,34 @@ export default function EditInterviewPage() {
    */
   const onSubmit = async (data: UpdateInterviewInput) => {
     setSubmitting(true);
+
     try {
+      // Default episode if empty
+      if (!data.episode) data.episode = maxEpisode + 1;
+
+      // Check if episode already exists in other interviews
+      const allInterviews = await getInterviews();
+      const conflicting = allInterviews.find(
+        (i) => i.episode === data.episode && i.id !== id,
+      );
+
+      if (conflicting) {
+        if (conflicting.status === "published") {
+          toast.error("Can't assign interview with this episode number");
+        } else {
+          toast.error("Episode number already exists");
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      // Proceed with update
       await updateInterview(id, data);
       toast.success("Interview updated successfully");
       router.push("/dashboard/interview");
-    } catch {
-      toast.error("Failed to update interview");
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message;
+      toast.error(message || "Failed to update interview");
     } finally {
       setSubmitting(false);
     }
@@ -242,47 +291,40 @@ export default function EditInterviewPage() {
               <FormInput name="end_time" control={control} type="time" />
             </FormField>
 
-            {/* Interview Status */}
-            <FormField label="Interview Status">
-              <div className="md:w-3/4">
-                <select
-                  {...register("interview_status")}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Status</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="completed">Completed</option>
-                  <option value="postponed">Postponed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+            <FormField label="Episode Number" required>
+              <div className="flex items-center gap-3 md:w-3/4">
+                <input
+                  type="number"
+                  {...register("episode", {
+                    valueAsNumber: true,
+                  })}
+                  className={`w-32 px-3 py-2 text-sm rounded-md border border-gray-300 ${
+                    episodeInputEnabled ? "bg-white" : "bg-gray-100"
+                  }`}
+                  readOnly={!episodeInputEnabled || !canEditInterview}
+                  min={1}
+                />
+                <span className="text-gray-600">
+                  Latest Episode: {maxEpisode}
+                </span>
 
-                {errors.interview_status && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {errors.interview_status.message}
-                  </p>
+                {canEditInterview && (
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={episodeInputEnabled}
+                      onChange={(e) => setEpisodeInputEnabled(e.target.checked)}
+                      className="cursor-pointer"
+                    />
+                    Edit
+                  </label>
                 )}
               </div>
-            </FormField>
-
-            {/* Live Status */}
-            <FormField label="Live Status">
-              <div className="md:w-3/4">
-                <select
-                  {...register("live_status")}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Live Status</option>
-                  <option value="live">Live</option>
-                  <option value="recorded">Recorded</option>
-                  <option value="not_live">Not Live</option>
-                </select>
-
-                {errors.live_status && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {errors.live_status.message}
-                  </p>
-                )}
-              </div>
+              {errors.episode && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.episode.message}
+                </p>
+              )}
             </FormField>
 
             {/* Google Drive */}

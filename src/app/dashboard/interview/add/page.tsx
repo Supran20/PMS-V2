@@ -14,6 +14,7 @@ import { FormActions } from "@/components/ui/FormActions";
 import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 import {
   createInterviewSchema,
@@ -38,9 +39,15 @@ export default function AddInterviewPage() {
   const [hosts, setHosts] = useState<User[]>([]);
   const [studios, setStudios] = useState<Studio[]>([]);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [maxEpisode, setMaxEpisode] = useState<number>(1);
+  const [episodeInputEnabled, setEpisodeInputEnabled] = useState(false);
+  const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
 
   const searchParams = useSearchParams();
   const guestIdFromUrl = searchParams.get("guest_id");
+  const { hasPermission } = useAuth();
+
+  const canEditInterview = hasPermission("interview.update");
 
   const {
     register,
@@ -91,6 +98,42 @@ export default function AddInterviewPage() {
   }, [guestIdFromUrl, setValue]);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [guestData, userData, studioData, interviews] = await Promise.all(
+          [
+            getGuests(),
+            getHostUser(),
+            getStudios(),
+            getInterviews(), // fetch all interviews to get max episode
+          ],
+        );
+
+        setGuests(guestData);
+        setHosts(userData);
+        setStudios(studioData);
+
+        // Determine max episode
+        const episodes = interviews.map((i) => i.episode);
+        setExistingEpisodes(episodes);
+        const max = Math.max(...episodes, 0);
+        setMaxEpisode(max);
+
+        // Set default episode in form
+        setValue("episode", max + 1);
+
+        if (guestIdFromUrl) {
+          setValue("guest_id", guestIdFromUrl, { shouldValidate: true });
+        }
+      } catch {
+        toast.error("Failed to load form data");
+      }
+    };
+
+    fetchData();
+  }, [guestIdFromUrl, setValue]);
+
+  useEffect(() => {
     if (!selectedGuest) return;
 
     if (selectedGuest.host_id) {
@@ -114,6 +157,26 @@ export default function AddInterviewPage() {
   const onSubmit = async (data: CreateInterviewInput) => {
     setSubmitting(true);
     try {
+      // Check if episode exists
+      const episodeExists = existingEpisodes.includes(data.episode);
+      if (episodeExists) {
+        // Fetch the interview to see if it is published
+        const allInterviews = await getInterviews();
+        const conflicting = allInterviews.find(
+          (i) => i.episode === data.episode,
+        );
+
+        if (conflicting?.status === "published") {
+          toast.error("Can't assign interview with this episode number");
+          setSubmitting(false);
+          return;
+        } else {
+          toast.error("Episode number already exists");
+          setSubmitting(false);
+          return;
+        }
+      }
+
       // Check for overlaps before creating the interview
       const endTime = data.end_time || "";
 
@@ -143,17 +206,15 @@ export default function AddInterviewPage() {
             return;
           }
         } catch (overlapError: any) {
-          // If the overlap check fails (e.g., endpoint not available), proceed with creation
-          // The backend will handle the overlap check anyway
           console.error("Overlap check error:", overlapError);
         }
       }
 
+      // Create interview
       await createInterview(data);
       toast.success("Interview scheduled successfully");
       router.push("/dashboard/interview");
     } catch (error: any) {
-      // Handle overlap errors from backend
       const errorMessage = error.response?.data?.message || error.message;
       if (
         errorMessage.includes("Guest is already booked") ||
@@ -168,7 +229,6 @@ export default function AddInterviewPage() {
       setSubmitting(false);
     }
   };
-
   return (
     <div className="space-y-6">
       <PageHeader title="Schedule Interview" backHref="/dashboard/interview" />
@@ -253,6 +313,50 @@ export default function AddInterviewPage() {
                 control={control}
                 type="time"
               />
+            </FormField>
+
+            <FormField label="Episode Number" required>
+              <div className="flex items-center gap-3 md:w-3/4">
+                <input
+                  type="number"
+                  {...register("episode", {
+                    valueAsNumber: true,
+                    // onChange: (e) => {
+                    //   const val = Number(e.target.value);
+
+                    //   // Check if episode already exists
+                    //   if (existingEpisodes.includes(val)) {
+                    //     toast.error("This episode number already exists");
+                    //   }
+                    // },
+                  })}
+                  className={`w-32 px-3 py-2 text-sm rounded-md border border-gray-300 ${
+                    episodeInputEnabled ? "bg-white" : "bg-gray-100"
+                  }`}
+                  readOnly={!episodeInputEnabled || !canEditInterview}
+                  min={1}
+                />
+                <span className="text-gray-600">
+                  Latest Episode: {maxEpisode}
+                </span>
+
+                {canEditInterview && (
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={episodeInputEnabled}
+                      onChange={(e) => setEpisodeInputEnabled(e.target.checked)}
+                      className="cursor-pointer"
+                    />
+                    Edit
+                  </label>
+                )}
+              </div>
+              {errors.episode && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.episode.message}
+                </p>
+              )}
             </FormField>
 
             {/* Google Drive */}

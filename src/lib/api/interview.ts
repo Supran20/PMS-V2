@@ -10,6 +10,7 @@ export interface InterviewPayload {
   guest_id: string;
   host_id: string;
   studio_id: string;
+  episode: number;
   interview_date?: string | null;
   start_time?: string | null;
   end_time?: string | null;
@@ -29,6 +30,7 @@ export interface InterviewPayload {
 
 export interface Interview {
   id: string;
+  episode: number;
 
   guest_id: string;
   host_id: string;
@@ -63,8 +65,14 @@ export interface Interview {
     full_name: string;
     email: string;
     slug: string;
-  };
 
+    profileImage?: {
+      id: string;
+      path: string;
+      media_name?: string;
+      type?: string;
+    } | null;
+  };
   host?: {
     id: string;
     full_name: string;
@@ -135,6 +143,23 @@ export const checkInterviewOverlap = async (params: {
 export const reorderInterviews = async (orderedIds: string[]) => {
   const response = await api.patch("/interviews/reorder", {
     orderedIds,
+  });
+
+  return response.data;
+};
+
+/**
+ * --------------------------------
+ * ASSIGN EPISODE (Swap)
+ * --------------------------------
+ */
+export const assignEpisode = async (
+  interviewId: string,
+  targetEpisode: number,
+) => {
+  const response = await api.patch("/interviews/assign-episode", {
+    interviewId,
+    targetEpisode,
   });
 
   return response.data;
