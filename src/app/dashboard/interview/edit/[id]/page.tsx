@@ -81,7 +81,8 @@ export default function EditInterviewPage() {
           getStudios(),
         ]);
 
-        setGuests(guestData);
+        const approvedGuests = guestData.filter((g) => g.approved === true);
+        setGuests(approvedGuests);
         setHosts(userData);
         setStudios(studioData);
 

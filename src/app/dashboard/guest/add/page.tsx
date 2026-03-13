@@ -53,7 +53,6 @@ export default function AddGuestPage() {
   });
 
   const fullName = watch("full_name");
-  const recordValue = watch("record");
 
   useEffect(() => {
     if (authLoading) return;
@@ -283,21 +282,6 @@ export default function AddGuestPage() {
                     </option>
                   ))}
                 </select>
-
-                {/* Record Guest */}
-                {/* <FormField label="Record this guest?">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={recordValue || false}
-                      onChange={(e) => setValue("record", e.target.checked)}
-                      className="w-4 h-4 accent-blue-600"
-                    />
-                    <span className="text-sm text-gray-600">
-                      Mark this guest as a record candidate
-                    </span>
-                  </div>
-                </FormField> */}
               </div>
             </FormField>
 

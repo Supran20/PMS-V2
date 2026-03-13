@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { getMediaUrl } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
@@ -48,6 +49,8 @@ export default function GuestsPage() {
   const canAddGuest = hasPermission("guest.create");
   const canEditGuest = hasPermission("guest.update");
   const canDeleteGuest = hasPermission("guest.delete");
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -65,6 +68,10 @@ export default function GuestsPage() {
   useEffect(() => {
     fetchGuests();
   }, []);
+
+  useEffect(() => {
+    if (tabFromUrl === "pending") setTabValue(1);
+  }, [tabFromUrl]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -243,10 +250,10 @@ export default function GuestsPage() {
           onChange={handleTabChange}
           aria-label="guest tabs"
         >
-          <Tab label="All Guests" />
-          <Tab label="Pending" />
-          <Tab label="Approved" />
-          <Tab label="Rejected" />
+          <Tab label={`All Guests (${guests.length})`} />
+          <Tab label={`Pending (${pendingGuests.length})`} />
+          <Tab label={`Approved (${approvedGuests.length})`} />
+          <Tab label={`Rejected (${rejectedGuests.length})`} />
         </Tabs>
       </Box>
 
@@ -338,7 +345,7 @@ export default function GuestsPage() {
                         </p>
                       </Link>
 
-                      {tabValue === 1 && (
+                      {tabValue === 2 && (
                         <div
                           className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
                             guest.status,

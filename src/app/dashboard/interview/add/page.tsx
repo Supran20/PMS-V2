@@ -78,7 +78,8 @@ export default function AddInterviewPage() {
           getStudios(),
         ]);
 
-        setGuests(guestData);
+        const approvedGuests = guestData.filter((g) => g.approved === true);
+        setGuests(approvedGuests);
         setHosts(userData);
         setStudios(studioData);
 
@@ -106,7 +107,8 @@ export default function AddInterviewPage() {
           ],
         );
 
-        setGuests(guestData);
+        const approvedGuests = guestData.filter((g) => g.approved === true);
+        setGuests(approvedGuests);
         setHosts(userData);
         setStudios(studioData);
 

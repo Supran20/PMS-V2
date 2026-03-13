@@ -8,6 +8,7 @@ import { logout } from "@/lib/api/auth";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { getGuests, Guest } from "@/lib/api/guest";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
@@ -47,6 +48,7 @@ export default function DashboardLayout({
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement | null>(null);
   const [interviewMenuOpen, setInterviewMenuOpen] = React.useState(false);
+  const [pendingGuestCount, setPendingGuestCount] = React.useState<number>(0);
 
   // Protect route
   useEffect(() => {
@@ -67,6 +69,20 @@ export default function DashboardLayout({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchPendingGuests = async () => {
+      try {
+        const data: Guest[] = await getGuests();
+        const pending = data.filter((g) => !g.approved && !g.rejected);
+        setPendingGuestCount(pending.length);
+      } catch (error) {
+        console.error("Failed to fetch pending guests", error);
+      }
+    };
+
+    fetchPendingGuests();
   }, []);
 
   if (loading || !user) {
@@ -213,6 +229,21 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-4 relative" ref={userMenuRef}>
+            {pendingGuestCount > 0 && (
+              <button
+                onClick={() => router.push("/dashboard/guest?tab=pending")}
+                className="relative p-2 rounded-full cursor-pointer bg-red-50 hover:bg-red-100 transition"
+                title="Pending Guests"
+              >
+                <Icon
+                  icon="mdi:account-voice"
+                  className="text-xl text-red-600"
+                />
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {pendingGuestCount}
+                </span>
+              </button>
+            )}
             <button
               onClick={() => setUserMenuOpen((prev) => !prev)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition cursor-pointer"

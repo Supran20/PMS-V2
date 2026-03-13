@@ -161,16 +161,6 @@ export default function InterviewsPage() {
     return todayInterviews;
   }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
 
-  // const handleReorder = async (items: Interview[]) => {
-  //   try {
-  //     const orderedIds = items.map((i) => i.id);
-  //     await reorderInterviews(orderedIds);
-  //   } catch {
-  //     toast.error("Failed to update order");
-  //     throw new Error("Reorder failed");
-  //   }
-  // };
-
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -486,9 +476,9 @@ export default function InterviewsPage() {
             onChange={handleTabChange}
             aria-label="interview tabs"
           >
-            <Tab label="All Interviews" />
-            <Tab label="Upcoming" />
-            <Tab label="Today" />
+            <Tab label={`All Interviews(${interviews.length})`} />
+            <Tab label={`Upcoming(${upcomingInterviews.length})`} />
+            <Tab label={`Today(${todayInterviews.length})`} />
           </Tabs>
         </Box>
       )}
