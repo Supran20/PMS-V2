@@ -15,6 +15,8 @@ export const createInterviewSchema = z.object({
   host_id: z.string().uuid("Invalid host ID"),
   studio_id: z.string().uuid("Invalid studio ID"),
 
+  episode: z.coerce.number().min(1, "Episode must be at least 1"),
+
   interview_date: z
     .string()
     .refine((val) => !isNaN(Date.parse(val)), {
@@ -68,7 +70,8 @@ export const createInterviewSchema = z.object({
     .nullable(),
 });
 
-export type CreateInterviewInput = z.infer<typeof createInterviewSchema>;
+export type CreateInterviewInput = z.input<typeof createInterviewSchema>;
+export type CreateInterviewOutput = z.output<typeof createInterviewSchema>;
 
 /**
  * --------------------------------
@@ -77,4 +80,5 @@ export type CreateInterviewInput = z.infer<typeof createInterviewSchema>;
  */
 export const updateInterviewSchema = createInterviewSchema.partial();
 
-export type UpdateInterviewInput = z.infer<typeof updateInterviewSchema>;
+export type UpdateInterviewInput = z.input<typeof updateInterviewSchema>;
+export type UpdateInterviewOutput = z.output<typeof updateInterviewSchema>;

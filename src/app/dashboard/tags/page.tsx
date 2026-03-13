@@ -20,8 +20,7 @@ export default function TagsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const ITEMS_PER_PAGE = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const fetchTags = async () => {
     setLoading(true);
@@ -69,11 +68,11 @@ export default function TagsPage() {
     fetchTags();
   };
 
-  const totalPages = Math.ceil(filteredTags.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTags.length / itemsPerPage);
 
   const paginatedTags = filteredTags.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -85,9 +84,7 @@ export default function TagsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Tags
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Tags</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -98,9 +95,7 @@ export default function TagsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Tags
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Tags</h2>
         <AddButton href="/dashboard/tags/add" label="Add Tag" />
       </div>
 
@@ -151,9 +146,7 @@ export default function TagsPage() {
                       <td className="py-3 px-4 text-gray-900">
                         {tag.tag_name}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {tag.slug}
-                      </td>
+                      <td className="py-3 px-4 text-gray-600">{tag.slug}</td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -184,7 +177,12 @@ export default function TagsPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
 
       <DeleteModal<Tag>
@@ -197,4 +195,3 @@ export default function TagsPage() {
     </div>
   );
 }
-

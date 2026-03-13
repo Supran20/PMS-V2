@@ -37,6 +37,31 @@ export default function PublishModal({
 
   if (!open) return null;
 
+  function normalizeYoutubeUrl(url: string): string {
+    try {
+      const u = new URL(url);
+
+      // handle embed link
+      if (
+        u.hostname.includes("youtube.com") &&
+        u.pathname.includes("/embed/")
+      ) {
+        const videoId = u.pathname.split("/embed/")[1];
+        return `https://www.youtube.com/watch?v=${videoId}`;
+      }
+
+      // handle youtu.be short link
+      if (u.hostname === "youtu.be") {
+        const videoId = u.pathname.slice(1);
+        return `https://www.youtube.com/watch?v=${videoId}`;
+      }
+
+      return url;
+    } catch {
+      return url;
+    }
+  }
+
   const handleSubmit = () => {
     if (!interview) return;
 
@@ -45,7 +70,8 @@ export default function PublishModal({
       return;
     }
 
-    onSubmit(interview.id, youtubeLink);
+    const normalized = normalizeYoutubeUrl(youtubeLink);
+    onSubmit(interview.id, normalized);
   };
 
   return (

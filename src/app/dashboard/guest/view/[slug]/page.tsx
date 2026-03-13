@@ -100,30 +100,48 @@ export default function GuestViewPage() {
     return `${hour}:${minuteStr} ${ampm}`;
   };
 
-  const getInterviewStatusClass = (status?: string | null) => {
+  const getStatusClass = (status?: string | null) => {
     switch (status) {
       case "scheduled":
         return "bg-blue-100 text-blue-700";
-      case "completed":
-        return "bg-green-100 text-green-700";
+
+      case "postponed":
+        return "bg-yellow-100 text-yellow-700";
+
       case "cancelled":
         return "bg-red-100 text-red-700";
+
+      case "recorded":
+        return "bg-purple-100 text-purple-700";
+
+      case "editing":
+        return "bg-orange-100 text-orange-700";
+
+      case "post_editing":
+        return "bg-indigo-100 text-indigo-700";
+
+      case "published":
+        return "bg-green-100 text-green-700";
+
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
 
-  const getLiveStatusClass = (status?: string | null) => {
-    switch (status) {
-      case "live":
-        return "bg-red-100 text-red-700";
-      case "recorded":
-        return "bg-purple-100 text-purple-700";
-      case "not_live":
-        return "bg-gray-100 text-gray-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
+  const getDisplayStatus = (status?: string | null) => {
+    if (!status) return "-";
+
+    const map: Record<string, string> = {
+      editing: "Edited",
+      post_editing: "Post Editing",
+      scheduled: "Scheduled",
+      postponed: "Postponed",
+      cancelled: "Cancelled",
+      recorded: "Recorded",
+      published: "Published",
+    };
+
+    return map[status] ?? status;
   };
 
   const handleAddNote = async () => {
@@ -386,73 +404,49 @@ export default function GuestViewPage() {
               ) : (
                 <div className="overflow-x-auto ">
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div className="grid grid-cols-12 gap-4 bg-gray-100 text-xs uppercase tracking-wider px-6 py-4 font-medium text-gray-600">
-                      <div className="text-xs capitalize col-span-2 font-medium text-gray-700">
+                    <div className="grid grid-cols-5 gap-4 bg-gray-100 text-xs uppercase tracking-wider px-6 py-4 font-medium text-gray-600">
+                      <div className="text-center text-xs capitalize  font-medium text-gray-700">
                         Host
                       </div>
-                      <div className="text-xs capitalize col-span-2 font-medium text-gray-700">
+                      <div className="text-center text-xs capitalize  font-medium text-gray-700">
                         Date
                       </div>
-                      <div className="text-xs capitalize col-span-1 font-medium text-gray-700">
+                      <div className="text-center text-xs capitalize  font-medium text-gray-700">
                         Start
                       </div>
-                      <div className="text-xs capitalize col-span-1 font-medium text-gray-700">
+                      <div className="text-center text-xs capitalize  font-medium text-gray-700">
                         End
                       </div>
-                      <div className="text-xs capitalize col-span-2 font-medium text-gray-700">
-                        Interview Status
-                      </div>
-                      <div className="text-xs capitalize col-span-2 font-medium text-gray-700">
-                        Live Status
-                      </div>
-                      <div className="text-xs capitalize  col-span-2 font-medium text-gray-700">
-                        Studio
+                      <div className="text-center text-xs capitalize  font-medium text-gray-700">
+                        Status
                       </div>
                     </div>
 
                     {interviews.map((interview) => (
                       <div
                         key={interview.id}
-                        className="grid grid-cols-12 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition"
+                        className="grid grid-cols-5 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition"
                       >
-                        <div className="text-xs text-gray-700 col-span-2">
+                        <div className="text-xs text-center text-gray-700 ">
                           {interview.host?.full_name ?? "-"}
                         </div>
-
-                        <div className="text-xs text-gray-600 col-span-2">
+                        <div className="text-xs text-center text-gray-600">
                           {interview.interview_date}
                         </div>
-
-                        <div className="text-xs text-gray-600 col-span-1">
+                        <div className="text-xs text-center text-gray-600 ">
                           {formatTimeTo12Hour(interview.start_time)}
                         </div>
-
-                        <div className="text-xs text-gray-600 col-span-1">
+                        <div className="text-xs text-center text-gray-600">
                           {formatTimeTo12Hour(interview.end_time)}
                         </div>
-
-                        <div className="col-span-2 text-xs">
+                        <div className="text-center">
                           <span
-                            className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getInterviewStatusClass(
-                              interview.interview_status,
+                            className={`px-2 py-1 rounded-md text-xs font-medium capitalize ${getStatusClass(
+                              interview.status,
                             )}`}
                           >
-                            {interview.interview_status}
+                            {getDisplayStatus(interview.status)}
                           </span>
-                        </div>
-
-                        <div className="col-span-2 text-xs">
-                          <span
-                            className={`inline-block px-2 py-1 rounded-md text-xs font-medium capitalize ${getLiveStatusClass(
-                              interview.live_status,
-                            )}`}
-                          >
-                            {interview.live_status}
-                          </span>
-                        </div>
-
-                        <div className="text-xs col-span-2 text-gray-600">
-                          {interview.studio?.studio_name ?? "-"}
                         </div>
                       </div>
                     ))}
@@ -557,22 +551,6 @@ export default function GuestViewPage() {
                             >
                               {note.description || "No description"}
                             </Typography>
-
-                            {/* <div className="text-xs flex gap-2 text-gray-500 border-t pt-2 space-y-1">
-                              <div>
-                                Created by:{" "}
-                                <span className="font-medium">
-                                  {note.creator?.full_name}
-                                </span>
-                              </div>
-
-                              <div>
-                                Updated by:{" "}
-                                <span className="font-medium">
-                                  {note.updater?.full_name}
-                                </span>
-                              </div>
-                            </div> */}
                           </div>
                         )}
                       </AccordionDetails>

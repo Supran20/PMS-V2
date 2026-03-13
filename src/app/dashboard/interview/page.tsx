@@ -12,13 +12,9 @@ import Box from "@mui/material/Box";
 import FilterInterviewModal from "@/components/ui/FilterInterviewModal";
 import PostponeModal from "@/components/ui/PostPoneModal";
 import PublishModal from "@/components/ui/PublishModal";
+import { getMediaUrl } from "@/lib/utils";
 
-import {
-  getInterviews,
-  updateInterview,
-  reorderInterviews,
-  Interview,
-} from "@/lib/api/interview";
+import { getInterviews, updateInterview, Interview } from "@/lib/api/interview";
 
 import { getGuests } from "@/lib/api/guest";
 
@@ -69,10 +65,11 @@ export default function InterviewsPage() {
   const [interviewToPublish, setInterviewToPublish] =
     useState<Interview | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const searchParams = useSearchParams();
-
-  const ITEMS_PER_PAGE = 10;
+  const statusParam = searchParams.get("status");
+  const showTabs = !statusParam;
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -158,20 +155,21 @@ export default function InterviewsPage() {
   );
 
   const tabInterviews = useMemo(() => {
+    if (statusParam) return interviews;
     if (tabValue === 0) return interviews;
     if (tabValue === 1) return upcomingInterviews;
     return todayInterviews;
-  }, [tabValue, todayInterviews, upcomingInterviews, interviews]);
+  }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
 
-  const handleReorder = async (items: Interview[]) => {
-    try {
-      const orderedIds = items.map((i) => i.id);
-      await reorderInterviews(orderedIds);
-    } catch {
-      toast.error("Failed to update order");
-      throw new Error("Reorder failed");
-    }
-  };
+  // const handleReorder = async (items: Interview[]) => {
+  //   try {
+  //     const orderedIds = items.map((i) => i.id);
+  //     await reorderInterviews(orderedIds);
+  //   } catch {
+  //     toast.error("Failed to update order");
+  //     throw new Error("Reorder failed");
+  //   }
+  // };
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -400,6 +398,28 @@ export default function InterviewsPage() {
     }
   };
 
+  const getYoutubeWatchUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+
+      if (
+        u.hostname.includes("youtube.com") &&
+        u.pathname.includes("/embed/")
+      ) {
+        const id = u.pathname.split("/embed/")[1];
+        return `https://www.youtube.com/watch?v=${id}`;
+      }
+
+      if (u.hostname === "youtu.be") {
+        return `https://www.youtube.com/watch?v=${u.pathname.slice(1)}`;
+      }
+
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
   const handlePublishSubmit = async (id: string, youtube_link: string) => {
     try {
       await updateInterview(id, {
@@ -418,11 +438,11 @@ export default function InterviewsPage() {
     }
   };
 
-  const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredInterviews.length / itemsPerPage);
 
   const paginatedInterviews = filteredInterviews.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -459,17 +479,19 @@ export default function InterviewsPage() {
           />
         )}
       </div>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="interview tabs"
-        >
-          <Tab label="All Interviews" />
-          <Tab label="Upcoming" />
-          <Tab label="Today" />
-        </Tabs>
-      </Box>
+      {showTabs && (
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="interview tabs"
+          >
+            <Tab label="All Interviews" />
+            <Tab label="Upcoming" />
+            <Tab label="Today" />
+          </Tabs>
+        </Box>
+      )}
       {/* Search + Table */}
       <Card className="shadow-sm bg-white border-none py-5">
         <CardContent>
@@ -508,68 +530,80 @@ export default function InterviewsPage() {
             <div className=" ">
               <div>
                 <div className="bg-white rounded-xl shadow-sm overflow-visible">
-                  <div className="grid grid-cols-6 gap-4 bg-gray-100 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
-                    <div className="text-left  text-vxs font-medium text-gray-700">
+                  <div className="grid grid-cols-11 gap-4 bg-gray-100 text-gray-600 text-xs uppercase tracking-wider px-6 py-4 font-medium">
+                    <div className="text-left text-vxs font-medium col-span-1 text-gray-700">
+                      Episode
+                    </div>
+                    <div className="text-center  text-vxs col-span-2 font-medium text-gray-700">
                       Guest
                     </div>
-                    <div className="text-center text-vxs  font-medium text-gray-700">
+                    <div className="text-center text-vxs col-span-2 font-medium text-gray-700">
                       Host
                     </div>
-                    <div className="text-center text-vxs  font-medium  text-gray-700">
+                    <div className="text-center text-vxs col-span-1 font-medium  text-gray-700">
                       Date
                     </div>
-                    <div className="text-center text-vxs  font-medium text-gray-700">
+                    <div className="text-center text-vxs col-span-1 font-medium text-gray-700">
                       Interview Time
                     </div>
 
-                    <div className="text-center text-vxs  font-medium text-gray-700">
+                    <div className="text-center text-vxs col-span-2  font-medium text-gray-700">
                       Status
                     </div>
 
-                    <div className="text-left text-vxs  font-medium text-gray-700">
+                    <div className="text-left text-vxs col-span-2  font-medium text-gray-700">
                       Actions
                     </div>
                   </div>
-                  <SortableList
-                    items={paginatedInterviews}
-                    getId={(i) => i.id}
-                    onChange={(newItems) => {
-                      // update only current page slice
-                      const start = (currentPage - 1) * ITEMS_PER_PAGE;
-                      const updated = [...interviews];
-                      updated.splice(start, newItems.length, ...newItems);
-                      setInterviews(updated);
-                    }}
-                    onReorder={handleReorder}
-                  >
-                    {(interview) => (
-                      <SortableItem id={interview.id}>
-                        <div className="grid grid-cols-6 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
-                          <div className="text-vxs text-gray-600">
+                  <div>
+                    {paginatedInterviews.map((interview) => (
+                      <div key={interview.id} id={interview.id}>
+                        <div className="grid grid-cols-11 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
+                          {/* Episode */}
+                          <div className="text-vxs col-span-1 text-gray-600">
+                            #{interview.episode ?? "-"}
+                          </div>
+                          <div className="text-vxs flex items-center justify-left col-span-2 text-gray-600">
                             {interview.guest ? (
                               <Link
                                 href={`/dashboard/guest/view/${interview.guest.slug}`}
-                                className=" hover:text-blue-600  text-center transition-colors"
+                                className="flex items-center gap-2 hover:text-blue-600 transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {interview.guest.full_name}
+                                {/* Guest Profile Image */}
+                                {interview.guest.profileImage?.path ? (
+                                  <img
+                                    src={getMediaUrl(
+                                      interview.guest.profileImage.path,
+                                    )}
+                                    alt={interview.guest.full_name}
+                                    className="w-8 h-8 rounded-full object-cover border"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
+                                    {interview.guest.full_name.charAt(0)}
+                                  </div>
+                                )}
+
+                                {/* Guest Name */}
+                                <span>{interview.guest.full_name}</span>
                               </Link>
                             ) : (
                               "-"
                             )}
                           </div>
-                          <div className=" text-vxs  text-gray-600">
+                          <div className=" text-vxs text-center col-span-2  text-gray-600">
                             {interview.host?.full_name ?? "-"}
                           </div>
-                          <div className=" text-vxs text-gray-600 text-center">
+                          <div className=" text-vxs col-span-1 text-gray-600 text-center">
                             {" "}
                             {interview.interview_date ?? "-"}
                           </div>
-                          <div className=" text-vxs text-gray-600 text-center">
+                          <div className=" text-vxs col-span-1 text-gray-600 text-center">
                             {formatTimeTo12Hour(interview.start_time)}
                           </div>
 
-                          <div className="text-center">
+                          <div className="text-center col-span-2">
                             <span
                               className={`px-2 py-1 rounded-md text-xs font-medium capitalize ${getStatusClass(
                                 interview.status,
@@ -578,7 +612,7 @@ export default function InterviewsPage() {
                               {getDisplayStatus(interview.status)}
                             </span>
                           </div>
-                          <div className="">
+                          <div className="col-span-2">
                             <div className="flex items-center justify-start gap-3">
                               <div className="relative">
                                 <button
@@ -764,7 +798,9 @@ export default function InterviewsPage() {
                               {/* YouTube Link */}
                               {interview.youtube_link && (
                                 <a
-                                  href={interview.youtube_link}
+                                  href={getYoutubeWatchUrl(
+                                    interview.youtube_link,
+                                  )}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
@@ -779,9 +815,9 @@ export default function InterviewsPage() {
                             </div>
                           </div>
                         </div>
-                      </SortableItem>
-                    )}
-                  </SortableList>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <br />
@@ -793,7 +829,12 @@ export default function InterviewsPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
       <FilterInterviewModal
         open={filterOpen}

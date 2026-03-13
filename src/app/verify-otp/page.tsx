@@ -15,9 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 /* ================= VALIDATION ================= */
 const otpSchema = z.object({
-  otp: z
-    .array(z.string().regex(/^\d$/, "Must be a digit"))
-    .length(6, "Enter 6-digit OTP"),
+  otp: z.string().regex(/^\d{6}$/, "OTP must be a 6-digit number"),
 });
 
 type OTPFormValues = z.infer<typeof otpSchema>;
@@ -29,18 +27,15 @@ const OTPPage = () => {
   const [loading, setLoading] = useState(false);
 
   const {
-    setValue,
-    watch,
+    register,
     handleSubmit,
     formState: { errors },
   } = useForm<OTPFormValues>({
     resolver: zodResolver(otpSchema),
     defaultValues: {
-      otp: Array(6).fill(""),
+      otp: "",
     },
   });
-
-  const otp = watch("otp");
 
   /* ================= GET EMAIL ================= */
   useEffect(() => {
@@ -54,24 +49,11 @@ const OTPPage = () => {
   }, [router]);
 
   /* ================= OTP INPUT HANDLER ================= */
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d?$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setValue("otp", newOtp);
-
-    if (value && index < 5) {
-      document.getElementById(`otp-${index + 1}`)?.focus();
-    } else if (!value && index > 0) {
-      document.getElementById(`otp-${index - 1}`)?.focus();
-    }
-  };
 
   /* ================= SUBMIT ================= */
   const onSubmit = async (data: OTPFormValues) => {
     setLoading(true);
-    const otpCode = data.otp.join("");
+    const otpCode = data.otp;
 
     try {
       const res = await verifyOTP(otpCode);
@@ -145,21 +127,18 @@ const OTPPage = () => {
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex justify-center gap-2">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`otp-${index}`}
-                  type="text"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
-                  className="w-12 h-12 text-center border rounded-md text-lg"
-                />
-              ))}
+            <div className="flex justify-center">
+              <input
+                type="text"
+                maxLength={6}
+                inputMode="numeric"
+                placeholder="Enter OTP"
+                {...register("otp")}
+                className="w-full text-center border rounded-md text-lg h-12 tracking-[0.5em]"
+              />
             </div>
 
-            {errors.otp && (
+            {errors.otp?.message && (
               <p className="text-red-600 text-sm text-center">
                 {errors.otp.message}
               </p>
@@ -195,4 +174,3 @@ const OTPPage = () => {
 };
 
 export default OTPPage;
-

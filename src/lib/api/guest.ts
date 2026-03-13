@@ -49,6 +49,7 @@ export interface Guest {
 
   record: boolean;
   status: "not_started" | "contacted" | "follow_up" | "confirmed";
+  rejected: boolean;
 
   referred_by: string | null;
   host_id: string;

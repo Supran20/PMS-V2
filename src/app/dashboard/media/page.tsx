@@ -24,8 +24,7 @@ export default function MediaPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -74,11 +73,11 @@ export default function MediaPage() {
     fetchMedia();
   };
 
-  const totalPages = Math.ceil(filteredMedia.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredMedia.length / itemsPerPage);
 
   const paginatedMedia = filteredMedia.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   useEffect(() => {
@@ -96,9 +95,7 @@ export default function MediaPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Media
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Media</h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -109,9 +106,7 @@ export default function MediaPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Media
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900">Media</h2>
         <AddButton href="/dashboard/media/add" label="Add Media" />
       </div>
 
@@ -146,9 +141,7 @@ export default function MediaPage() {
           </div>
 
           {filteredMedia.length === 0 ? (
-            <p className="text-gray-600 py-12 text-center">
-              No media found
-            </p>
+            <p className="text-gray-600 py-12 text-center">No media found</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {paginatedMedia.map((item) => (
@@ -160,9 +153,9 @@ export default function MediaPage() {
                     {isImage(item.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={getMediaUrl(item.path)}  
+                        src={getMediaUrl(item.path)}
                         alt={item.media_name}
-                        className="w-full h-full object-cover"  
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -209,7 +202,12 @@ export default function MediaPage() {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onItemsPerPageChange={(value) => {
+          setItemsPerPage(value);
+          setCurrentPage(1);
+        }}
       />
 
       <DeleteModal<Media>
@@ -222,4 +220,3 @@ export default function MediaPage() {
     </div>
   );
 }
-

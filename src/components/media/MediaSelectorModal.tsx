@@ -31,8 +31,6 @@ interface MediaSelectorModalProps {
   onSelect: (media: Media) => void;
 }
 
-const ITEMS_PER_PAGE = 16;
-
 const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
   open,
   onClose,
@@ -44,6 +42,7 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   useEffect(() => {
     if (!open) return;
@@ -81,11 +80,11 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
     return data;
   }, [media, search, selectedTag]);
 
-  const totalPages = Math.ceil(filteredMedia.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredMedia.length / itemsPerPage);
 
   const paginatedMedia = filteredMedia.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   if (!open) return null;
@@ -168,7 +167,12 @@ const MediaSelectorModal: React.FC<MediaSelectorModalProps> = ({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
+          itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
+          onItemsPerPageChange={(value) => {
+            setItemsPerPage(value);
+            setCurrentPage(1);
+          }}
         />
       </div>
     </div>
