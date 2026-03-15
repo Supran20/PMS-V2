@@ -55,19 +55,30 @@ export const createInterviewSchema = z.object({
     ])
     .optional(),
 
-  google_drive_link: z.string().url("Invalid URL").optional().nullable(),
+  google_drive_link: z
+    .string()
+    .trim()
+    .transform((val) => (val === "" ? null : val))
+    .nullable()
+    .refine((val) => !val || /^https?:\/\/.+/.test(val), {
+      message: "Invalid URL",
+    })
+    .optional(),
+
   youtube_link: z
     .string()
-    .url("Invalid YouTube URL")
+    .trim()
+    .transform((val) => (val === "" ? null : val))
+    .nullable()
     .refine(
       (val) =>
+        !val ||
         val.includes("youtube.com/embed/") ||
         val.includes("youtube.com/watch") ||
         val.includes("youtu.be/"),
       "Invalid YouTube link",
     )
-    .optional()
-    .nullable(),
+    .optional(),
 });
 
 export type CreateInterviewInput = z.input<typeof createInterviewSchema>;

@@ -12,6 +12,8 @@ import Box from "@mui/material/Box";
 import FilterInterviewModal from "@/components/ui/FilterInterviewModal";
 import PostponeModal from "@/components/ui/PostPoneModal";
 import PublishModal from "@/components/ui/PublishModal";
+import PostEditModal from "@/components/ui/PostEditModal";
+
 import { getMediaUrl } from "@/lib/utils";
 
 import { getInterviews, updateInterview, Interview } from "@/lib/api/interview";
@@ -25,7 +27,6 @@ import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
 import SortableItem from "@/components/sortable/SortableItem";
 import SortableList from "@/components/sortable/SortableList";
-import PostEditModal from "@/components/ui/PostEditModal";
 import { useSearchParams } from "next/navigation";
 
 export default function InterviewsPage() {
@@ -142,15 +143,26 @@ export default function InterviewsPage() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  function sortByDateTime(a: Interview, b: Interview) {
+    const aDate = new Date(`${a.interview_date}T${a.start_time ?? "00:00"}`);
+    const bDate = new Date(`${b.interview_date}T${b.start_time ?? "00:00"}`);
+
+    return aDate.getTime() - bDate.getTime(); // earliest first
+  }
+
   const todayInterviews = useMemo(
     () =>
-      interviews.filter((i) => i.interview_date && i.interview_date === today),
+      interviews
+        .filter((i) => i.interview_date && i.interview_date === today)
+        .sort(sortByDateTime),
     [interviews, today],
   );
 
   const upcomingInterviews = useMemo(
     () =>
-      interviews.filter((i) => i.interview_date && i.interview_date > today),
+      interviews
+        .filter((i) => i.interview_date && i.interview_date > today)
+        .sort(sortByDateTime),
     [interviews, today],
   );
 
@@ -374,7 +386,7 @@ export default function InterviewsPage() {
     try {
       await updateInterview(id, {
         google_drive_link,
-        status: "post_editing",
+        status: "editing",
       });
 
       toast.success("Drive link updated");
@@ -664,18 +676,10 @@ export default function InterviewsPage() {
                                           <button
                                             onClick={() => {
                                               if (status === "editing") {
-                                                handleStatusChange(
-                                                  interview.id,
-                                                  "editing",
-                                                );
                                                 handlePostEditClick(interview);
                                               } else if (
                                                 status === "published"
                                               ) {
-                                                handleStatusChange(
-                                                  interview.id,
-                                                  "published",
-                                                );
                                                 handlePublishClick(interview);
                                               } else {
                                                 handleStatusChange(
@@ -721,10 +725,6 @@ export default function InterviewsPage() {
                                                           subStatus ===
                                                           "postponed"
                                                         ) {
-                                                          handleStatusChange(
-                                                            interview.id,
-                                                            "postponed",
-                                                          );
                                                           handlePostponeClick(
                                                             interview,
                                                           );

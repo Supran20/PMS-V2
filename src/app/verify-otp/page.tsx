@@ -64,7 +64,7 @@ const OTPPage = () => {
       localStorage.removeItem("temp_token");
       localStorage.removeItem("loginEmail");
 
-      toast.success("OTP verified successfully");
+      // toast.success("OTP verified successfully");
       await refreshUser();
       router.push("/dashboard");
     } catch (err) {
