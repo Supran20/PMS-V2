@@ -152,7 +152,6 @@ const OTPPage = () => {
                     Resend OTP
                   </Button>
                 </div>
-
                 <Button
                   type="submit"
                   className="w-full bg-blue-800 hover:bg-blue-900 text-white"
@@ -170,10 +169,10 @@ const OTPPage = () => {
 
                 <Button
                   type="button"
-                  className="w-full border border-primary-color text-primary-color rounded"
+                  className="w-full border border-primary-color text-blue-600 rounded"
                   onClick={logout}
                 >
-                  Sign In again
+                  Go back 
                 </Button>
               </form>
             </CardContent>
