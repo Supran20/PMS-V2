@@ -92,7 +92,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
-          Welcome back, {displayName}
+          Welcome back, {displayName} 
         </h2>
         <p className="mt-1 text-gray-600">
           Manage your podcast content from the dashboard
