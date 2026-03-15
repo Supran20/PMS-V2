@@ -299,14 +299,14 @@ export default function GuestsPage() {
           {filteredGuests.length === 0 ? (
             <p className="text-gray-600 py-12 text-center">No guests found</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1  sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {paginatedGuests.map((guest) => (
                 <div
                   key={guest.id}
                   className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
-                  <div className="aspect-square relative ">
+                  <div className="sm:aspect-square h-50  relative ">
                     {guest.profileImage && isImage(guest.profileImage.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

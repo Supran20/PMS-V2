@@ -128,8 +128,8 @@ const OTPPage = () => {
             </CardHeader>
 
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="flex justify-center">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="flex justify-center flex-col ">
                   <input
                     type="text"
                     maxLength={6}
@@ -138,13 +138,20 @@ const OTPPage = () => {
                     {...register("otp")}
                     className="w-full text-center border rounded-md text-lg h-12 tracking-[0.5em]"
                   />
-                </div>
+                  {errors.otp?.message && (
+                    <p className="text-red-600 text-sm start mt-1">
+                      {errors.otp.message}
+                    </p>
+                  )}
 
-                {errors.otp?.message && (
-                  <p className="text-red-600 text-sm text-center">
-                    {errors.otp.message}
-                  </p>
-                )}
+                  <Button
+                    type="button"
+                    className="text-sm font-medium underline text-gray-600 border-0 flex items-center justify-end "
+                    onClick={handleResend}
+                  >
+                    Resend OTP
+                  </Button>
+                </div>
 
                 <Button
                   type="submit"
@@ -153,20 +160,20 @@ const OTPPage = () => {
                   Verify OTP
                 </Button>
 
-                <Button
+                {/* <Button
                   type="button"
                   className="w-full bg-blue-800 hover:bg-blue-900 text-white"
                   onClick={handleResend}
                 >
                   Resend OTP
-                </Button>
+                </Button> */}
 
                 <Button
                   type="button"
                   className="w-full border border-primary-color text-primary-color rounded"
                   onClick={logout}
                 >
-                  Logout
+                  Sign In again
                 </Button>
               </form>
             </CardContent>
