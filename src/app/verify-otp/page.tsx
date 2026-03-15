@@ -128,7 +128,7 @@ const OTPPage = () => {
             </CardHeader>
 
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                 <div className="flex justify-center flex-col ">
                   <input
                     type="text"
@@ -146,7 +146,7 @@ const OTPPage = () => {
 
                   <Button
                     type="button"
-                    className="text-sm font-medium underline text-gray-600 border-0 flex items-center justify-end "
+                    className="text-sm font-medium italic underline text-gray-600 border-0 flex items-center justify-end mt-1.5 "
                     onClick={handleResend}
                   >
                     Resend OTP
