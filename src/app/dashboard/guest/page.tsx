@@ -13,6 +13,7 @@ import {
   getGuests,
   deleteGuest,
   approveGuest,
+  rejectGuest,
   updateGuestBySlug,
   Guest,
   toggleRecordGuest,
@@ -120,8 +121,8 @@ export default function GuestsPage() {
       await approveGuest(guest.id);
       toast.success("Guest approved successfully");
       fetchGuests();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to approve guest");
+    } catch {
+      toast.error("Failed to approve guest");
     } finally {
       setApproveModalOpen(false);
       setGuestToApprove(null);
@@ -130,7 +131,7 @@ export default function GuestsPage() {
 
   const handleRejectConfirm = async (guest: Guest) => {
     try {
-      await updateGuestBySlug(guest.slug, { rejected: true });
+      await rejectGuest(guest.id);
       toast.success("Guest rejected successfully");
       fetchGuests();
     } catch {
