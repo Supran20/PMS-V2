@@ -126,7 +126,7 @@ export default function AddGuestPage() {
       <PageHeader title="Add Guest" backHref="/dashboard/guest" />
 
       {/* Form */}
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none px-5 sm:px-0 py-5">
         {/* <CardHeader>Create New Guest</CardHeader> */}
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

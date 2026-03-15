@@ -92,7 +92,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
-          Welcome back, {displayName} 
+          Welcome back, {displayName}
         </h2>
         <p className="mt-1 text-gray-600">
           Manage your podcast content from the dashboard
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
         {/* Hosts */}
         <Card className="border-gray-200">
           <CardContent className="flex items-center justify-between p-6">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
         {DASHBOARD_SECTIONS.filter((tab) => {
           if (!tab.requiredPermission) return true;
           return hasPermission(tab.requiredPermission);
@@ -155,14 +155,14 @@ export default function DashboardPage() {
               className="h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer border-gray-200"
             >
               <CardHeader>
-                <div className="flex items-center gap-3">
+                <div className="flex sm:flex-row flex-col sm:items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50">
                     <Icon
                       icon={section.icon}
                       className="text-2xl text-red-600"
                     />
                   </div>
-                  <div>
+                  <div className=" ">
                     <h3 className="font-semibold text-gray-900">
                       {section.title}
                     </h3>
@@ -170,14 +170,20 @@ export default function DashboardPage() {
                       {section.description}
                     </p>
                   </div>
+                  <CardContent className=" sm:hidden">
+                    <span className="sm:text-sm text-xs font-medium text-blue-600 flex items-center gap-1">
+                      Go to {section.title}
+                      <Icon icon="mdi:chevron-right" className="text-lg" />
+                    </span>
+                  </CardContent>
                 </div>
+                <CardContent className="hidden sm:block">
+                  <span className="sm:text-sm text-xs font-medium text-blue-600 flex items-center gap-1">
+                    Go to {section.title}
+                    <Icon icon="mdi:chevron-right" className="text-lg" />
+                  </span>
+                </CardContent>
               </CardHeader>
-              <CardContent>
-                <span className="text-sm font-medium text-blue-600 flex items-center gap-1">
-                  Go to {section.title}
-                  <Icon icon="mdi:chevron-right" className="text-lg" />
-                </span>
-              </CardContent>
             </Card>
           </Link>
         ))}

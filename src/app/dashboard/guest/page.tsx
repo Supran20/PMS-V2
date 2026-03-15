@@ -237,21 +237,22 @@ export default function GuestsPage() {
         )}
       </div>
 
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2  , overflowX:"auto"}}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
           aria-label="guest tabs"
+          className="overflow-auto"
         >
-          <Tab label="All Guests" />
-          <Tab label="Pending" />
-          <Tab label="Approved" />
-          <Tab label="Rejected" />
+          <Tab label="All Guests" className="text-vsx"/>
+          <Tab label="Pending" className="text-vsx"/>
+          <Tab label="Approved" className="text-vsx" />
+          <Tab label="Rejected" className="text-vsx" />
         </Tabs>
       </Box>
 
       {/* Search */}
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5">
         {/* <CardHeader>Guest Management</CardHeader> */}
 
         <CardContent>
@@ -300,7 +301,7 @@ export default function GuestsPage() {
                     )}
 
                     {/* Overlay Actions */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       {/* Edit */}
                       {canEditGuest && (
                         <button
