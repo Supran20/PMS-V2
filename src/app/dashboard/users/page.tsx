@@ -118,7 +118,7 @@ export default function UsersPage() {
         <AddButton href="/dashboard/users/add" label="Add User" />
       </div>
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none px-5 md:px-0 py-5">
         <CardContent>
           {users.length === 0 ? (
             <p className="text-gray-600 py-8 text-center">No users found</p>

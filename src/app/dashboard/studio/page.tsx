@@ -99,7 +99,7 @@ export default function StudioPage() {
         <AddButton href="/dashboard/studio/add" label="Add Studio" />
       </div>
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5 md:px-0">
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">
