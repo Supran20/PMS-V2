@@ -237,17 +237,40 @@ export default function GuestsPage() {
         )}
       </div>
 
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2  , overflowX:"auto"}}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
           aria-label="guest tabs"
-          className="overflow-auto"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
         >
-          <Tab label="All Guests" className="text-vsx"/>
-          <Tab label="Pending" className="text-vsx"/>
-          <Tab label="Approved" className="text-vsx" />
-          <Tab label="Rejected" className="text-vsx" />
+          <Tab
+            label={
+              <span>
+                <span className="sm:hidden">All</span>
+                <span className="hidden sm:inline">All Guests</span>
+              </span>
+            }
+          />
+          <Tab label={<span>Pending</span>} />
+          <Tab
+            label={
+              <span>
+                <span className="sm:hidden">Approved</span>
+                <span className="hidden sm:inline">Approved</span>
+              </span>
+            }
+          />
+          <Tab
+            label={
+              <span>
+                <span className="sm:hidden">Rejected</span>
+                <span className="hidden sm:inline">Rejected</span>
+              </span>
+            }
+          />
         </Tabs>
       </Box>
 
