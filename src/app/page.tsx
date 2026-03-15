@@ -85,10 +85,10 @@ const LoginPage = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-bg-primary ">
+    <div className="min-h-screen bg-bg-primary w-full flex items-center justify-center md:inline-block">
       <div className="flex items-center justify-center sm:py-16 px-4">
         <div className="w-full lg:w-1/2 flex items-center justify-center">
-          <Card className="w-full max-w-md border border-gray-400 shadow-lg p-4 sm:p-0">
+          <Card className="w-full max-w-md border border-gray-400 shadow-lg p-4 md:p-0">
             <CardHeader className="text-center pb-4">
               <div className="flex items-center justify-center mb-4">
                 <Image src="/rst.png" alt="RST Logo" width={120} height={40} />
