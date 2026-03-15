@@ -57,7 +57,7 @@ export default function AddTagPage() {
     <div className="space-y-6">
       <PageHeader title="Add Tag" backHref="/dashboard/tags" />
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5 md:px-0">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <FormField label="Tag Name" required>

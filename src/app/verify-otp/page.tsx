@@ -110,65 +110,75 @@ const OTPPage = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-      <Card className="w-full max-w-md border border-primary-border shadow-lg p-6">
-        <CardHeader className="text-center">
-          <Image
-            src="/rst.png"
-            alt="Logo"
-            width={120}
-            height={40}
-            className="mx-auto"
-          />
-          <p className="mt-4 text-gray-600">
-            Enter the 6-digit OTP sent to {maskEmail(email)}
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex justify-center">
-              <input
-                type="text"
-                maxLength={6}
-                inputMode="numeric"
-                placeholder="Enter OTP"
-                {...register("otp")}
-                className="w-full text-center border rounded-md text-lg h-12 tracking-[0.5em]"
+    <div className="min-h-screen bg-bg-primary w-full flex items-center justify-center md:inline-block">
+      <div className="flex items-center justify-center sm:py-16 px-4">
+        <div className="w-full lg:w-1/2 flex items-center justify-center">
+          <Card className="w-full max-w-md border border-primary-border shadow-lg p-6  px-4 sm:px-0">
+            <CardHeader className="text-center">
+              <Image
+                src="/rst.png"
+                alt="Logo"
+                width={120}
+                height={40}
+                className="mx-auto"
               />
-            </div>
-
-            {errors.otp?.message && (
-              <p className="text-red-600 text-sm text-center">
-                {errors.otp.message}
+              <p className="mt-4 text-gray-600">
+                Enter the 6-digit OTP sent to {maskEmail(email)}
               </p>
-            )}
+            </CardHeader>
 
-            <Button
-              type="submit"
-              className="w-full bg-blue-800 hover:bg-blue-900 text-white"
-            >
-              Verify OTP
-            </Button>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+                <div className="flex justify-center flex-col ">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    inputMode="numeric"
+                    placeholder="Enter OTP"
+                    {...register("otp")}
+                    className="w-full text-center border rounded-md text-lg h-12 tracking-[0.5em]"
+                  />
+                  {errors.otp?.message && (
+                    <p className="text-red-600 text-sm start mt-1">
+                      {errors.otp.message}
+                    </p>
+                  )}
 
-            <Button
-              type="button"
-              className="w-full bg-blue-800 hover:bg-blue-900 text-white"
-              onClick={handleResend}
-            >
-              Resend OTP
-            </Button>
+                  <Button
+                    type="button"
+                    className="text-sm font-medium italic underline text-gray-600 border-0 flex items-center justify-end mt-1.5 "
+                    onClick={handleResend}
+                  >
+                    Resend OTP
+                  </Button>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-800 hover:bg-blue-900 text-white"
+                >
+                  Verify OTP
+                </Button>
 
-            <Button
-              type="button"
-              className="w-full border border-primary-color text-primary-color rounded"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                {/* <Button
+                  type="button"
+                  className="w-full bg-blue-800 hover:bg-blue-900 text-white"
+                  onClick={handleResend}
+                >
+                  Resend OTP
+                </Button> */}
+
+                <Button
+                  type="button"
+                  className="w-full border border-primary-color text-blue-600 rounded"
+                  onClick={logout}
+                >
+                  Go back 
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

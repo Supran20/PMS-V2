@@ -230,7 +230,7 @@ export default function AddInterviewPage() {
     <div className="space-y-6">
       <PageHeader title="Schedule Interview" backHref="/dashboard/interview" />
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5 md:px-0">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Guest */}

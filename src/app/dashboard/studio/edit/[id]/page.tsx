@@ -94,7 +94,7 @@ export default function EditStudioPage() {
     <div className="space-y-6">
       <PageHeader title="Edit Studio" backHref="/dashboard/studio" />
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5 md:px-0">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <FormField label="Studio Name" required>

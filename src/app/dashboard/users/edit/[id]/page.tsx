@@ -107,7 +107,7 @@ export default function EditUserPage() {
     <div className="space-y-6">
       <PageHeader title="Edit User" backHref="/dashboard/users" />
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none px-5 md:px-0 py-5">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <FormField label="Full Name" required>
