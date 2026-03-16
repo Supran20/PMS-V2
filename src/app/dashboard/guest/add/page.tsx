@@ -24,6 +24,16 @@ import { useAuth } from "@/context/AuthContext";
 import { getTags } from "@/lib/api/tags";
 import { z } from "zod";
 
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+];
+
 export default function AddGuestPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -245,6 +255,16 @@ export default function AddGuestPage() {
                     const file = e.target.files?.[0];
                     if (!file) return;
 
+                    // 🔥 Validate file type
+                    if (!allowedMimeTypes.includes(file.type)) {
+                      toast.error(
+                        "Invalid file type. Only jpeg, png, webp images are allowed.",
+                      );
+                      e.target.value = ""; // Clear the invalid file
+                      setImagePreview(null);
+                      return;
+                    }
+
                     setValue("file", file, { shouldValidate: true });
 
                     const previewUrl = URL.createObjectURL(file);
@@ -252,6 +272,9 @@ export default function AddGuestPage() {
                   }}
                   className="w-80 px-4 py-1 rounded-lg border text-xs border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
                 />
+                <p className="text-xs text-red-500">
+                  Upload only jpg, png or webp image
+                </p>
 
                 {/* 🔥 Image Preview */}
                 {imagePreview && (
