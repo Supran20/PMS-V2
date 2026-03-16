@@ -13,6 +13,7 @@ import {
   getGuests,
   deleteGuest,
   approveGuest,
+  rejectGuest,
   updateGuestBySlug,
   Guest,
   toggleRecordGuest,
@@ -23,6 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { getMediaUrl } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
@@ -48,6 +50,8 @@ export default function GuestsPage() {
   const canAddGuest = hasPermission("guest.create");
   const canEditGuest = hasPermission("guest.update");
   const canDeleteGuest = hasPermission("guest.delete");
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -65,6 +69,10 @@ export default function GuestsPage() {
   useEffect(() => {
     fetchGuests();
   }, []);
+
+  useEffect(() => {
+    if (tabFromUrl === "pending") setTabValue(1);
+  }, [tabFromUrl]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -113,8 +121,8 @@ export default function GuestsPage() {
       await approveGuest(guest.id);
       toast.success("Guest approved successfully");
       fetchGuests();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to approve guest");
+    } catch {
+      toast.error("Failed to approve guest");
     } finally {
       setApproveModalOpen(false);
       setGuestToApprove(null);
@@ -123,7 +131,7 @@ export default function GuestsPage() {
 
   const handleRejectConfirm = async (guest: Guest) => {
     try {
-      await updateGuestBySlug(guest.slug, { rejected: true });
+      await rejectGuest(guest.id);
       toast.success("Guest rejected successfully");
       fetchGuests();
     } catch {
@@ -249,28 +257,13 @@ export default function GuestsPage() {
           <Tab
             label={
               <span>
-                <span className="sm:hidden">All</span>
-                <span className="hidden sm:inline">All Guests</span>
+                <span className="">{`All Guests (${guests.length})`} </span>
               </span>
             }
           />
-          <Tab label={<span>Pending</span>} />
-          <Tab
-            label={
-              <span>
-                <span className="sm:hidden">Approved</span>
-                <span className="hidden sm:inline">Approved</span>
-              </span>
-            }
-          />
-          <Tab
-            label={
-              <span>
-                <span className="sm:hidden">Rejected</span>
-                <span className="hidden sm:inline">Rejected</span>
-              </span>
-            }
-          />
+          <Tab label={`Pending (${pendingGuests.length})`} />
+          <Tab label={`Approved (${approvedGuests.length})`} />
+          <Tab label={`Rejected (${rejectedGuests.length})`} />
         </Tabs>
       </Box>
 
@@ -306,7 +299,7 @@ export default function GuestsPage() {
                   className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
-                  <div className="sm:aspect-square h-50  relative ">
+                  <div className="sm:aspect-square h-50 sm:h-auto  relative ">
                     {guest.profileImage && isImage(guest.profileImage.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -362,7 +355,7 @@ export default function GuestsPage() {
                         </p>
                       </Link>
 
-                      {tabValue === 1 && (
+                      {tabValue === 2 && (
                         <div
                           className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
                             guest.status,

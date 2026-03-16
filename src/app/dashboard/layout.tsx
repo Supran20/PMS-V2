@@ -8,6 +8,7 @@ import { logout } from "@/lib/api/auth";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { getGuests, Guest } from "@/lib/api/guest";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
@@ -51,6 +52,22 @@ export default function DashboardLayout({
   const [interviewMenuOpen, setInterviewMenuOpen] = React.useState(false);
   const mobileDrawerRef = React.useRef<HTMLDivElement | null>(null);
   const [offcanvasOpen, setOffcanvasOpen] = useState(false);
+  const [pendingGuestCount, setPendingGuestCount] = React.useState<number>(0);
+
+  // Fetch pending guests
+  useEffect(() => {
+    const fetchPendingGuests = async () => {
+      try {
+        const data: Guest[] = await getGuests();
+        const pending = data.filter((g) => !g.approved && !g.rejected);
+        setPendingGuestCount(pending.length);
+      } catch (error) {
+        console.error("Failed to fetch pending guests", error);
+      }
+    };
+
+    fetchPendingGuests();
+  }, []);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -78,37 +95,37 @@ export default function DashboardLayout({
   }, [mobileDrawerOpen]);
 
   // Protect route
- useEffect(() => {
-   if (!loading && !user) {
-     router.replace("/");
-   }
- }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
- useEffect(() => {
-   const handleClickOutside = (event: MouseEvent) => {
-     if (
-       userMenuRef.current &&
-       !userMenuRef.current.contains(event.target as Node)
-     ) {
-       setUserMenuOpen(false);
-     }
-   };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
 
-   document.addEventListener("mousedown", handleClickOutside);
-   return () => document.removeEventListener("mousedown", handleClickOutside);
- }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
- if (loading || !user) {
-   return (
-     <div className="flex justify-center items-center h-screen">
-       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-     </div>
-   );
- }
+  if (loading || !user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
- const displayName = user?.full_name || user?.email || "User";
+  const displayName = user?.full_name || user?.email || "User";
 
- const handleLogout = () => logout();
+  const handleLogout = () => logout();
   return (
     <>
       <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -255,6 +272,21 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex items-center gap-4 relative" ref={userMenuRef}>
+              {pendingGuestCount > 0 && (
+                <button
+                  onClick={() => router.push("/dashboard/guest?tab=pending")}
+                  className="relative p-2 rounded-full cursor-pointer bg-red-50 hover:bg-red-100 transition"
+                  title="Pending Guests"
+                >
+                  <Icon
+                    icon="mdi:account-voice"
+                    className="text-xl text-red-600"
+                  />
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    {pendingGuestCount}
+                  </span>
+                </button>
+              )}
               <button
                 onClick={() => setUserMenuOpen((prev) => !prev)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
@@ -268,54 +300,55 @@ export default function DashboardLayout({
                 </span>
                 <Icon icon="mdi:chevron-down" className="text-gray-500" />
               </button>
+              <div>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {hasPermission("user.manage") && (
+                      <Link
+                        href="/dashboard/users"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:account-group" className="text-lg" />
+                        Users
+                      </Link>
+                    )}
 
-              {userMenuOpen && (
-                <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                  {hasPermission("user.manage") && (
                     <Link
-                      href="/dashboard/users"
+                      href="/dashboard/studio"
                       className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      <Icon icon="mdi:account-group" className="text-lg" />
-                      Users
+                      <Icon icon="mdi:microphone" className="text-lg" />
+                      Studio
                     </Link>
-                  )}
 
-                  <Link
-                    href="/dashboard/studio"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <Icon icon="mdi:microphone" className="text-lg" />
-                    Studio
-                  </Link>
+                    <Link
+                      href="/dashboard/media"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Icon icon="mdi:video" className="text-lg" />
+                      Media
+                    </Link>
 
-                  <Link
-                    href="/dashboard/media"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <Icon icon="mdi:video" className="text-lg" />
-                    Media
-                  </Link>
+                    <Link
+                      href="/dashboard/tags"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Icon icon="mdi:tag-multiple" className="text-lg" />
+                      Tags
+                    </Link>
 
-                  <Link
-                    href="/dashboard/tags"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <Icon icon="mdi:tag-multiple" className="text-lg" />
-                    Tags
-                  </Link>
+                    <div className="border-t my-1" />
 
-                  <div className="border-t my-1" />
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <Icon icon="mdi:logout" className="text-lg" />
-                    Logout
-                  </button>
-                </div>
-              )}
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <Icon icon="mdi:logout" className="text-lg" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </header>
 
@@ -330,17 +363,17 @@ export default function DashboardLayout({
             offcanvasOpen ? "-translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="absolute right-4 top-4" >
-            <button onClick={()=>setOffcanvasOpen(false)} className=" rounded-full text-xl  flex items-center justify-center"><Icon icon="uil:multiply"></Icon></button>
+          <div className="absolute right-4 top-4">
+            <button
+              onClick={() => setOffcanvasOpen(false)}
+              className=" rounded-full text-xl  flex items-center justify-center"
+            >
+              <Icon icon="uil:multiply"></Icon>
+            </button>
           </div>
           <div className="p-5 border-b border-gray-200 flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Image
-                src="/rst.png"
-                alt="RST"
-                height={50}
-                width={80}
-              />
+              <Image src="/rst.png" alt="RST" height={50} width={80} />
             </Link>
           </div>
 

@@ -176,6 +176,16 @@ export const approveGuest = async (id: string): Promise<Guest> => {
 
 /**
  * --------------------------------
+ * APPROVE GUEST (Admin Only)
+ * --------------------------------
+ */
+export const rejectGuest = async (id: string): Promise<Guest> => {
+  const response = await api.patch(`/guests/${id}/reject`);
+  return response.data.data;
+};
+
+/**
+ * --------------------------------
  * TOGGLE RECORD
  * --------------------------------
  */

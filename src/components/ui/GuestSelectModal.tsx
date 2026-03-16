@@ -31,7 +31,7 @@ const GuestSelectModal = ({ open, guests, onClose, onSelect }: Props) => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold  text-gray-600">Select Guest</h3>
-          <button onClick={onClose} className=" text-red-500">
+          <button onClick={onClose} className=" text-red-500 cursor-pointer">
             ✕
           </button>
         </div>

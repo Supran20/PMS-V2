@@ -57,7 +57,7 @@ export default function PostEditModal({
         className="bg-white rounded-xl p-6 w-[420px] space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold">Post Editing</h3>
+        <h3 className="text-lg font-semibold">Edited</h3>
 
         <div className="flex flex-col gap-2">
           <label className="text-sm text-gray-700">Google Drive Link</label>
