@@ -99,7 +99,7 @@ export default function TagsPage() {
         <AddButton href="/dashboard/tags/add" label="Add Tag" />
       </div>
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none px-5 md:px-0 py-5">
         <CardContent>
           <div className="mb-4">
             <div className="relative max-w-sm">

@@ -169,7 +169,7 @@ export default function EditGuestPage() {
       {/* Header */}
       <PageHeader title="Edit Guest" backHref="/dashboard/guest" />
 
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5 sm:px-0">
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Full Name */}

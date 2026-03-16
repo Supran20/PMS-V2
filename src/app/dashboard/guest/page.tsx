@@ -250,8 +250,17 @@ export default function GuestsPage() {
           value={tabValue}
           onChange={handleTabChange}
           aria-label="guest tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
         >
-          <Tab label={`All Guests (${guests.length})`} />
+          <Tab
+            label={
+              <span>
+                <span className="">{`All Guests (${guests.length})`} </span>
+              </span>
+            }
+          />
           <Tab label={`Pending (${pendingGuests.length})`} />
           <Tab label={`Approved (${approvedGuests.length})`} />
           <Tab label={`Rejected (${rejectedGuests.length})`} />
@@ -259,7 +268,7 @@ export default function GuestsPage() {
       </Box>
 
       {/* Search */}
-      <Card className="shadow-lg bg-white border-none py-5">
+      <Card className="shadow-lg bg-white border-none py-5 px-5">
         {/* <CardHeader>Guest Management</CardHeader> */}
 
         <CardContent>
@@ -283,14 +292,14 @@ export default function GuestsPage() {
           {filteredGuests.length === 0 ? (
             <p className="text-gray-600 py-12 text-center">No guests found</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1  sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {paginatedGuests.map((guest) => (
                 <div
                   key={guest.id}
                   className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
-                  <div className="aspect-square relative ">
+                  <div className="sm:aspect-square h-50 sm:h-auto  relative ">
                     {guest.profileImage && isImage(guest.profileImage.type) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -308,7 +317,7 @@ export default function GuestsPage() {
                     )}
 
                     {/* Overlay Actions */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       {/* Edit */}
                       {canEditGuest && (
                         <button

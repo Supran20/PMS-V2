@@ -53,7 +53,7 @@ export const CardContent: React.FC<CardContentProps> = ({
   children,
   ...props
 }) => (
-  <div className={cn("px-6 pt-6 pb-0 ", className)} {...props}>
+  <div className={cn("md:px-6 md:pt-6 pb-0 ", className)} {...props}>
     {children}
   </div>
 );
