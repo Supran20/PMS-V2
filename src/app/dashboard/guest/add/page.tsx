@@ -19,7 +19,6 @@ import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
-import { slugify } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { getTags } from "@/lib/api/tags";
 import { z } from "zod";
@@ -61,8 +60,6 @@ export default function AddGuestPage() {
       record: false,
     },
   });
-
-  const fullName = watch("full_name");
 
   useEffect(() => {
     if (authLoading) return;
@@ -145,25 +142,7 @@ export default function AddGuestPage() {
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
-                onBlur={() => {
-                  const currentSlug = watch("slug");
-                  if (!currentSlug && fullName) {
-                    setValue("slug", slugify(fullName));
-                  }
-                }}
               />
-            </FormField>
-
-            {/* Slug */}
-            <FormField label="Slug" required>
-              <FormInput
-                name="slug"
-                control={control}
-                placeholder="e.g. john-doe"
-              />
-              <p className="text-xs text-gray-500">
-                Leave blank and blur Full Name to auto-fill.
-              </p>
             </FormField>
 
             {/* Designation */}
