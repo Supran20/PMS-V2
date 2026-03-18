@@ -81,7 +81,9 @@ const OTPPage = () => {
   /* ================= RESEND OTP ================= */
   const handleResend = async () => {
     try {
+      setLoading(true);
       await resendOTP();
+      setLoading(false);
       toast.success("A new OTP has been sent to your email");
     } catch (err) {
       if (err instanceof AxiosError) {
@@ -122,9 +124,7 @@ const OTPPage = () => {
                 height={40}
                 className="mx-auto"
               />
-              <p className="mt-4 text-gray-600">
-                Enter the 6-digit OTP sent to {maskEmail(email)}
-              </p>
+              <p className="mt-4 text-gray-600">Enter the 6-digit OTP</p>
             </CardHeader>
 
             <CardContent>
@@ -136,7 +136,7 @@ const OTPPage = () => {
                     inputMode="numeric"
                     placeholder="Enter OTP"
                     {...register("otp")}
-                    className="w-full text-center border rounded-md text-lg h-12 tracking-[0.5em]"
+                    className="w-full text-center border rounded-md text-lg h-12"
                   />
                   {errors.otp?.message && (
                     <p className="text-red-600 text-sm start mt-1">
@@ -172,7 +172,7 @@ const OTPPage = () => {
                   className="w-full border border-primary-color text-blue-600 rounded"
                   onClick={logout}
                 >
-                  Go back 
+                  Go back
                 </Button>
               </form>
             </CardContent>

@@ -19,7 +19,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { FormField } from "@/components/ui/FormField";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
-import { slugify, getMediaUrl } from "@/lib/utils";
+import { getMediaUrl } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { getTags } from "@/lib/api/tags";
 
@@ -63,9 +63,6 @@ export default function EditGuestPage() {
     resolver: zodResolver(updateGuestSchema),
   });
 
-  const fullName = watch("full_name");
-  const recordValue = watch("record");
-
   // Redirect if user doesn't have permission
   useEffect(() => {
     if (authLoading) return;
@@ -85,7 +82,6 @@ export default function EditGuestPage() {
         reset({
           full_name: data.full_name,
           designation: data.designation,
-          slug: data.slug,
           bio: data.bio,
           email: data.email,
           phone: data.phone,
@@ -178,25 +174,7 @@ export default function EditGuestPage() {
                 name="full_name"
                 control={control}
                 placeholder="e.g. John Doe"
-                onBlur={() => {
-                  const currentSlug = watch("slug");
-                  if (!currentSlug && fullName) {
-                    setValue("slug", slugify(fullName));
-                  }
-                }}
               />
-            </FormField>
-
-            {/* Slug */}
-            <FormField label="Slug" required>
-              <FormInput<UpdateGuestInput>
-                name="slug"
-                control={control}
-                placeholder="e.g. john-doe"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Leave blank and blur Full Name to auto-fill.
-              </p>
             </FormField>
 
             {/* Designation */}

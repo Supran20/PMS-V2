@@ -319,15 +319,14 @@ export default function GuestsPage() {
                     {/* Overlay Actions */}
                     <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       {/* Edit */}
-                      {canEditGuest && (
-                        <button
-                          onClick={() => handleEditClick(guest)}
-                          className="p-2 rounded-lg bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                          title="Edit"
-                        >
-                          <Icon icon="mdi:pencil" className="text-xl" />
-                        </button>
-                      )}
+
+                      <button
+                        onClick={() => handleEditClick(guest)}
+                        className="p-2 rounded-lg bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
+                        title="Edit"
+                      >
+                        <Icon icon="mdi:pencil" className="text-xl" />
+                      </button>
 
                       {/* Delete */}
                       {canDeleteGuest && (
