@@ -41,8 +41,8 @@ export function ConfirmModal<T>({
 
   const confirmClasses =
     confirmVariant === "danger"
-      ? "bg-red-600 text-white"
-      : "bg-blue-600 text-white";
+      ? "bg-red-600 text-white rounded-md"
+      : "bg-blue-600 text-white rounded-md";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000040]">
@@ -79,4 +79,3 @@ export function ConfirmModal<T>({
     </div>
   );
 }
-

@@ -60,11 +60,16 @@ export const getUserById = async (id: string): Promise<User> => {
 
 /**
  * --------------------------------
- * GET USER BY ID
+ * GET USER BY ROLE
  * --------------------------------
  */
 export const getHostUser = async (): Promise<User[]> => {
   const response = await api.get(`/users/hosts`);
+  return response.data.data;
+};
+
+export const getAdminUser = async (): Promise<User[]> => {
+  const response = await api.get(`/users/admins`);
   return response.data.data;
 };
 
