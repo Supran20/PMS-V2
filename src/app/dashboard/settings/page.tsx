@@ -36,9 +36,6 @@ export default function SettingsPage() {
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [permissionId, setPermissionId] = useState<string>("");
 
-  /**
-   * ✅ DEFINE FIRST
-   */
   const fetchData = async () => {
     const [usersData, permData] = await Promise.all([
       getUsers(),
@@ -65,6 +62,7 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -74,13 +72,20 @@ export default function SettingsPage() {
   }));
 
   const handleUpdate = async () => {
-    if (!permissionId) return;
+    try {
+      if (!permissionId) return;
 
-    const user_ids = selectedUsers.map((u) => u.value);
+      const user_ids = selectedUsers.map((u) => u.value);
 
-    await updatePermissionSetting(permissionId, { user_ids });
+      await updatePermissionSetting(permissionId, { user_ids });
 
-    toast.success("Updated successfully");
+      toast.success("Updated successfully");
+
+      console.log("PermissionId:", permissionId);
+      console.log("Selected Users", user_ids);
+    } catch {
+      toast.error("Error in Updating");
+    }
   };
 
   return (

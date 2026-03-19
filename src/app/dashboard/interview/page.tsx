@@ -70,7 +70,16 @@ export default function InterviewsPage() {
 
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
+  const tabParam = searchParams.get("tab");
   const showTabs = !statusParam;
+
+  useEffect(() => {
+    if (!tabParam) return;
+
+    if (tabParam === "upcoming") setTabValue(1);
+    else if (tabParam === "today") setTabValue(2);
+    else setTabValue(0);
+  }, [tabParam]);
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -168,10 +177,22 @@ export default function InterviewsPage() {
 
   const tabInterviews = useMemo(() => {
     if (statusParam) return interviews;
-    if (tabValue === 0) return interviews;
+
+    if (tabParam === "upcoming") return upcomingInterviews;
+    if (tabParam === "today") return todayInterviews;
+
     if (tabValue === 1) return upcomingInterviews;
-    return todayInterviews;
-  }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
+    if (tabValue === 2) return todayInterviews;
+
+    return interviews;
+  }, [
+    statusParam,
+    tabParam,
+    tabValue,
+    todayInterviews,
+    upcomingInterviews,
+    interviews,
+  ]);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -487,6 +508,9 @@ export default function InterviewsPage() {
             value={tabValue}
             onChange={handleTabChange}
             aria-label="interview tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
             <Tab label={`All Interviews(${interviews.length})`} />
             <Tab label={`Upcoming(${upcomingInterviews.length})`} />

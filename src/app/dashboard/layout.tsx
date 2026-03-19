@@ -12,6 +12,7 @@ import { getGuests, Guest } from "@/lib/api/guest";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
+
   { label: "Scheduled", value: "scheduled" },
   { label: "Recorded", value: "recorded" },
   { label: "Edited", value: "editing" },
