@@ -112,8 +112,9 @@ export default function EditGuestPage() {
           getUsers(),
           getHostUser(),
         ]);
+        const activeUsers = allUsers.filter((u) => u.status === "active");
 
-        setUsers(allUsers);
+        setUsers(activeUsers);
         setHostUsers(hosts);
       } catch {
         toast.error("Failed to load users");

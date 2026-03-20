@@ -87,6 +87,20 @@ export default function UsersPage() {
     setUserToChangePassword(null);
   };
 
+  function StatusBadge({ status }: { status: string }) {
+    const isActive = status?.toLowerCase() === "active";
+
+    return (
+      <span
+        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+          isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+        }`}
+      >
+        {isActive ? "Active" : "Inactive"}
+      </span>
+    );
+  }
+
   const totalPages = Math.ceil(users.length / itemsPerPage);
 
   const paginatedUsers = users.slice(
@@ -134,6 +148,9 @@ export default function UsersPage() {
                       Email
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Role
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">
@@ -151,6 +168,10 @@ export default function UsersPage() {
                         {user.full_name}
                       </td>
                       <td className="py-3 px-4 text-gray-600">{user.email}</td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={user.status} />
+                      </td>
+
                       <td className="py-3 px-4 text-gray-600">
                         {user.roles?.[0]?.role_name}
                       </td>

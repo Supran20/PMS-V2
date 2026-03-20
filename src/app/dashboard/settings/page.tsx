@@ -33,8 +33,13 @@ export default function SettingsPage() {
   const [tab, setTab] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<any[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-  const [permissionId, setPermissionId] = useState<string>("");
+
+  const [guestUsers, setGuestUsers] = useState<any[]>([]);
+  const [guestPermissionId, setGuestPermissionId] = useState<string>("");
+
+  const [interviewUsers, setInterviewUsers] = useState<any[]>([]);
+  const [interviewPermissionId, setInterviewPermissionId] =
+    useState<string>("");
 
   const fetchData = async () => {
     const [usersData, permData] = await Promise.all([
@@ -49,15 +54,32 @@ export default function SettingsPage() {
       (p) => p.permission_type === "guest_approver",
     );
 
+    const interviewPerm = permData.find(
+      (p) => p.permission_type === "interview_cc",
+    );
+
+    //Guest
     if (guestPerm) {
-      setPermissionId(guestPerm.id);
+      setGuestPermissionId(guestPerm.id);
 
       const mapped = guestPerm.users?.map((u: any) => ({
         value: u.id,
         label: u.full_name,
       }));
 
-      setSelectedUsers(mapped || []);
+      setGuestUsers(mapped || []);
+    }
+
+    // Interview CC
+    if (interviewPerm) {
+      setInterviewPermissionId(interviewPerm.id);
+
+      const mapped = interviewPerm.users?.map((u: any) => ({
+        value: u.id,
+        label: u.full_name,
+      }));
+
+      setInterviewUsers(mapped || []);
     }
   };
 
@@ -71,20 +93,37 @@ export default function SettingsPage() {
     label: u.full_name,
   }));
 
-  const handleUpdate = async () => {
+  const handleSaveAll = async () => {
     try {
-      if (!permissionId) return;
+      console.log("Save button clicked");
+      const updates = [];
 
-      const user_ids = selectedUsers.map((u) => u.value);
+      if (guestPermissionId) {
+        const guest_ids = guestUsers.map((u) => u.value);
+        updates.push(
+          updatePermissionSetting(guestPermissionId, {
+            user_ids: guest_ids,
+          }),
+        );
+      }
 
-      await updatePermissionSetting(permissionId, { user_ids });
+      if (interviewPermissionId) {
+        const interview_ids = interviewUsers.map((u) => u.value);
+        updates.push(
+          updatePermissionSetting(interviewPermissionId, {
+            user_ids: interview_ids,
+          }),
+        );
+      }
 
-      toast.success("Updated successfully");
+      await Promise.all(updates);
 
-      console.log("PermissionId:", permissionId);
-      console.log("Selected Users", user_ids);
+      toast.success("Permissions updated");
+
+      console.log("guestPermissionId", guestPermissionId);
+      console.log("interviewPermissionId", interviewPermissionId);
     } catch {
-      toast.error("Error in Updating");
+      toast.error("Error updating permissions");
     }
   };
 
@@ -101,28 +140,45 @@ export default function SettingsPage() {
         </Box>
 
         <TabPanel value={tab} index={0}>
-          <div className="max-w-xl">
-            <h2 className="text-lg font-semibold mb-3">
-              Guest Approver Settings
-            </h2>
+          <div className="flex flex-col gap-5">
+            <div className="max-w-xl">
+              <h2 className="text-lg font-semibold mb-3">
+                Guest Approver Settings
+              </h2>
 
-            <Select
-              closeMenuOnSelect={false}
-              components={animatedComponents}
-              isMulti
-              value={selectedUsers}
-              onChange={(val) => setSelectedUsers(val as any)}
-              options={userOptions}
-            />
+              <Select
+                closeMenuOnSelect={false}
+                components={animatedComponents}
+                isMulti
+                value={guestUsers}
+                onChange={(val) => setGuestUsers(val as any)}
+                options={userOptions}
+              />
+            </div>
+            {/* Interview CC */}
+            <div className="max-w-xl">
+              <h2 className="text-lg font-semibold mb-3">
+                Interview CC Settings
+              </h2>
 
-            <button
-              onClick={handleUpdate}
-              className="mt-4 bg-blue-600 cursor-pointer text-white px-4 py-2 rounded"
-            >
-              Update
-            </button>
+              <Select
+                isMulti
+                components={animatedComponents}
+                value={interviewUsers}
+                onChange={(val) => setInterviewUsers(val as any)}
+                options={userOptions}
+              />
+            </div>
           </div>
         </TabPanel>
+        <div className="mt-6">
+          <button
+            onClick={handleSaveAll}
+            className="bg-blue-600 text-white px-6 py-2 rounded cursor-pointer"
+          >
+            Save
+          </button>
+        </div>
       </Box>
     </div>
   );

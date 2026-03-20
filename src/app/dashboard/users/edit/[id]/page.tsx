@@ -127,24 +127,6 @@ export default function EditUserPage() {
               />
             </FormField>
 
-            <FormField label="New Password (leave blank to keep current)">
-              <FormInput<UpdateUserInput>
-                name="password"
-                control={control}
-                placeholder="Enter new password to change"
-                type="password"
-              />
-            </FormField>
-
-            <FormField label="Re-enter Password" required>
-              <FormInput<UpdateUserInput>
-                name="confirm_password"
-                control={control}
-                placeholder="Re-enter password"
-                type="password"
-              />
-            </FormField>
-
             <FormField label="Status" required>
               <select
                 {...register("status")}
