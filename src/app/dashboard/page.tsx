@@ -10,6 +10,7 @@ import { getGuests, Guest } from "@/lib/api/guest";
 import { getInterviews, Interview } from "@/lib/api/interview";
 import { useRouter } from "next/navigation";
 import { getMediaUrl } from "@/lib/utils";
+import { toast } from "sonner";
 
 /**
  * --------------------------------
@@ -137,6 +138,35 @@ export default function DashboardPage() {
     return filtered.slice(0, 3); // limit 3
   }, [guests, user]);
 
+  const recentApprovedGuests = useMemo(() => {
+    let data = guests.filter((g) => g.approved === true);
+
+    const hasRole = (roles: any[] | undefined, roleName: string) =>
+      roles?.some((r) =>
+        typeof r === "string" ? r === roleName : r.role_name === roleName,
+      );
+
+    const isHost = hasRole(user?.roles, "Host");
+
+    if (isHost) {
+      data = data.filter((g) => g.host_id === user?.id);
+    }
+
+    // latest first
+    data.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+
+    return data.slice(0, 3);
+  }, [guests, user]);
+
+  const isPendingMode = pendingGuests.length > 0;
+
+  const displayGuests = isPendingMode ? pendingGuests : recentApprovedGuests;
+
+  const title = isPendingMode ? "Requested Approval" : "Approved Guests";
+
   /**
    * --------------------------------
    * FILTER UPCOMING INTERVIEWS
@@ -145,7 +175,7 @@ export default function DashboardPage() {
   // Only upcoming interviews (future dates)
   const upcomingInterviewsWidget = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    let data = interviews.filter(
+    let up_interview = interviews.filter(
       (i) => i.interview_date && i.interview_date > today,
     );
 
@@ -158,18 +188,51 @@ export default function DashboardPage() {
     const isHost = hasRole(user?.roles, "Host");
 
     if (isHost) {
-      data = data.filter((i) => i.host_id === user?.id);
+      up_interview = up_interview.filter((i) => i.host_id === user?.id);
     }
 
     // sort by date
-    data.sort(
+    up_interview.sort(
       (a, b) =>
         new Date(a.interview_date).getTime() -
         new Date(b.interview_date).getTime(),
     );
 
-    return data.slice(0, 3); // limit 3
+    return up_interview.slice(0, 3); // limit 3
   }, [interviews, user]);
+
+  const recentNonPublishedInterviews = useMemo(() => {
+    let data = interviews.filter((i) => i.status !== "published");
+
+    const hasRole = (roles: any[] | undefined, roleName: string) =>
+      roles?.some((r) =>
+        typeof r === "string" ? r === roleName : r.role_name === roleName,
+      );
+
+    const isHost = hasRole(user?.roles, "Host");
+
+    if (isHost) {
+      data = data.filter((i) => i.host_id === user?.id);
+    }
+
+    // latest first
+    data.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    return data.slice(0, 3);
+  }, [interviews, user]);
+
+  const isUpcomingMode = upcomingInterviewsWidget.length > 0;
+
+  const displayInterviews = isUpcomingMode
+    ? upcomingInterviewsWidget
+    : recentNonPublishedInterviews;
+
+  const interviewTitle = isUpcomingMode
+    ? "Upcoming Interviews"
+    : "Recent Interviews";
 
   /**
    * --------------------------------
@@ -191,16 +254,89 @@ export default function DashboardPage() {
     return data.slice(0, 3);
   }, [interviews]);
 
+  const recentInterviewsFallback = useMemo(() => {
+    let data = interviews;
+
+    // latest first
+    data.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    return data.slice(0, 3);
+  }, [interviews]);
+
+  const isPublishedMode = publishedInterviewsWidget.length > 0;
+
+  const displayPublished = isPublishedMode
+    ? publishedInterviewsWidget
+    : recentInterviewsFallback;
+
+  const publishedTitle = isPublishedMode
+    ? "Published Interviews"
+    : "Recent Interviews";
+
+  const getYoutubeWatchUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+
+      if (
+        u.hostname.includes("youtube.com") &&
+        u.pathname.includes("/embed/")
+      ) {
+        const id = u.pathname.split("/embed/")[1];
+        return `https://www.youtube.com/watch?v=${id}`;
+      }
+
+      if (u.hostname === "youtu.be") {
+        return `https://www.youtube.com/watch?v=${u.pathname.slice(1)}`;
+      }
+
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
+  const getYoutubeVideoId = (url?: string | null) => {
+    if (!url) return null;
+
+    try {
+      const u = new URL(url);
+
+      if (u.hostname.includes("youtube.com")) {
+        return u.searchParams.get("v");
+      }
+
+      if (u.hostname === "youtu.be") {
+        return u.pathname.slice(1);
+      }
+
+      if (u.pathname.includes("/embed/")) {
+        return u.pathname.split("/embed/")[1];
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleYoutubeClick = (link?: string | null) => {
+    if (!link) {
+      toast.error("No Youtube Link Available");
+      return;
+    }
+    const url = getYoutubeWatchUrl(link);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const handleWidgetClick = () => {
     router.push("/dashboard/guest?tab=pending");
   };
 
   const handleUpcomingWidgetClick = () => {
     router.push("/dashboard/interview?tab=upcoming");
-  };
-
-  const handlePublishedClick = () => {
-    router.push("/dashboard/interview?status=published");
   };
 
   /**
@@ -249,7 +385,7 @@ export default function DashboardPage() {
           <CardHeader>
             <div className="flex justify-between">
               <h3 className="font-semibold">
-                Guest Approval ({pendingGuests.length})
+                {title} ({displayGuests.length})
               </h3>
               <div className="text-2xl">
                 <Icon icon="mdi:account-clock" />
@@ -260,16 +396,15 @@ export default function DashboardPage() {
           <CardContent onClick={handleWidgetClick}>
             {loading ? (
               <p>Loading...</p>
-            ) : pendingGuests.length === 0 ? (
-              <p>No pending guests</p>
+            ) : displayGuests.length === 0 ? (
+              <p>No data available</p>
             ) : (
               <div className="space-y-2">
-                {pendingGuests.slice(0, 5).map((g) => (
+                {displayGuests.map((g) => (
                   <div
                     key={g.id}
                     className="flex items-center justify-between p-2 rounded bg-gray-50 hover:bg-gray-100"
                   >
-                    {/* LEFT */}
                     <div className="flex items-center gap-3">
                       <img
                         src={getMediaUrl(g.profileImage?.path)}
@@ -299,20 +434,22 @@ export default function DashboardPage() {
         <Card className="border-gray-200 cursor-pointer hover:shadow-lg transition">
           <CardHeader>
             <div className="flex justify-between">
-              <h3 className="font-semibold">Upcoming Interviews</h3>
+              <h3 className="font-semibold">
+                {interviewTitle} ({displayInterviews.length})
+              </h3>
               <div className="text-2xl">
                 <Icon icon="material-symbols:event-upcoming-rounded" />
               </div>
             </div>
           </CardHeader>
           <CardContent onClick={handleUpcomingWidgetClick}>
-            {upcomingInterviewsWidget.length === 0 ? (
+            {displayInterviews.length === 0 ? (
               <p className="text-gray-500 text-sm ps-5 pb-3">
-                No upcoming interviews
+                No data available
               </p>
             ) : (
               <div className="space-y-2">
-                {upcomingInterviewsWidget.map((i) => (
+                {displayInterviews.map((i) => (
                   <div
                     key={i.id}
                     className="flex items-start justify-between p-2 rounded bg-gray-50 hover:bg-gray-100"
@@ -324,8 +461,7 @@ export default function DashboardPage() {
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div>
-                        <p className="text-xs text-blue-600 mb-1 text-vxs ">
-                          {" "}
+                        <p className="text-xs text-blue-600 mb-1 text-vxs">
                           {i.interview_date}
                         </p>
 
@@ -333,14 +469,13 @@ export default function DashboardPage() {
                           {i.guest?.full_name ?? "-"}
                         </p>
 
-                        <p className="text-vxs text-gray-500 ">
+                        <p className="text-vxs text-gray-500">
                           {i.host?.full_name ?? "-"}
                         </p>
                       </div>
                     </div>
-                    <div>
-                      <Icon icon="mdi:chevron-right" />
-                    </div>
+
+                    <Icon icon="mdi:chevron-right" />
                   </div>
                 ))}
               </div>
@@ -352,48 +487,73 @@ export default function DashboardPage() {
         <Card className="border-gray-200 cursor-pointer hover:shadow-lg transition">
           <CardHeader>
             <div className="flex justify-between">
-              <h3 className="font-semibold">Published Interviews</h3>
+              <h3 className="font-semibold">
+                {publishedTitle} ({displayPublished.length})
+              </h3>
               <div className="text-2xl">
                 <Icon icon="material-symbols:published-with-changes" />
               </div>
             </div>
           </CardHeader>
-          <CardContent onClick={handlePublishedClick}>
-            {publishedInterviewsWidget.length === 0 ? (
+          <CardContent>
+            {displayPublished.length === 0 ? (
               <p className="text-gray-500 text-sm ps-5 pb-3">
-                No published interviews
+                No data available
               </p>
             ) : (
               <div className="space-y-2">
-                {publishedInterviewsWidget.map((i) => (
-                  <div
-                    key={i.id}
-                    className="flex items-start justify-between p-2 rounded bg-gray-50 hover:bg-gray-100"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={getMediaUrl(i.guest?.profileImage?.path)}
-                        alt={i.guest?.full_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="text-xs text-blue-600 mb-1 text-vxs ">
-                          {" "}
-                          {i.interview_date}
-                        </p>
-                        <p className="text-sm font-bold text-gray-600 mb-1">
-                          {i.guest?.full_name ?? "-"}
-                        </p>
-                        <p className="text-vxs text-gray-500">
-                          {i.host?.full_name ?? "-"}
-                        </p>
+                {displayPublished.map((i) => {
+                  const videoId = getYoutubeVideoId(i.youtube_link);
+
+                  return (
+                    <div
+                      key={i.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleYoutubeClick(i.youtube_link);
+                      }}
+                      className="flex items-start justify-between p-2 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        {videoId ? (
+                          <div className="relative w-[120px] h-[70px]">
+                            <img
+                              src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                              className="w-full h-full object-cover rounded"
+                              alt="thumbnail"
+                            />
+
+                            {/* custom play button */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-red-600 p-2 rounded-full">
+                                <Icon
+                                  icon="mdi:play"
+                                  className="text-white text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-[120px] h-[70px] flex items-center justify-center bg-gray-200 text-xs text-gray-500 rounded">
+                            No Video
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-xs text-blue-600 mb-1 text-vxs">
+                            {i.interview_date}
+                          </p>
+                          <p className="text-sm font-bold text-gray-600 mb-1">
+                            {i.guest?.full_name ?? "-"}
+                          </p>
+                          <p className="text-vxs text-gray-500">
+                            {i.host?.full_name ?? "-"}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <Icon icon="mdi:chevron-right" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
