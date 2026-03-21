@@ -19,6 +19,14 @@ export interface UserPayload {
   role_name?: "Admin" | "Host" | "Staff";
 }
 
+export interface Media {
+  id: string;
+  media_name: string;
+  path: string;
+  type: string;
+  tag_id?: string | null;
+}
+
 export interface User {
   otp_in_sms: boolean;
   otp_in_mail: boolean;
@@ -27,6 +35,7 @@ export interface User {
   email: string;
   status: string;
   profile_image?: string | null;
+  profileImage?: Media | null;
   mobile_number?: string | null;
   enable_otp_login?: boolean;
   roles?: {
@@ -78,8 +87,35 @@ export const getAdminUser = async (): Promise<User[]> => {
  * CREATE USER
  * --------------------------------
  */
-export const createUser = async (payload: UserPayload): Promise<User> => {
-  const response = await api.post("/users", payload);
+// src/lib/api/user.ts
+
+// src/lib/api/user.ts
+
+export const createUser = async (payload: any): Promise<User> => {
+  const formData = new FormData();
+
+  const { confirm_password, file, ...rest } = payload;
+
+  // append normal fields
+  Object.entries(rest).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    formData.append(key, String(value));
+  });
+
+  // append file separately (important)
+  if (file instanceof File) {
+    formData.append("file", file);
+  }
+
+  console.log("FORM DATA:");
+  for (const [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+
+  const response = await api.post("/users", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return response.data.data;
 };
 
@@ -88,11 +124,26 @@ export const createUser = async (payload: UserPayload): Promise<User> => {
  * UPDATE USER
  * --------------------------------
  */
-export const updateUser = async (
-  id: string,
-  payload: Partial<UserPayload>,
-): Promise<User> => {
-  const response = await api.put(`/users/${id}`, payload);
+export const updateUser = async (id: string, payload: any): Promise<User> => {
+  const formData = new FormData();
+
+  const { file, ...rest } = payload;
+
+  // append normal fields
+  Object.entries(rest).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    formData.append(key, String(value));
+  });
+
+  // append file properly
+  if (file instanceof File) {
+    formData.append("file", file);
+  }
+
+  const response = await api.put(`/users/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return response.data.data;
 };
 

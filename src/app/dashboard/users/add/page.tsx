@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { createUser } from "@/lib/api/user";
@@ -16,9 +16,20 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+];
+
 export default function AddUserPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const {
     register,
@@ -40,21 +51,18 @@ export default function AddUserPage() {
 
   const enableOtp = watch("enable_otp_login");
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   const onSubmit = async (data: CreateUserInput) => {
     setSubmitting(true);
     try {
-      await createUser({
-        full_name: data.full_name,
-        email: data.email,
-        password: data.password,
-        status: data.status,
-        role_name: data.role_name,
-        profile_image: data.profile_image,
-        mobile_number: data.mobile_number,
-        enable_otp_login: data.enable_otp_login,
-        otp_in_mail: data.otp_in_mail,
-        otp_in_sms: data.otp_in_sms,
-      });
+      await createUser(data);
       toast.success("User created successfully");
       router.push("/dashboard/users");
     } catch {
@@ -135,6 +143,58 @@ export default function AddUserPage() {
                   {errors.role_name.message}
                 </p>
               )}
+            </FormField>
+
+            {/* Profile Image */}
+            <FormField label="Profile Image" required>
+              <div className="space-y-4">
+                {/* File Upload */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    // 🔥 Validate file type
+                    if (!allowedMimeTypes.includes(file.type)) {
+                      toast.error(
+                        "Invalid file type. Only jpeg, png, webp images are allowed.",
+                      );
+                      e.target.value = ""; // Clear the invalid file
+                      setImagePreview(null);
+                      return;
+                    }
+
+                    setValue("file", file, { shouldValidate: true });
+
+                    const previewUrl = URL.createObjectURL(file);
+                    setImagePreview(previewUrl);
+                  }}
+                  className="w-80 px-4 py-1 rounded-lg border text-xs border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
+                />
+                <p className="text-xs text-red-500">
+                  Upload only jpg, png or webp image
+                </p>
+
+                {/* 🔥 Image Preview */}
+                {imagePreview && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Image Preview
+                    </p>
+
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+
+                <br />
+              </div>
             </FormField>
 
             <div className="flex items-center gap-2">

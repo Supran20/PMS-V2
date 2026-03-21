@@ -16,6 +16,17 @@ import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
+import { getMediaUrl } from "@/lib/utils";
+
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+];
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -23,6 +34,7 @@ export default function EditUserPage() {
   const id = params.id as string;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const {
     register,
@@ -61,6 +73,10 @@ export default function EditUserPage() {
           otp_in_mail: user.otp_in_mail ?? false,
           otp_in_sms: user.otp_in_sms ?? false,
         });
+        if (user.profileImage?.path) {
+          const imageUrl = getMediaUrl(user.profileImage.path);
+          setImagePreview(imageUrl);
+        }
       } catch {
         toast.error("Failed to load user");
         router.push("/dashboard/users");
@@ -83,6 +99,8 @@ export default function EditUserPage() {
         enable_otp_login: data.enable_otp_login,
         otp_in_mail: data.otp_in_mail,
         otp_in_sms: data.otp_in_sms,
+
+        file: data.file,
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
       });
@@ -156,6 +174,57 @@ export default function EditUserPage() {
                   {errors.role_name.message}
                 </p>
               )}
+            </FormField>
+
+            <FormField label="Profile Image" required>
+              <div className="space-y-4">
+                {/* File Upload */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    // 🔥 Validate file type
+                    if (!allowedMimeTypes.includes(file.type)) {
+                      toast.error(
+                        "Invalid file type. Only jpeg, png, webp images are allowed.",
+                      );
+                      e.target.value = ""; // Clear the invalid file
+                      setImagePreview(null);
+                      return;
+                    }
+
+                    setValue("file", file, { shouldValidate: true });
+
+                    const previewUrl = URL.createObjectURL(file);
+                    setImagePreview(previewUrl);
+                  }}
+                  className="w-80 px-4 py-1 rounded-lg border text-xs border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
+                />
+                <p className="text-xs text-red-500">
+                  Upload only jpg, png or webp image
+                </p>
+
+                {/* 🔥 Image Preview */}
+                {imagePreview && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      {imagePreview.startsWith("blob:")
+                        ? "New Image Preview"
+                        : "Current Image"}
+                    </p>
+
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imagePreview}
+                      alt="Profile Preview"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+              </div>
             </FormField>
 
             <div className="flex items-center gap-2">
