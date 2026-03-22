@@ -5,6 +5,7 @@ import { z } from "zod";
  * Base Schema
  * --------------------------------
  */
+
 const baseUserSchema = z.object({
   full_name: z.string().min(3),
   email: z.string().email(),
@@ -13,18 +14,15 @@ const baseUserSchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
 
   mobile_number: z.string().optional(),
-  enable_otp_login: z.coerce.boolean().optional(),
-  otp_in_mail: z.coerce.boolean().optional(),
-  otp_in_sms: z.coerce.boolean().optional(),
+
+  enable_otp_login: z.boolean().optional(),
+  otp_in_mail: z.boolean().optional(),
+  otp_in_sms: z.boolean().optional(),
+
   role_name: z.enum(["Admin", "Host", "Staff"]),
   file: z.any().optional(),
 });
 
-/**
- * --------------------------------
- * Create Schema
- * --------------------------------
- */
 export const createUserSchema = baseUserSchema
   .refine((data) => data.password === data.confirm_password, {
     message: "Passwords do not match",
@@ -39,13 +37,12 @@ export const createUserSchema = baseUserSchema
       );
     },
     {
-      message: "Select exactly one OTP method (Email or SMS)",
+      message: "Select exactly one OTP method",
       path: ["otp_in_mail"],
     },
   );
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
-
 /**
  * --------------------------------
  * Update Schema
@@ -60,9 +57,9 @@ export const updateUserSchema = z
     status: z.enum(["active", "inactive"]).optional(),
 
     mobile_number: z.string().optional(),
-    enable_otp_login: z.coerce.boolean().optional(),
-    otp_in_mail: z.coerce.boolean().optional(),
-    otp_in_sms: z.coerce.boolean().optional(),
+    enable_otp_login: z.boolean().optional(),
+    otp_in_mail: z.boolean().optional(),
+    otp_in_sms: z.boolean().optional(),
     role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
     file: z.any().optional(),
   })

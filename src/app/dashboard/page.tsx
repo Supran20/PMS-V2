@@ -192,11 +192,12 @@ export default function DashboardPage() {
     }
 
     // sort by date
-    up_interview.sort(
-      (a, b) =>
-        new Date(a.interview_date).getTime() -
-        new Date(b.interview_date).getTime(),
-    );
+    up_interview.sort((a, b) => {
+      const dateA = a.interview_date ? new Date(a.interview_date).getTime() : 0;
+      const dateB = b.interview_date ? new Date(b.interview_date).getTime() : 0;
+
+      return dateA - dateB;
+    });
 
     return up_interview.slice(0, 3); // limit 3
   }, [interviews, user]);
@@ -245,11 +246,12 @@ export default function DashboardPage() {
     let data = interviews.filter((i) => i.status === "published");
 
     // sort by date descending
-    data.sort(
-      (a, b) =>
-        new Date(b.interview_date).getTime() -
-        new Date(a.interview_date).getTime(),
-    );
+    data.sort((a, b) => {
+      const dateA = a.interview_date ? new Date(a.interview_date).getTime() : 0;
+      const dateB = b.interview_date ? new Date(b.interview_date).getTime() : 0;
+
+      return dateB - dateA;
+    });
 
     return data.slice(0, 3);
   }, [interviews]);

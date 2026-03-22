@@ -15,6 +15,7 @@ import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
+import { z } from "zod";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -48,7 +49,6 @@ export default function AddUserPage() {
       otp_in_sms: false,
     },
   });
-
   const enableOtp = watch("enable_otp_login");
 
   useEffect(() => {
