@@ -345,13 +345,15 @@ export default function DashboardLayout({
                       Tags
                     </Link>
 
-                    <Link
-                      href="/dashboard/settings"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:cog" className="text-lg" />
-                      Settings
-                    </Link>
+                    {hasPermission("user.manage") && (
+                      <Link
+                        href="/dashboard/settings"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:cog" className="text-lg" />
+                        Settings
+                      </Link>
+                    )}
 
                     <div className="border-t my-1" />
 

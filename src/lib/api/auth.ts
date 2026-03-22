@@ -10,13 +10,13 @@ export const login = async (data: LoginData) => {
   return res.data;
 };
 
-export const verifyOTP = async (otp: string) => {
+export const verifyOTP = async (otp: string, rememberMe?: boolean) => {
   const temp_token = localStorage.getItem("temp_token");
   if (!temp_token) throw new Error("Session expired. Please login again.");
 
   const res = await api.post(
     "/auth/verify-otp",
-    { otp },
+    { otp, rememberMe },
     {
       headers: {
         Authorization: `Bearer ${temp_token}`,

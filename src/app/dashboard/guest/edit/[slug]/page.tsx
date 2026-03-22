@@ -67,10 +67,10 @@ export default function EditGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!hasPermission("guest.update")) {
-      router.replace("/dashboard/guest");
-      return;
-    }
+    // if (!hasPermission("guest.update")) {
+    //   router.replace("/dashboard/guest");
+    //   return;
+    // }
 
     // Only fetch data if permission is ok
     const fetchGuest = async () => {
