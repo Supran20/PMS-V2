@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/api/auth";
 import { Icon } from "@iconify/react";
-import { cn } from "@/lib/utils";
+import { cn, getMediaUrl, getInitials } from "@/lib/utils";
 import Image from "next/image";
 import { getGuests, Guest } from "@/lib/api/guest";
 
@@ -292,10 +292,17 @@ export default function DashboardLayout({
                 onClick={() => setUserMenuOpen((prev) => !prev)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
               >
-                <Icon
-                  icon="mdi:account-circle"
-                  className="text-2xl text-gray-600"
-                />
+                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 text-xs font-semibold text-gray-600">
+                  {user.profileImage?.path ? (
+                    <img
+                      src={getMediaUrl(user.profileImage.path)}
+                      alt={user.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    getInitials(user.full_name)
+                  )}
+                </div>
                 <span className="text-sm font-medium text-gray-800">
                   {displayName}
                 </span>

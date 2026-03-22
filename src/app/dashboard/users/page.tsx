@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getUsers, deleteUser, User } from "@/lib/api/user";
+import { getMediaUrl, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
@@ -164,7 +165,20 @@ export default function UsersPage() {
                       key={user.id}
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
-                      <td className="py-3 px-4 text-gray-900">
+                      <td className="py-3 px-4 text-gray-900 flex items-center gap-2">
+                        {/* User Profile Image */}
+                        {user.profileImage?.path ? (
+                          <img
+                            src={getMediaUrl(user.profileImage.path)}
+                            alt={user.full_name}
+                            className="w-8 h-8 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
+                            {getInitials(user.full_name)}
+                          </div>
+                        )}
+
                         {user.full_name}
                       </td>
                       <td className="py-3 px-4 text-gray-600">{user.email}</td>

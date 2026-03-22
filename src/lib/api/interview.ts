@@ -77,6 +77,13 @@ export interface Interview {
     id: string;
     full_name: string;
     email: string;
+
+    profileImage?: {
+      id: string;
+      path: string;
+      media_name?: string;
+      type?: string;
+    } | null;
   };
 
   studio?: {

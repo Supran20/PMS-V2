@@ -28,3 +28,19 @@ export function slugify(value: string): string {
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-");
 }
+
+export function getInitials(fullName: string): string {
+  if (!fullName) return "?";
+
+  const parts = fullName.trim().split(" ");
+
+  if (parts.length === 1) {
+    const name = parts[0];
+    return (name[0] + name[name.length - 1]).toUpperCase();
+  }
+
+  const first = parts[0][0];
+  const last = parts[parts.length - 1][0];
+
+  return (first + last).toUpperCase();
+}

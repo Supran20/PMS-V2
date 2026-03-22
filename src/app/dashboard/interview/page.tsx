@@ -13,6 +13,7 @@ import FilterInterviewModal from "@/components/ui/FilterInterviewModal";
 import PostponeModal from "@/components/ui/PostPoneModal";
 import PublishModal from "@/components/ui/PublishModal";
 import PostEditModal from "@/components/ui/PostEditModal";
+import { getInitials } from "@/lib/utils";
 
 import { getMediaUrl } from "@/lib/utils";
 
@@ -443,6 +444,8 @@ export default function InterviewsPage() {
     }
   };
 
+  // fallback profile image
+
   const handlePublishSubmit = async (id: string, youtube_link: string) => {
     try {
       await updateInterview(id, {
@@ -607,7 +610,7 @@ export default function InterviewsPage() {
                                   />
                                 ) : (
                                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
-                                    {interview.guest.full_name.charAt(0)}
+                                    {getInitials(interview.guest.full_name)}
                                   </div>
                                 )}
 
@@ -618,8 +621,30 @@ export default function InterviewsPage() {
                               "-"
                             )}
                           </div>
-                          <div className=" text-vxs text-center col-span-2  text-gray-600">
-                            {interview.host?.full_name ?? "-"}
+
+                          {/* Host Profile Image */}
+                          <div className="text-vxs flex items-center justify-left col-span-2 text-gray-600">
+                            {interview.host ? (
+                              <div className="flex items-center gap-2">
+                                {interview.host.profileImage?.path ? (
+                                  <img
+                                    src={getMediaUrl(
+                                      interview.host.profileImage.path,
+                                    )}
+                                    alt={interview.host.full_name}
+                                    className="w-8 h-8 rounded-full object-cover border"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
+                                    {getInitials(interview.host.full_name)}
+                                  </div>
+                                )}
+
+                                <span>{interview.host.full_name}</span>
+                              </div>
+                            ) : (
+                              "-"
+                            )}
                           </div>
                           <div className=" text-vxs col-span-1 text-gray-600 text-center">
                             {" "}
