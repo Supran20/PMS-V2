@@ -50,6 +50,8 @@ export default function EditUserPage() {
       enable_otp_login: false,
       otp_in_mail: false,
       otp_in_sms: false,
+      status: "active",
+      role_name: "Staff",
     },
   });
 
