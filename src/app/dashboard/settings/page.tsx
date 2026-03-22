@@ -12,6 +12,7 @@ import Box from "@mui/material/Box";
 import {
   getPermissionSettings,
   updatePermissionSetting,
+  createPermissionSetting,
 } from "@/lib/api/permissionSettings";
 import { getUsers, getAdminUser, User } from "@/lib/api/user";
 
@@ -41,6 +42,9 @@ export default function SettingsPage() {
   const [interviewPermissionId, setInterviewPermissionId] =
     useState<string>("");
 
+  const settingsId =
+    permissions[0]?.settings_id ?? "fde46d48-aff0-433e-8f46-354037df7403";
+
   const fetchData = async () => {
     const [usersData, permData] = await Promise.all([
       getUsers(),
@@ -57,6 +61,8 @@ export default function SettingsPage() {
     const interviewPerm = permData.find(
       (p) => p.permission_type === "interview_cc",
     );
+
+    console.log("Permission data from API:", permData);
 
     //Guest
     if (guestPerm) {
@@ -96,21 +102,40 @@ export default function SettingsPage() {
   const handleSaveAll = async () => {
     try {
       console.log("Save button clicked");
+
       const updates = [];
 
+      // Guest
+      const guest_ids = guestUsers.map((u) => u.value);
       if (guestPermissionId) {
-        const guest_ids = guestUsers.map((u) => u.value);
         updates.push(
-          updatePermissionSetting(guestPermissionId, {
+          updatePermissionSetting(guestPermissionId, { user_ids: guest_ids }),
+        );
+      } else {
+        // create new record if not exists
+        updates.push(
+          createPermissionSetting({
+            settings_id: settingsId,
+            permission_type: "guest_approver",
             user_ids: guest_ids,
           }),
         );
       }
 
+      // Interview
+      const interview_ids = interviewUsers.map((u) => u.value);
       if (interviewPermissionId) {
-        const interview_ids = interviewUsers.map((u) => u.value);
         updates.push(
           updatePermissionSetting(interviewPermissionId, {
+            user_ids: interview_ids,
+          }),
+        );
+      } else {
+        // create new record if not exists
+        updates.push(
+          createPermissionSetting({
+            settings_id: settingsId,
+            permission_type: "interview_cc",
             user_ids: interview_ids,
           }),
         );
@@ -119,10 +144,8 @@ export default function SettingsPage() {
       await Promise.all(updates);
 
       toast.success("Permissions updated");
-
-      console.log("guestPermissionId", guestPermissionId);
-      console.log("interviewPermissionId", interviewPermissionId);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Error updating permissions");
     }
   };
