@@ -12,13 +12,15 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { otpSchema, OTPFormValues } from "@/lib/validations/auth.validation";
 
 /* ================= VALIDATION ================= */
-const otpSchema = z.object({
-  otp: z.string().regex(/^\d{6}$/, "OTP must be a 6-digit number"),
-});
+// const otpSchema = z.object({
+//   otp: z.string().regex(/^\d{6}$/, "OTP must be a 6-digit number"),
+//   rememberMe: z.boolean().optional(),
+// });
 
-type OTPFormValues = z.infer<typeof otpSchema>;
+// type OTPFormValues = z.infer<typeof otpSchema>;
 
 const OTPPage = () => {
   const router = useRouter();
@@ -56,7 +58,7 @@ const OTPPage = () => {
     const otpCode = data.otp;
 
     try {
-      const res = await verifyOTP(otpCode);
+      const res = await verifyOTP(otpCode, data.rememberMe);
 
       localStorage.setItem("accessToken", res.accessToken);
       localStorage.setItem("refreshToken", res.refreshToken);
@@ -144,13 +146,19 @@ const OTPPage = () => {
                     </p>
                   )}
 
-                  <Button
-                    type="button"
-                    className="text-sm font-medium italic underline text-gray-600 border-0 flex items-center justify-end mt-1.5 "
-                    onClick={handleResend}
-                  >
-                    Resend OTP
-                  </Button>
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-1.5">
+                      <input type="checkbox" {...register("rememberMe")} />
+                      <span>Remember me</span>
+                    </div>
+                    <Button
+                      type="button"
+                      className="text-sm font-medium italic underline text-gray-600 border-0 flex items-center justify-end mt-1.5 "
+                      onClick={handleResend}
+                    >
+                      Resend OTP
+                    </Button>
+                  </div>
                 </div>
                 <Button
                   type="submit"

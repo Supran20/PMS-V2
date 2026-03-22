@@ -75,8 +75,8 @@ export default function AddGuestPage() {
           getUsers(), // for referred_by
           getHostUser(), // for host dropdown
         ]);
-
-        setUsers(allUsers);
+        const activeUsers = allUsers.filter((u) => u.status === "active");
+        setUsers(activeUsers);
         setHostUsers(hosts);
       } catch {
         toast.error("Failed to load users");

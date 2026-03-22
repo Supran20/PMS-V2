@@ -13,14 +13,18 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { useAuth } from "@/context/AuthContext";
+import {
+  loginSchema,
+  LoginFormValues,
+} from "@/lib/validations/auth.validation";
 
 /* ================= VALIDATION SCHEMA ================= */
-const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+// const loginSchema = z.object({
+//   email: z.string().min(1, "Email is required").email("Invalid email address"),
+//   password: z.string().min(6, "Password must be at least 6 characters"),
+// });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+// type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const router = useRouter();

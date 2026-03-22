@@ -11,12 +11,13 @@ const baseUserSchema = z.object({
   password: z.string().min(8),
   confirm_password: z.string().min(8),
   status: z.enum(["active", "inactive"]).optional(),
-  profile_image: z.string().url().optional(),
+
   mobile_number: z.string().optional(),
-  enable_otp_login: z.boolean().optional(),
-  otp_in_mail: z.boolean().optional(),
-  otp_in_sms: z.boolean().optional(),
+  enable_otp_login: z.coerce.boolean().optional(),
+  otp_in_mail: z.coerce.boolean().optional(),
+  otp_in_sms: z.coerce.boolean().optional(),
   role_name: z.enum(["Admin", "Host", "Staff"]),
+  file: z.any().optional(),
 });
 
 /**
@@ -57,12 +58,13 @@ export const updateUserSchema = z
     password: z.string().min(8).optional(),
     confirm_password: z.string().optional(),
     status: z.enum(["active", "inactive"]).optional(),
-    profile_image: z.string().url().optional(),
+
     mobile_number: z.string().optional(),
-    enable_otp_login: z.boolean().optional(),
-    otp_in_mail: z.boolean().optional(),
-    otp_in_sms: z.boolean().optional(),
+    enable_otp_login: z.coerce.boolean().optional(),
+    otp_in_mail: z.coerce.boolean().optional(),
+    otp_in_sms: z.coerce.boolean().optional(),
     role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
+    file: z.any().optional(),
   })
   .refine(
     (data) => {

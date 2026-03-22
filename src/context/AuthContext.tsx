@@ -3,6 +3,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getProfile } from "@/lib/api/auth";
 
+export interface Media {
+  id: string;
+  media_name: string;
+  path: string;
+  type: string;
+  tag_id?: string | null;
+}
+
 interface User {
   full_name: string;
   id: string;
@@ -10,6 +18,7 @@ interface User {
   name?: string;
   roles: string[];
   permissions: string[];
+  profileImage?: Media | null;
 }
 
 interface AuthContextType {

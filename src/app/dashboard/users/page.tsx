@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { Icon } from "@iconify/react";
 import { getUsers, deleteUser, User } from "@/lib/api/user";
+import { getMediaUrl, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
@@ -87,6 +88,20 @@ export default function UsersPage() {
     setUserToChangePassword(null);
   };
 
+  function StatusBadge({ status }: { status: string }) {
+    const isActive = status?.toLowerCase() === "active";
+
+    return (
+      <span
+        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+          isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+        }`}
+      >
+        {isActive ? "Active" : "Inactive"}
+      </span>
+    );
+  }
+
   const totalPages = Math.ceil(users.length / itemsPerPage);
 
   const paginatedUsers = users.slice(
@@ -134,6 +149,9 @@ export default function UsersPage() {
                       Email
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
                       Role
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">
@@ -147,10 +165,27 @@ export default function UsersPage() {
                       key={user.id}
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
-                      <td className="py-3 px-4 text-gray-900">
+                      <td className="py-3 px-4 text-gray-900 flex items-center gap-2">
+                        {/* User Profile Image */}
+                        {user.profileImage?.path ? (
+                          <img
+                            src={getMediaUrl(user.profileImage.path)}
+                            alt={user.full_name}
+                            className="w-8 h-8 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
+                            {getInitials(user.full_name)}
+                          </div>
+                        )}
+
                         {user.full_name}
                       </td>
                       <td className="py-3 px-4 text-gray-600">{user.email}</td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={user.status} />
+                      </td>
+
                       <td className="py-3 px-4 text-gray-600">
                         {user.roles?.[0]?.role_name}
                       </td>

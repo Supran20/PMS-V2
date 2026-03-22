@@ -67,10 +67,10 @@ export default function EditGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!hasPermission("guest.update")) {
-      router.replace("/dashboard/guest");
-      return;
-    }
+    // if (!hasPermission("guest.update")) {
+    //   router.replace("/dashboard/guest");
+    //   return;
+    // }
 
     // Only fetch data if permission is ok
     const fetchGuest = async () => {
@@ -112,8 +112,9 @@ export default function EditGuestPage() {
           getUsers(),
           getHostUser(),
         ]);
+        const activeUsers = allUsers.filter((u) => u.status === "active");
 
-        setUsers(allUsers);
+        setUsers(activeUsers);
         setHostUsers(hosts);
       } catch {
         toast.error("Failed to load users");

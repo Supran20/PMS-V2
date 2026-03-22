@@ -16,9 +16,9 @@ import {
   rejectGuest,
   updateGuestBySlug,
   Guest,
-  toggleRecordGuest,
   updateGuestStatus,
 } from "@/lib/api/guest";
+import { getPermissionSettings } from "@/lib/api/permissionSettings";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
@@ -43,15 +43,22 @@ export default function GuestsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [guestToReject, setGuestToReject] = useState<Guest | null>(null);
+  const [guestApprovers, setGuestApprovers] = useState<string[]>([]);
 
   const { hasPermission } = useAuth();
-  const canApproveGuest = hasPermission("guest.auto_approve");
+  // const canApproveGuest = hasPermission("guest.auto_approve");
 
   const canAddGuest = hasPermission("guest.create");
   const canEditGuest = hasPermission("guest.update");
   const canDeleteGuest = hasPermission("guest.delete");
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
+  const { user } = useAuth();
+
+  const canApproveGuest = useMemo(() => {
+    if (!user) return false;
+    return guestApprovers.includes(user.id);
+  }, [user, guestApprovers]);
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -73,6 +80,24 @@ export default function GuestsPage() {
   useEffect(() => {
     if (tabFromUrl === "pending") setTabValue(1);
   }, [tabFromUrl]);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const data = await getPermissionSettings();
+
+        const approver = data.find(
+          (p) => p.permission_type === "guest_approver",
+        );
+
+        setGuestApprovers(approver?.user_ids || []);
+      } catch (err) {
+        console.error("Failed to fetch permissions", err);
+      }
+    };
+
+    fetchPermissions();
+  }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -420,13 +445,22 @@ export default function GuestsPage() {
                         >
                           <Icon icon="mdi:close-circle" className="text-lg" />
                         </div>
-                      ) : canApproveGuest ? (
+                      ) : (
                         <>
                           {/* Approve Button */}
                           <button
+                            disabled={!canApproveGuest}
                             onClick={() => handleApproveClick(guest)}
-                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-green-500 transition-colors"
-                            title="Approve Guest"
+                            className={`p-2 rounded-lg transition-colors ${
+                              canApproveGuest
+                                ? "bg-gray-100 text-gray-600 hover:text-green-500"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            }`}
+                            title={
+                              canApproveGuest
+                                ? "Approve Guest"
+                                : "You are not allowed to approve"
+                            }
                           >
                             <Icon
                               icon="mdi:check-circle-outline"
@@ -436,9 +470,18 @@ export default function GuestsPage() {
 
                           {/* Reject Button */}
                           <button
+                            disabled={!canApproveGuest}
                             onClick={() => handleRejectClick(guest)}
-                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:text-red-500 transition-colors"
-                            title="Reject Guest"
+                            className={`p-2 rounded-lg transition-colors ${
+                              canApproveGuest
+                                ? "bg-gray-100 text-gray-600 hover:text-red-500"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            }`}
+                            title={
+                              canApproveGuest
+                                ? "Reject Guest"
+                                : "You are not allowed to reject"
+                            }
                           >
                             <Icon
                               icon="mdi:close-circle-outline"
@@ -446,16 +489,6 @@ export default function GuestsPage() {
                             />
                           </button>
                         </>
-                      ) : (
-                        <div
-                          className="p-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
-                          title="Not approved"
-                        >
-                          <Icon
-                            icon="mdi:check-circle-outline"
-                            className="text-lg"
-                          />
-                        </div>
                       )}
                     </div>
                   </div>
