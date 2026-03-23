@@ -14,6 +14,7 @@ import {
   updatePermissionSetting,
   createPermissionSetting,
 } from "@/lib/api/permissionSettings";
+import { getSettingsByType } from "@/lib/api/settings";
 import { getUsers, getAdminUser, User } from "@/lib/api/user";
 
 const animatedComponents = makeAnimated();
@@ -41,18 +42,20 @@ export default function SettingsPage() {
   const [interviewUsers, setInterviewUsers] = useState<any[]>([]);
   const [interviewPermissionId, setInterviewPermissionId] =
     useState<string>("");
-
-  const settingsId =
-    permissions[0]?.settings_id ?? "fde46d48-aff0-433e-8f46-354037df7403";
+  const [settingsId, setSettingsId] = useState<string>("");
 
   const fetchData = async () => {
-    const [usersData, permData] = await Promise.all([
+    const [usersData, permData, settingsData] = await Promise.all([
       getUsers(),
       getPermissionSettings(),
+      getSettingsByType("permission_settings"), // 🔥 new
     ]);
 
     setUsers(usersData);
     setPermissions(permData);
+
+    // ✅ set dynamic settingsId
+    setSettingsId(settingsData.id);
 
     const guestPerm = permData.find(
       (p) => p.permission_type === "guest_approver",
@@ -62,9 +65,7 @@ export default function SettingsPage() {
       (p) => p.permission_type === "interview_cc",
     );
 
-    console.log("Permission data from API:", permData);
-
-    //Guest
+    // Guest
     if (guestPerm) {
       setGuestPermissionId(guestPerm.id);
 
@@ -76,7 +77,7 @@ export default function SettingsPage() {
       setGuestUsers(mapped || []);
     }
 
-    // Interview CC
+    // Interview
     if (interviewPerm) {
       setInterviewPermissionId(interviewPerm.id);
 
@@ -98,6 +99,11 @@ export default function SettingsPage() {
     value: u.id,
     label: u.full_name,
   }));
+
+  if (!settingsId) {
+    toast.error("Settings not loaded");
+    return;
+  }
 
   const handleSaveAll = async () => {
     try {
