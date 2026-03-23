@@ -114,10 +114,9 @@ const OTPPage = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-bg-primary w-full flex items-center justify-center md:inline-block">
-      <div className="flex items-center justify-center sm:py-16 px-4">
-        <div className="w-full lg:w-1/2 flex items-center justify-center">
-          <Card className="w-full max-w-md border border-primary-border shadow-lg p-6  px-4 sm:px-0">
+    <div className="min-h-screen bg-bg-primary w-full flex items-center justify-center">
+      <div className="flex items-center justify-center ">
+          <Card className=" border border-primary-border shadow-lg py-4 w-sm">
             <CardHeader className="text-center">
               <Image
                 src="/rst.png"
@@ -185,7 +184,6 @@ const OTPPage = () => {
               </form>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
