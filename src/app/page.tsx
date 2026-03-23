@@ -46,9 +46,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      console.log("Sending login request", data);
       const res = await login(data);
-      console.log("Login response", res);
 
       if (res.temp_token) {
         localStorage.setItem("temp_token", res.temp_token);
