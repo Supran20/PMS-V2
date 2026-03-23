@@ -41,10 +41,10 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   children,
   ...props
 }) => (
-  <div className={cn("p-6 pb-4", className)} {...props}>
+  <div className={cn("p-6 pb-4 ", className)} {...props}>
     {children}
   </div>
-);
+);  
 
 interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -53,7 +53,7 @@ export const CardContent: React.FC<CardContentProps> = ({
   children,
   ...props
 }) => (
-  <div className={cn("md:px-6 md:pt-6 pb-0 ", className)} {...props}>
+  <div className={cn("md:px-6 px-4 md:pt-6 pb-4 ", className)} {...props}>
     {children}
   </div>
 );

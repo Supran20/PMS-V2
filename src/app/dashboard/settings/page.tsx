@@ -14,7 +14,7 @@ import {
   updatePermissionSetting,
   createPermissionSetting,
 } from "@/lib/api/permissionSettings";
-import { getSettingsByType } from "@/lib/api/settings";
+import { getSettingsByType, getSettings } from "@/lib/api/settings";
 import { getUsers, getAdminUser, User } from "@/lib/api/user";
 
 const animatedComponents = makeAnimated();
@@ -43,50 +43,53 @@ export default function SettingsPage() {
   const [interviewPermissionId, setInterviewPermissionId] =
     useState<string>("");
   const [settingsId, setSettingsId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    const [usersData, permData, settingsData] = await Promise.all([
-      getUsers(),
-      getPermissionSettings(),
-      getSettingsByType("permission_settings"), // 🔥 new
-    ]);
+    try {
+      const [usersData, permData, settingsData] = await Promise.all([
+        getUsers(),
+        getPermissionSettings(),
+        getSettingsByType("permission_settings"),
+        console.log(getSettings()),
+      ]);
 
-    setUsers(usersData);
-    setPermissions(permData);
+      setUsers(usersData);
+      setPermissions(permData);
+      setSettingsId(settingsData.id);
 
-    // ✅ set dynamic settingsId
-    setSettingsId(settingsData.id);
+      const guestPerm = permData.find(
+        (p) => p.permission_type === "guest_approver",
+      );
 
-    const guestPerm = permData.find(
-      (p) => p.permission_type === "guest_approver",
-    );
+      const interviewPerm = permData.find(
+        (p) => p.permission_type === "interview_cc",
+      );
 
-    const interviewPerm = permData.find(
-      (p) => p.permission_type === "interview_cc",
-    );
+      if (guestPerm) {
+        setGuestPermissionId(guestPerm.id);
+        setGuestUsers(
+          guestPerm.users?.map((u: any) => ({
+            value: u.id,
+            label: u.full_name,
+          })) || [],
+        );
+      }
 
-    // Guest
-    if (guestPerm) {
-      setGuestPermissionId(guestPerm.id);
-
-      const mapped = guestPerm.users?.map((u: any) => ({
-        value: u.id,
-        label: u.full_name,
-      }));
-
-      setGuestUsers(mapped || []);
-    }
-
-    // Interview
-    if (interviewPerm) {
-      setInterviewPermissionId(interviewPerm.id);
-
-      const mapped = interviewPerm.users?.map((u: any) => ({
-        value: u.id,
-        label: u.full_name,
-      }));
-
-      setInterviewUsers(mapped || []);
+      if (interviewPerm) {
+        setInterviewPermissionId(interviewPerm.id);
+        setInterviewUsers(
+          interviewPerm.users?.map((u: any) => ({
+            value: u.id,
+            label: u.full_name,
+          })) || [],
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load settings");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,13 +103,12 @@ export default function SettingsPage() {
     label: u.full_name,
   }));
 
-  if (!settingsId) {
-    toast.error("Settings not loaded");
-    return;
-  }
-
   const handleSaveAll = async () => {
     try {
+      if (!settingsId) {
+        toast.error("Settings not initialized");
+        return;
+      }
       console.log("Save button clicked");
 
       const updates = [];
@@ -155,6 +157,15 @@ export default function SettingsPage() {
       toast.error("Error updating permissions");
     }
   };
+
+  /* ================= LOADING ================= */
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -60,6 +60,8 @@ export default function GuestViewPage() {
     description: "",
   });
   const canAddInterview = hasPermission("interview.create");
+  const canSchedule = canAddInterview && guest?.approved && !guest?.rejected;
+  const isDisabled = !canSchedule;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -253,6 +255,14 @@ export default function GuestViewPage() {
           <AddButton
             href={`/dashboard/interview/add?guest_id=${guest.id}`}
             label="Schedule Interview"
+            disabled={isDisabled}
+            onClick={(e) => {
+              if (isDisabled) {
+                e.preventDefault();
+                e.stopPropagation(); // 🔥 VERY IMPORTANT
+                toast.error("Guest must be approved and not rejected");
+              }
+            }}
           />
         )}
       </div>
