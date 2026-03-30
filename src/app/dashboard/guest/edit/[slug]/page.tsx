@@ -6,7 +6,12 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@iconify/react";
-import { getGuestBySlug, updateGuestBySlug, Guest } from "@/lib/api/guest";
+import {
+  getGuestBySlug,
+  updateGuestBySlug,
+  deleteGuest,
+  Guest,
+} from "@/lib/api/guest";
 import {
   updateGuestSchema,
   UpdateGuestInput,
@@ -22,6 +27,7 @@ import { FormActions } from "@/components/ui/FormActions";
 import { getMediaUrl } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { getTags } from "@/lib/api/tags";
+import { DeleteModal } from "@/components/ui/DeleteModal";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -46,10 +52,13 @@ export default function EditGuestPage() {
   const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hostusers, setHostUsers] = useState<User[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
 
   const { hasPermission, loading: authLoading } = useAuth();
   const { user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
+  const canDeleteGuest = hasPermission("guest.delete");
 
   const {
     register,
@@ -137,6 +146,30 @@ export default function EditGuestPage() {
     };
   }, [imagePreview]);
 
+  //Delete handler
+  const handleDeleteClick = (guest: Guest) => {
+    setGuestToDelete(guest);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setDeleteModalOpen(false);
+    setGuestToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!guestToDelete) return;
+
+    try {
+      await deleteGuest(guestToDelete.id);
+      router.push("/dashboard/guest");
+    } catch {
+      toast.error("Failed to delete guest");
+    } finally {
+      handleDeleteClose();
+    }
+  };
+
   const onSubmit = async (data: UpdateGuestInput) => {
     setSubmitting(true);
     try {
@@ -164,7 +197,10 @@ export default function EditGuestPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Edit Guest" backHref="/dashboard/guest" />
+      <PageHeader
+        title="Edit Guest"
+        backHref={`/dashboard/guest/view/${slug}`}
+      />
 
       <Card className="shadow-lg bg-white border-none py-5 px-5 sm:px-0">
         <CardContent>
@@ -354,15 +390,37 @@ export default function EditGuestPage() {
             </div>
 
             {/* Buttons */}
-            <FormActions
-              cancelHref="/dashboard/guest"
-              submitLabel="Update Guest"
-              loadingLabel="Updating..."
-              isSubmitting={submitting}
-            />
+            <div className="flex items-center justify-between gap-4">
+              {canDeleteGuest && (
+                <button
+                  type="button"
+                  onClick={() => guest && handleDeleteClick(guest)}
+                  className=" flex items-center mt-6 gap-2 py-2 px-4 rounded-md shadow-sm border-gray-200  bg-white text-red-600 hover:bg-red-600 hover:shadow-lg cursor-pointer hover:text-white transition-colors"
+                  title="Delete"
+                >
+                  <Icon icon="mdi:delete" className="text-xl" />
+                  <span className="">Delete Guest</span>
+                </button>
+              )}
+              <FormActions
+                cancelHref="/dashboard/guest"
+                submitLabel="Update Guest"
+                loadingLabel="Updating..."
+                isSubmitting={submitting}
+                
+              />
+            </div>
           </form>
         </CardContent>
       </Card>
+      {/* Delete Modal */}
+      <DeleteModal<Guest>
+        open={deleteModalOpen}
+        item={guestToDelete}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        titleKey="full_name"
+      />
     </div>
   );
 }
