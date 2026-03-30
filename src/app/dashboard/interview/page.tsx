@@ -557,7 +557,7 @@ export default function InterviewsPage() {
             </p>
           ) : (
             <div className=" ">
-              <div className="overflow-x-auto">
+              <div className="overflow-visible">
                 <div className="bg-white rounded-xl shadow-sm min-w-[900px]">
                   <div className="grid grid-cols-11 lg:grid-cols-11 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
                     <div className="text-left text-vxs font-medium col-span-1 lg:col-span-1 text-gray-700">
