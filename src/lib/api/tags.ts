@@ -8,7 +8,7 @@ import api from "@/lib/axios";
 
 export interface TagPayload {
   tag_name: string;
-  slug: string;
+  slug?: string;
 }
 
 export interface Tag {
