@@ -248,6 +248,7 @@ export default function GuestViewPage() {
       <div className="text-center py-24 text-gray-600">Guest not found</div>
     );
   }
+  console.log("tags_data:", guest.tags_data);
 
   const profileImage =
     guest.profileImage?.path && guest.profileImage.type?.startsWith("image/")
@@ -310,6 +311,19 @@ export default function GuestViewPage() {
                   {guest.designation}
                 </p>
               )}
+              {/* Tags */}
+              {Array.isArray(guest.tags_data) && guest.tags_data.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3 justify-center">
+                  {guest.tags_data.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium"
+                    >
+                      {tag.tag_name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {guest.bio && (
@@ -347,6 +361,12 @@ export default function GuestViewPage() {
                 <div className="flex items-center gap-2 text-gray-600">
                   <Icon icon="mdi:shield-check-outline" />
                   <span>Approved by: {guest.approver.full_name}</span>
+                </div>
+              )}
+              {guest.host && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Icon icon="si:mic-line" />
+                  <span>Assigned Host: {guest.host.full_name}</span>
                 </div>
               )}
             </div>

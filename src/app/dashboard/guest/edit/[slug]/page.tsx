@@ -5,6 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { MultiValue } from "react-select";
+import { getTags, Tag } from "@/lib/api/tags";
+import Select from "react-select";
+
 import { Icon } from "@iconify/react";
 import {
   getGuestBySlug,
@@ -26,7 +30,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { getMediaUrl } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-import { getTags } from "@/lib/api/tags";
+
 import { DeleteModal } from "@/components/ui/DeleteModal";
 
 const allowedMimeTypes = [
@@ -38,6 +42,10 @@ const allowedMimeTypes = [
   "video/mpeg",
   "video/quicktime",
 ];
+type Option = {
+  value: string;
+  label: string;
+};
 
 export default function EditGuestPage() {
   const router = useRouter();
@@ -49,11 +57,12 @@ export default function EditGuestPage() {
   const [users, setUsers] = useState<User[]>([]);
 
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hostusers, setHostUsers] = useState<User[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Option[]>([]);
 
   const { hasPermission, loading: authLoading } = useAuth();
   const { user } = useAuth();
@@ -99,12 +108,25 @@ export default function EditGuestPage() {
           record: data.record ?? false,
 
           social_media: data.social_media ?? {},
-          tag_id: data.profileImage?.tag_id ?? "",
         });
 
         if (data.profileImage?.path) {
           const imageUrl = getMediaUrl(data.profileImage.path);
           setImagePreview(imageUrl);
+        }
+
+        if (data.tags_data) {
+          const preSelected = data.tags_data.map((tag) => ({
+            value: tag.id,
+            label: tag.tag_name,
+          }));
+
+          setSelectedTags(preSelected);
+
+          setValue(
+            "tag_ids",
+            data.tags_data.map((t) => t.id),
+          );
         }
       } catch {
         toast.error("Failed to load guest");
@@ -117,14 +139,16 @@ export default function EditGuestPage() {
 
     const fetchUsers = async () => {
       try {
-        const [allUsers, hosts] = await Promise.all([
+        const [allUsers, hosts, allTags] = await Promise.all([
           getUsers(),
           getHostUser(),
+          getTags(),
         ]);
         const activeUsers = allUsers.filter((u) => u.status === "active");
 
         setUsers(activeUsers);
         setHostUsers(hosts);
+        setTags(allTags);
       } catch {
         toast.error("Failed to load users");
       }
@@ -133,18 +157,17 @@ export default function EditGuestPage() {
   }, [authLoading, hasPermission, router, slug, reset, setValue]);
 
   useEffect(() => {
-    getTags()
-      .then(setTags)
-      .catch(() => setTags([]));
-  }, []);
-
-  useEffect(() => {
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
     };
   }, [imagePreview]);
+
+  const tagOptions: Option[] = tags.map((tag) => ({
+    value: tag.id,
+    label: tag.tag_name,
+  }));
 
   //Delete handler
   const handleDeleteClick = (guest: Guest) => {
@@ -253,6 +276,26 @@ export default function EditGuestPage() {
               />
             </FormField>
 
+            <FormField label="Tags">
+              <div className="md:w-3/4">
+                <Select
+                  options={tagOptions}
+                  isMulti
+                  value={selectedTags}
+                  onChange={(selected: MultiValue<Option>) => {
+                    const selectedArray = Array.from(selected); // 🔥 convert readonly → mutable
+
+                    setSelectedTags(selectedArray);
+
+                    const ids = selectedArray.map((t) => t.value);
+
+                    setValue("tag_ids", ids);
+                  }}
+                  className="text-sm"
+                />
+              </div>
+            </FormField>
+
             {/* Referred By */}
             <FormField label="Referred By">
               <div className="md:w-3/4">
@@ -337,20 +380,6 @@ export default function EditGuestPage() {
                     />
                   </div>
                 )}
-
-                <br />
-                {/* Tag Select */}
-                <select
-                  {...register("tag_id")}
-                  className="w-80 px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
-                >
-                  <option value="">No tag</option>
-                  {tags.map((tag) => (
-                    <option key={tag.id} value={tag.id}>
-                      {tag.tag_name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </FormField>
 
@@ -407,7 +436,6 @@ export default function EditGuestPage() {
                 submitLabel="Update Guest"
                 loadingLabel="Updating..."
                 isSubmitting={submitting}
-                
               />
             </div>
           </form>

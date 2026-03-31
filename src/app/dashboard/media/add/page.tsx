@@ -53,7 +53,7 @@ export default function AddMediaPage() {
     try {
       await createMedia({
         media_name: data.media_name,
-        tag_id: data.tag_id || null,
+        tag_id: data.tag_id === "" ? null : data.tag_id,
         file: data.file,
       });
       toast.success("Media created successfully");

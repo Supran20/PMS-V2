@@ -36,10 +36,10 @@ export const createGuestSchema = z.object({
 
   referred_by: z.string().uuid().optional().nullable(),
   notes: z.array(notesSchema).optional().nullable(),
+  tag_ids: z.array(z.string()).optional().nullable(),
 
   host_id: z.string().uuid().optional().nullable(),
 
-  tag_id: z.string().uuid().optional().nullable(),
   file: z.any().optional(),
 });
 
