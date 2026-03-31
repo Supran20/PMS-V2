@@ -5,8 +5,18 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { MultiValue } from "react-select";
+import CreatableSelect from "react-select/creatable";
+import { getTags, createTag, Tag } from "@/lib/api/tags";
+import Select from "react-select";
+
 import { Icon } from "@iconify/react";
-import { getGuestBySlug, updateGuestBySlug, Guest } from "@/lib/api/guest";
+import {
+  getGuestBySlug,
+  updateGuestBySlug,
+  deleteGuest,
+  Guest,
+} from "@/lib/api/guest";
 import {
   updateGuestSchema,
   UpdateGuestInput,
@@ -21,7 +31,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { getMediaUrl } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-import { getTags } from "@/lib/api/tags";
+
+import { DeleteModal } from "@/components/ui/DeleteModal";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -32,6 +43,10 @@ const allowedMimeTypes = [
   "video/mpeg",
   "video/quicktime",
 ];
+type Option = {
+  value: string;
+  label: string;
+};
 
 export default function EditGuestPage() {
   const router = useRouter();
@@ -43,13 +58,17 @@ export default function EditGuestPage() {
   const [users, setUsers] = useState<User[]>([]);
 
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [hostusers, setHostUsers] = useState<User[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Option[]>([]);
 
   const { hasPermission, loading: authLoading } = useAuth();
   const { user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
+  const canDeleteGuest = hasPermission("guest.delete");
 
   const {
     register,
@@ -90,12 +109,25 @@ export default function EditGuestPage() {
           record: data.record ?? false,
 
           social_media: data.social_media ?? {},
-          tag_id: data.profileImage?.tag_id ?? "",
         });
 
         if (data.profileImage?.path) {
           const imageUrl = getMediaUrl(data.profileImage.path);
           setImagePreview(imageUrl);
+        }
+
+        if (data.tags_data) {
+          const preSelected = data.tags_data.map((tag) => ({
+            value: tag.id,
+            label: tag.tag_name,
+          }));
+
+          setSelectedTags(preSelected);
+
+          setValue(
+            "tag_ids",
+            data.tags_data.map((t) => t.id),
+          );
         }
       } catch {
         toast.error("Failed to load guest");
@@ -108,14 +140,16 @@ export default function EditGuestPage() {
 
     const fetchUsers = async () => {
       try {
-        const [allUsers, hosts] = await Promise.all([
+        const [allUsers, hosts, allTags] = await Promise.all([
           getUsers(),
           getHostUser(),
+          getTags(),
         ]);
         const activeUsers = allUsers.filter((u) => u.status === "active");
 
         setUsers(activeUsers);
         setHostUsers(hosts);
+        setTags(allTags);
       } catch {
         toast.error("Failed to load users");
       }
@@ -124,18 +158,41 @@ export default function EditGuestPage() {
   }, [authLoading, hasPermission, router, slug, reset, setValue]);
 
   useEffect(() => {
-    getTags()
-      .then(setTags)
-      .catch(() => setTags([]));
-  }, []);
-
-  useEffect(() => {
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
     };
   }, [imagePreview]);
+
+  const tagOptions: Option[] = tags.map((tag) => ({
+    value: tag.id,
+    label: tag.tag_name,
+  }));
+
+  //Delete handler
+  const handleDeleteClick = (guest: Guest) => {
+    setGuestToDelete(guest);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setDeleteModalOpen(false);
+    setGuestToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!guestToDelete) return;
+
+    try {
+      await deleteGuest(guestToDelete.id);
+      router.push("/dashboard/guest");
+    } catch {
+      toast.error("Failed to delete guest");
+    } finally {
+      handleDeleteClose();
+    }
+  };
 
   const onSubmit = async (data: UpdateGuestInput) => {
     setSubmitting(true);
@@ -164,7 +221,10 @@ export default function EditGuestPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Edit Guest" backHref="/dashboard/guest" />
+      <PageHeader
+        title="Edit Guest"
+        backHref={`/dashboard/guest/view/${slug}`}
+      />
 
       <Card className="shadow-lg bg-white border-none py-5 px-5 sm:px-0">
         <CardContent>
@@ -215,6 +275,51 @@ export default function EditGuestPage() {
                 rows={3}
                 placeholder="Short bio..."
               />
+            </FormField>
+
+            <FormField label="Tags">
+              <div className="md:w-3/4">
+                <CreatableSelect
+                  options={tagOptions}
+                  isMulti
+                  value={selectedTags}
+                  onChange={(selected: MultiValue<Option>) => {
+                    const selectedArray = Array.from(selected); // 🔥 convert readonly → mutable
+
+                    setSelectedTags(selectedArray);
+
+                    const ids = selectedArray.map((t) => t.value);
+
+                    setValue("tag_ids", ids);
+                  }}
+                  onCreateOption={async (inputValue) => {
+                    try {
+                      const newTag = await createTag({
+                        tag_name: inputValue, // ✅ correct
+                        slug: "", // let backend generate
+                      });
+
+                      const newOption = {
+                        value: newTag.id,
+                        label: newTag.tag_name,
+                      };
+
+                      setTags((prev) => [...prev, newTag]);
+
+                      const updatedSelected = [...selectedTags, newOption];
+                      setSelectedTags(updatedSelected);
+
+                      const ids = updatedSelected.map((t) => t.value);
+                      setValue("tag_ids", ids);
+
+                      toast.success("Tag created");
+                    } catch {
+                      toast.error("Failed to create tag");
+                    }
+                  }}
+                  className="text-sm"
+                />
+              </div>
             </FormField>
 
             {/* Referred By */}
@@ -301,20 +406,6 @@ export default function EditGuestPage() {
                     />
                   </div>
                 )}
-
-                <br />
-                {/* Tag Select */}
-                <select
-                  {...register("tag_id")}
-                  className="w-80 px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
-                >
-                  <option value="">No tag</option>
-                  {tags.map((tag) => (
-                    <option key={tag.id} value={tag.id}>
-                      {tag.tag_name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </FormField>
 
@@ -354,15 +445,36 @@ export default function EditGuestPage() {
             </div>
 
             {/* Buttons */}
-            <FormActions
-              cancelHref="/dashboard/guest"
-              submitLabel="Update Guest"
-              loadingLabel="Updating..."
-              isSubmitting={submitting}
-            />
+            <div className="flex items-center justify-between gap-4">
+              {canDeleteGuest && (
+                <button
+                  type="button"
+                  onClick={() => guest && handleDeleteClick(guest)}
+                  className=" flex items-center mt-6 gap-2 py-2 px-4 rounded-md shadow-sm border-gray-200  bg-white text-red-600 hover:bg-red-600 hover:shadow-lg cursor-pointer hover:text-white transition-colors"
+                  title="Delete"
+                >
+                  <Icon icon="mdi:delete" className="text-xl" />
+                  <span className="">Delete Guest</span>
+                </button>
+              )}
+              <FormActions
+                cancelHref="/dashboard/guest"
+                submitLabel="Update Guest"
+                loadingLabel="Updating..."
+                isSubmitting={submitting}
+              />
+            </div>
           </form>
         </CardContent>
       </Card>
+      {/* Delete Modal */}
+      <DeleteModal<Guest>
+        open={deleteModalOpen}
+        item={guestToDelete}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        titleKey="full_name"
+      />
     </div>
   );
 }

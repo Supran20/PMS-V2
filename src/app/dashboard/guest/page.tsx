@@ -286,7 +286,7 @@ export default function GuestsPage() {
               </span>
             }
           />
-          <Tab label={`Pending (${pendingGuests.length})`} />
+          <Tab label={`Potential (${pendingGuests.length})`} />
           <Tab label={`Approved (${approvedGuests.length})`} />
           <Tab label={`Rejected (${rejectedGuests.length})`} />
         </Tabs>
@@ -325,26 +325,27 @@ export default function GuestsPage() {
                 >
                   {/* Image */}
                   <div className="sm:aspect-square h-50 sm:h-auto  relative ">
-                    {guest.profileImage && isImage(guest.profileImage.type) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={getMediaUrl(guest.profileImage.path)}
-                        alt={guest.full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <Icon
-                          icon="mdi:account"
-                          className="text-4xl text-gray-500"
+                    <Link href={`/dashboard/guest/view/${guest.slug}`}>
+                      {guest.profileImage &&
+                      isImage(guest.profileImage.type) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={getMediaUrl(guest.profileImage.path)}
+                          alt={guest.full_name}
+                          className="w-full h-full object-cover"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <Icon
+                            icon="mdi:account"
+                            className="text-4xl text-gray-500"
+                          />
+                        </div>
+                      )}
+                    </Link>
 
                     {/* Overlay Actions */}
-                    <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      {/* Edit */}
-
+                    {/* <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
                         onClick={() => handleEditClick(guest)}
                         className="p-2 rounded-lg bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
@@ -353,7 +354,6 @@ export default function GuestsPage() {
                         <Icon icon="mdi:pencil" className="text-xl" />
                       </button>
 
-                      {/* Delete */}
                       {canDeleteGuest && (
                         <button
                           onClick={() => handleDeleteClick(guest)}
@@ -363,7 +363,7 @@ export default function GuestsPage() {
                           <Icon icon="mdi:delete" className="text-xl" />
                         </button>
                       )}
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Name + Designation */}
@@ -379,7 +379,7 @@ export default function GuestsPage() {
                         </p>
                       </Link>
 
-                      {tabValue === 2 && (
+                      {!guest.rejected && (
                         <div
                           className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
                             guest.status,
@@ -451,7 +451,7 @@ export default function GuestsPage() {
                           <button
                             disabled={!canApproveGuest}
                             onClick={() => handleApproveClick(guest)}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
                               canApproveGuest
                                 ? "bg-gray-100 text-gray-600 hover:text-green-500"
                                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -472,7 +472,7 @@ export default function GuestsPage() {
                           <button
                             disabled={!canApproveGuest}
                             onClick={() => handleRejectClick(guest)}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
                               canApproveGuest
                                 ? "bg-gray-100 text-gray-600 hover:text-red-500"
                                 : "bg-gray-100 text-gray-400 cursor-not-allowed"

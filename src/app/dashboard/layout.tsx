@@ -9,6 +9,7 @@ import { Icon } from "@iconify/react";
 import { cn, getMediaUrl, getInitials } from "@/lib/utils";
 import Image from "next/image";
 import { getGuests, Guest } from "@/lib/api/guest";
+import { getInterviews, Interview } from "@/lib/api/interview";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
@@ -54,6 +55,7 @@ export default function DashboardLayout({
   const mobileDrawerRef = React.useRef<HTMLDivElement | null>(null);
   const [offcanvasOpen, setOffcanvasOpen] = useState(false);
   const [pendingGuestCount, setPendingGuestCount] = React.useState<number>(0);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
   // Fetch pending guests
   useEffect(() => {
@@ -116,6 +118,30 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const fetchInterviewCounts = async () => {
+      try {
+        const data: Interview[] = await getInterviews();
+
+        const counts: Record<string, number> = {};
+
+        data.forEach((i) => {
+          const status = i.status || "";
+          counts[status] = (counts[status] || 0) + 1;
+        });
+
+        // total count for "All"
+        counts[""] = data.length;
+
+        setStatusCounts(counts);
+      } catch (err) {
+        console.error("Failed to fetch interviews", err);
+      }
+    };
+
+    fetchInterviewCounts();
+  }, []);
+
   if (loading || !user) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -125,6 +151,7 @@ export default function DashboardLayout({
   }
 
   const displayName = user?.full_name || user?.email || "User";
+  console.log("statusCounts", statusCounts);
 
   const handleLogout = () => logout();
   return (
@@ -199,7 +226,7 @@ export default function DashboardLayout({
                                   !isSidebarOpen && "text-vxs",
                                 )}
                               >
-                                {item.label}
+                                {item.label} ({statusCounts[item.value] || 0})
                               </Link>
                             </li>
                           ))}
@@ -447,7 +474,7 @@ export default function DashboardLayout({
                                   !isSidebarOpen && "text-vxs",
                                 )}
                               >
-                                {item.label}
+                                {item.label} ({statusCounts[item.value] || 0})
                               </Link>
                             </li>
                           ))}

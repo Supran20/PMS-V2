@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@iconify/react";
+import { MultiValue } from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { createGuest } from "@/lib/api/guest";
 import {
   createGuestSchema,
@@ -20,7 +22,9 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { useAuth } from "@/context/AuthContext";
-import { getTags } from "@/lib/api/tags";
+import { getTags, createTag, Tag } from "@/lib/api/tags";
+import Select from "react-select";
+
 import { z } from "zod";
 
 const allowedMimeTypes = [
@@ -33,14 +37,20 @@ const allowedMimeTypes = [
   "video/quicktime",
 ];
 
+type Option = {
+  value: string;
+  label: string;
+};
+
 export default function AddGuestPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [hostusers, setHostUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tags, setTags] = useState<{ id: string; tag_name: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Option[]>([]);
 
   const { hasPermission, loading: authLoading } = useAuth();
 
@@ -71,13 +81,15 @@ export default function AddGuestPage() {
 
     const fetchData = async () => {
       try {
-        const [allUsers, hosts] = await Promise.all([
+        const [allUsers, hosts, allTags] = await Promise.all([
           getUsers(), // for referred_by
           getHostUser(), // for host dropdown
+          getTags(), // for tags dropdown
         ]);
         const activeUsers = allUsers.filter((u) => u.status === "active");
         setUsers(activeUsers);
         setHostUsers(hosts);
+        setTags(allTags);
       } catch {
         toast.error("Failed to load users");
       } finally {
@@ -89,18 +101,17 @@ export default function AddGuestPage() {
   }, [authLoading, hasPermission, router]);
 
   useEffect(() => {
-    getTags()
-      .then(setTags)
-      .catch(() => setTags([]));
-  }, []);
-
-  useEffect(() => {
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
     };
   }, [imagePreview]);
+
+  const tagOptions: Option[] = tags.map((tag) => ({
+    value: tag.id,
+    label: tag.tag_name,
+  }));
 
   const onSubmit = async (data: CreateGuestInput) => {
     setSubmitting(true);
@@ -181,6 +192,50 @@ export default function AddGuestPage() {
                 as="textarea"
                 rows={4}
               />
+            </FormField>
+
+            <FormField label="Tags">
+              <div className="md:w-3/4">
+                <CreatableSelect
+                  isMulti
+                  options={tagOptions}
+                  value={selectedTags}
+                  onChange={(selected: MultiValue<Option>) => {
+                    const selectedArray = [...selected];
+
+                    setSelectedTags(selectedArray);
+
+                    const ids = selectedArray.map((t) => t.value);
+                    setValue("tag_ids", ids);
+                  }}
+                  onCreateOption={async (inputValue) => {
+                    try {
+                      const newTag = await createTag({
+                        tag_name: inputValue, // ✅ correct
+                        slug: "", // let backend generate
+                      });
+
+                      const newOption = {
+                        value: newTag.id,
+                        label: newTag.tag_name,
+                      };
+
+                      setTags((prev) => [...prev, newTag]);
+
+                      const updatedSelected = [...selectedTags, newOption];
+                      setSelectedTags(updatedSelected);
+
+                      const ids = updatedSelected.map((t) => t.value);
+                      setValue("tag_ids", ids);
+
+                      toast.success("Tag created");
+                    } catch {
+                      toast.error("Failed to create tag");
+                    }
+                  }}
+                  className="text-sm"
+                />
+              </div>
             </FormField>
 
             {/* Referred By */}
@@ -270,20 +325,6 @@ export default function AddGuestPage() {
                     />
                   </div>
                 )}
-
-                <br />
-                {/* Tag Select */}
-                <select
-                  {...register("tag_id")}
-                  className="w-80 px-4 py-2 rounded-lg border border-gray-300 bg-gray-50"
-                >
-                  <option value="">No tag</option>
-                  {tags.map((tag) => (
-                    <option key={tag.id} value={tag.id}>
-                      {tag.tag_name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </FormField>
 

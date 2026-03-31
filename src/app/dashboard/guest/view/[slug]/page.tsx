@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import { useRouter } from "next/navigation";
 
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
@@ -37,6 +38,7 @@ interface NoteForm {
 }
 
 export default function GuestViewPage() {
+  const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
 
@@ -66,6 +68,8 @@ export default function GuestViewPage() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+
+  const canEditGuest = hasPermission("guest.update");
 
   useEffect(() => {
     if (!slug) return;
@@ -176,6 +180,11 @@ export default function GuestViewPage() {
     }
   };
 
+  //edit handlers
+  const handleEditClick = (guest: Guest) => {
+    router.push(`/dashboard/guest/edit/${guest.slug}`);
+  };
+
   const handleDeleteNote = async (noteId: string) => {
     setSavingNote(true);
 
@@ -239,6 +248,7 @@ export default function GuestViewPage() {
       <div className="text-center py-24 text-gray-600">Guest not found</div>
     );
   }
+  console.log("tags_data:", guest.tags_data);
 
   const profileImage =
     guest.profileImage?.path && guest.profileImage.type?.startsWith("image/")
@@ -251,20 +261,30 @@ export default function GuestViewPage() {
       {/* Header + Add Button */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Guest Details</h2>
-        {canAddInterview && (
-          <AddButton
-            href={`/dashboard/interview/add?guest_id=${guest.id}`}
-            label="Schedule Interview"
-            disabled={isDisabled}
-            onClick={(e) => {
-              if (isDisabled) {
-                e.preventDefault();
-                e.stopPropagation(); // 🔥 VERY IMPORTANT
-                toast.error("Guest must be approved and not rejected");
-              }
-            }}
-          />
-        )}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => handleEditClick(guest)}
+            className="flex items-center gap-2 shadow-sm hover:shadow-lg  hover:duration-300 border-gray-200  rounded-mde text-blue-600 hover:bg-blue-600 py-2 rounded-md cursor-pointer px-4 hover:text-white transition-colors"
+            title="Edit"
+          >
+            <Icon icon="mdi:pencil" className="text-xl" />
+            <span className="">Edit Guest</span>
+          </button>
+          {canAddInterview && (
+            <AddButton
+              href={`/dashboard/interview/add?guest_id=${guest.id}`}
+              label="Schedule Interview"
+              disabled={isDisabled}
+              onClick={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  e.stopPropagation(); // 🔥 VERY IMPORTANT
+                  toast.error("Guest must be approved and not rejected");
+                }
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -290,6 +310,19 @@ export default function GuestViewPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   {guest.designation}
                 </p>
+              )}
+              {/* Tags */}
+              {Array.isArray(guest.tags_data) && guest.tags_data.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3 justify-center">
+                  {guest.tags_data.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium"
+                    >
+                      {tag.tag_name}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -328,6 +361,12 @@ export default function GuestViewPage() {
                 <div className="flex items-center gap-2 text-gray-600">
                   <Icon icon="mdi:shield-check-outline" />
                   <span>Approved by: {guest.approver.full_name}</span>
+                </div>
+              )}
+              {guest.host && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Icon icon="si:mic-line" />
+                  <span>Assigned Host: {guest.host.full_name}</span>
                 </div>
               )}
             </div>

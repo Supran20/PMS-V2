@@ -19,6 +19,8 @@ export interface GuestPayload {
   phone?: string | null;
 
   profile_image?: string | null;
+  tags?: string[] | null;
+  tag_ids?: string[] | null;
   referred_by?: string | null;
   host_id: string;
 }
@@ -56,6 +58,7 @@ export interface Guest {
 
   profile_image: string | null;
   profileImage?: Media | null;
+  tags?: string[] | null;
 
   referrer?: {
     id: string;
@@ -66,6 +69,17 @@ export interface Guest {
     id: string;
     full_name: string;
   } | null;
+
+  host?: {
+    id: string;
+    full_name: string;
+  } | null;
+
+  tags_data?: {
+    id: string;
+    tag_name: string;
+    slug: string;
+  }[];
 
   interviews?: Interview[];
 
@@ -121,6 +135,8 @@ export const createGuest = async (payload: any): Promise<Guest> => {
 
     if (key === "social_media") {
       formData.append(key, JSON.stringify(value));
+    } else if (key === "tag_ids") {
+      formData.append(key, JSON.stringify(value)); // 🔥 important
     } else if (key === "file") {
       formData.append("file", value as File);
     } else {
@@ -149,12 +165,8 @@ export const updateGuestBySlug = async (
   Object.entries(payload).forEach(([key, value]) => {
     if (value === null || value === undefined) return;
 
-    if (key === "social_media" || key === "notes") {
+    if (key === "social_media" || key === "notes" || key === "tag_ids") {
       formData.append(key, JSON.stringify(value));
-    } else if (key === "file") {
-      formData.append("file", value as File);
-    } else {
-      formData.append(key, String(value));
     }
   });
 
