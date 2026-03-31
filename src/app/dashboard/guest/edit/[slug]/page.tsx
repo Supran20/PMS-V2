@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { MultiValue } from "react-select";
-import { getTags, Tag } from "@/lib/api/tags";
+import CreatableSelect from "react-select/creatable";
+import { getTags, createTag, Tag } from "@/lib/api/tags";
 import Select from "react-select";
 
 import { Icon } from "@iconify/react";
@@ -278,7 +279,7 @@ export default function EditGuestPage() {
 
             <FormField label="Tags">
               <div className="md:w-3/4">
-                <Select
+                <CreatableSelect
                   options={tagOptions}
                   isMulti
                   value={selectedTags}
@@ -290,6 +291,31 @@ export default function EditGuestPage() {
                     const ids = selectedArray.map((t) => t.value);
 
                     setValue("tag_ids", ids);
+                  }}
+                  onCreateOption={async (inputValue) => {
+                    try {
+                      const newTag = await createTag({
+                        tag_name: inputValue, // ✅ correct
+                        slug: "", // let backend generate
+                      });
+
+                      const newOption = {
+                        value: newTag.id,
+                        label: newTag.tag_name,
+                      };
+
+                      setTags((prev) => [...prev, newTag]);
+
+                      const updatedSelected = [...selectedTags, newOption];
+                      setSelectedTags(updatedSelected);
+
+                      const ids = updatedSelected.map((t) => t.value);
+                      setValue("tag_ids", ids);
+
+                      toast.success("Tag created");
+                    } catch {
+                      toast.error("Failed to create tag");
+                    }
                   }}
                   className="text-sm"
                 />

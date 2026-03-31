@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@iconify/react";
 import { MultiValue } from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { createGuest } from "@/lib/api/guest";
 import {
   createGuestSchema,
@@ -21,7 +22,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { useAuth } from "@/context/AuthContext";
-import { getTags, Tag } from "@/lib/api/tags";
+import { getTags, createTag, Tag } from "@/lib/api/tags";
 import Select from "react-select";
 
 import { z } from "zod";
@@ -35,6 +36,11 @@ const allowedMimeTypes = [
   "video/mpeg",
   "video/quicktime",
 ];
+
+type Option = {
+  value: string;
+  label: string;
+};
 
 export default function AddGuestPage() {
   const router = useRouter();
@@ -101,11 +107,6 @@ export default function AddGuestPage() {
       }
     };
   }, [imagePreview]);
-
-  type Option = {
-    value: string;
-    label: string;
-  };
 
   const tagOptions: Option[] = tags.map((tag) => ({
     value: tag.id,
@@ -195,18 +196,42 @@ export default function AddGuestPage() {
 
             <FormField label="Tags">
               <div className="md:w-3/4">
-                <Select
-                  options={tagOptions}
+                <CreatableSelect
                   isMulti
+                  options={tagOptions}
                   value={selectedTags}
                   onChange={(selected: MultiValue<Option>) => {
-                    const selectedArray = [...selected]; // 🔥 convert readonly → mutable
+                    const selectedArray = [...selected];
 
                     setSelectedTags(selectedArray);
 
                     const ids = selectedArray.map((t) => t.value);
-
                     setValue("tag_ids", ids);
+                  }}
+                  onCreateOption={async (inputValue) => {
+                    try {
+                      const newTag = await createTag({
+                        tag_name: inputValue, // ✅ correct
+                        slug: "", // let backend generate
+                      });
+
+                      const newOption = {
+                        value: newTag.id,
+                        label: newTag.tag_name,
+                      };
+
+                      setTags((prev) => [...prev, newTag]);
+
+                      const updatedSelected = [...selectedTags, newOption];
+                      setSelectedTags(updatedSelected);
+
+                      const ids = updatedSelected.map((t) => t.value);
+                      setValue("tag_ids", ids);
+
+                      toast.success("Tag created");
+                    } catch {
+                      toast.error("Failed to create tag");
+                    }
                   }}
                   className="text-sm"
                 />
