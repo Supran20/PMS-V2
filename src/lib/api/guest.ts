@@ -167,6 +167,10 @@ export const updateGuestBySlug = async (
 
     if (key === "social_media" || key === "notes" || key === "tag_ids") {
       formData.append(key, JSON.stringify(value));
+    } else if (key === "file") {
+      formData.append("file", value as File);
+    } else {
+      formData.append(key, String(value));
     }
   });
 
