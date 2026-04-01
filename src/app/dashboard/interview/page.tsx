@@ -14,7 +14,7 @@ import PostponeModal from "@/components/ui/PostPoneModal";
 import PublishModal from "@/components/ui/PublishModal";
 import PostEditModal from "@/components/ui/PostEditModal";
 import { getInitials } from "@/lib/utils";
-
+import { formatDate } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/utils";
 
 import { getInterviews, updateInterview, Interview } from "@/lib/api/interview";
@@ -559,7 +559,7 @@ export default function InterviewsPage() {
             <div className=" ">
               <div className="overflow-visible">
                 <div className="bg-white rounded-xl shadow-sm min-w-[900px]">
-                  <div className="grid grid-cols-11 lg:grid-cols-11 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
+                  <div className="grid grid-cols-11 lg:grid-cols-12 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
                     <div className="text-left text-vxs font-medium col-span-1 lg:col-span-1 text-gray-700">
                       Episode
                     </div>
@@ -569,7 +569,7 @@ export default function InterviewsPage() {
                     <div className="text-center text-vxs col-span-2 font-medium text-gray-700">
                       Host
                     </div>
-                    <div className="text-center text-vxs col-span-1 font-medium  text-gray-700">
+                    <div className="text-center text-vxs col-span-2 font-medium  text-gray-700">
                       Date
                     </div>
                     <div className="text-center text-vxs col-span-1 font-medium text-gray-700">
@@ -587,7 +587,7 @@ export default function InterviewsPage() {
                   <div>
                     {paginatedInterviews.map((interview) => (
                       <div key={interview.id} id={interview.id}>
-                        <div className="grid grid-cols-11 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
+                        <div className="grid grid-cols-12 gap-4 px-6 py-5 items-center border-t hover:bg-gray-50 transition">
                           {/* Episode */}
                           <div className="text-vxs col-span-1 text-gray-600">
                             #{interview.episode ?? "-"}
@@ -646,9 +646,9 @@ export default function InterviewsPage() {
                               "-"
                             )}
                           </div>
-                          <div className=" text-vxs col-span-1 text-gray-600 text-center">
+                          <div className=" text-vxs col-span-2 text-gray-600 text-center">
                             {" "}
-                            {interview.interview_date ?? "-"}
+                            {formatDate(interview.interview_date)}
                           </div>
                           <div className=" text-vxs col-span-1 text-gray-600 text-center">
                             {formatTimeTo12Hour(interview.start_time)}

@@ -11,6 +11,7 @@ import {
   deleteGuestNote,
   GuestNote,
 } from "@/lib/api/guest_note";
+import { formatDate } from "@/lib/utils";
 
 import { getMediaUrl } from "@/lib/utils";
 import { getInterviews, Interview } from "@/lib/api/interview";
@@ -480,7 +481,7 @@ export default function GuestViewPage() {
                           {interview.host?.full_name ?? "-"}
                         </div>
                         <div className="text-xs text-center text-gray-600">
-                          {interview.interview_date}
+                          {formatDate(interview.interview_date)}
                         </div>
                         <div className="text-xs text-center text-gray-600 ">
                           {formatTimeTo12Hour(interview.start_time)}
