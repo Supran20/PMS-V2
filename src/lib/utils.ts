@@ -44,3 +44,36 @@ export function getInitials(fullName: string): string {
 
   return (first + last).toUpperCase();
 }
+
+export function formatDate(dateString?: string | null): string {
+  if (!dateString) return "-";
+
+  const date = new Date(dateString);
+
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  const weekday = date.toLocaleDateString("en-US", {
+    weekday: "short",
+  });
+
+  const month = date.toLocaleDateString("en-US", {
+    month: "short",
+  });
+
+  const getOrdinal = (n: number) => {
+    if (n > 3 && n < 21) return `${n}th`;
+    switch (n % 10) {
+      case 1:
+        return `${n}st`;
+      case 2:
+        return `${n}nd`;
+      case 3:
+        return `${n}rd`;
+      default:
+        return `${n}th`;
+    }
+  };
+
+  return `${weekday}, ${getOrdinal(day)} ${month} ${year}`;
+}
