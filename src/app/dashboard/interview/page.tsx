@@ -485,7 +485,7 @@ export default function InterviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Interviews </h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -522,7 +522,7 @@ export default function InterviewsPage() {
         </Box>
       )}
       {/* Search + Table */}
-      <Card className="shadow-sm bg-white border-none px-5 sm:px-0 py-5">
+      <Card className="shadow-sm bg-white border-none min-w-[950px] lg:w-auto  px-5 sm:px-0 py-5">
         <CardContent>
           {/* Search */}
           <div className="mb-4 flex gap-3 items-center justify-between">
@@ -559,7 +559,7 @@ export default function InterviewsPage() {
             <div className=" ">
               <div className="overflow-visible">
                 <div className="bg-white rounded-xl shadow-sm min-w-[900px]">
-                  <div className="grid grid-cols-11 lg:grid-cols-12 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
+                  <div className="grid grid-cols-12 lg:grid-cols-12 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
                     <div className="text-left text-vxs font-medium col-span-1 lg:col-span-1 text-gray-700">
                       Episode
                     </div>

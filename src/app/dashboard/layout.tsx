@@ -469,6 +469,7 @@ export default function DashboardLayout({
                                     ? `/dashboard/interview?status=${item.value}`
                                     : `/dashboard/interview`
                                 }
+                                onClick={() => setOffcanvasOpen(false)}
                                 className={cn(
                                   "block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md",
                                   !isSidebarOpen && "text-vxs",
@@ -494,6 +495,7 @@ export default function DashboardLayout({
                   <li key={tab.href}>
                     <Link
                       href={tab.href}
+                      onClick={() => setOffcanvasOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
