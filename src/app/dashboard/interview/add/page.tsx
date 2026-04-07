@@ -286,8 +286,9 @@ export default function AddInterviewPage() {
               <div className="md:w-3/4">
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setSelectedDate(date);
+
                     setValue(
                       "interview_date",
                       date ? date.toISOString().split("T")[0] : "",
@@ -306,8 +307,9 @@ export default function AddInterviewPage() {
               <div className="md:w-3/4">
                 <DatePicker
                   selected={selectedTime}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setSelectedTime(date);
+
                     if (date) {
                       const time = date.toTimeString().slice(0, 5);
                       setValue("start_time", time, { shouldValidate: true });

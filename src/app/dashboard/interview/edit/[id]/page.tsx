@@ -312,7 +312,7 @@ export default function EditInterviewPage() {
               <div className="md:w-3/4">
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setSelectedDate(date);
                     setValue(
                       "interview_date",
@@ -331,7 +331,7 @@ export default function EditInterviewPage() {
               <div className="md:w-3/4">
                 <DatePicker
                   selected={selectedStartTime}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setSelectedStartTime(date);
                     if (date) {
                       setValue("start_time", date.toTimeString().slice(0, 5), {
@@ -354,7 +354,7 @@ export default function EditInterviewPage() {
               <div className="md:w-3/4">
                 <DatePicker
                   selected={selectedEndTime}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setSelectedEndTime(date);
                     if (date) {
                       setValue("end_time", date.toTimeString().slice(0, 5), {

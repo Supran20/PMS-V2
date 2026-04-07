@@ -26,15 +26,15 @@ import { getHostUser } from "@/lib/api/user";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
-import SortableItem from "@/components/sortable/SortableItem";
-import SortableList from "@/components/sortable/SortableList";
+
 import { useSearchParams } from "next/navigation";
+import { useInterview } from "@/context/InterviewContext";
 
 export default function InterviewsPage() {
   const router = useRouter();
   const { hasPermission } = useAuth();
 
-  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const { interviews, setInterviews } = useInterview();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -81,6 +81,22 @@ export default function InterviewsPage() {
     else if (tabParam === "today") setTabValue(2);
     else setTabValue(0);
   }, [tabParam]);
+
+  const getPageTitle = () => {
+    if (!statusParam) return "Interviews";
+
+    const map: Record<string, string> = {
+      scheduled: "Scheduled",
+      recorded: "Recorded",
+      editing: "Edited",
+      post_editing: "Post Editing",
+      published: "Published",
+      postponed: "Postponed",
+      cancelled: "Cancelled",
+    };
+
+    return `Interviews : ${map[statusParam] || statusParam}`;
+  };
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -497,7 +513,9 @@ export default function InterviewsPage() {
     <div className="space-y-6">
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {getPageTitle()}
+        </h2>
         {canAddInterview && (
           <AddButton
             href="/dashboard/interview/add"
