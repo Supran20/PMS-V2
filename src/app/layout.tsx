@@ -3,6 +3,7 @@ import { DM_Sans, Poppins } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { InterviewProvider } from "@/context/InterviewContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -31,10 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${dmSans.variable} antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <InterviewProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </InterviewProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>
   );
 }
-

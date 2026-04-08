@@ -15,6 +15,7 @@ import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import DatePicker from "react-datepicker";
 
 import {
   createInterviewSchema,
@@ -43,6 +44,8 @@ export default function AddInterviewPage() {
   const [maxEpisode, setMaxEpisode] = useState<number>(1);
   const [episodeInputEnabled, setEpisodeInputEnabled] = useState(false);
   const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 
   const searchParams = useSearchParams();
   const guestIdFromUrl = searchParams.get("guest_id");
@@ -68,32 +71,6 @@ export default function AddInterviewPage() {
    * Fetch dropdown data
    * -------------------------
    */
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [guestData, userData, studioData] = await Promise.all([
-          getGuests(),
-          getHostUser(),
-          getStudios(),
-        ]);
-
-        const approvedGuests = guestData.filter((g) => g.approved === true);
-        setGuests(approvedGuests);
-        setHosts(userData);
-        setStudios(studioData);
-
-        // 🔥 AUTO-SELECT GUEST IF PASSED IN URL
-        if (guestIdFromUrl) {
-          setValue("guest_id", guestIdFromUrl, { shouldValidate: true });
-        }
-      } catch {
-        toast.error("Failed to load form data");
-      }
-    };
-
-    fetchData();
-  }, [guestIdFromUrl, setValue]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,6 +108,14 @@ export default function AddInterviewPage() {
 
     fetchData();
   }, [guestIdFromUrl, setValue]);
+
+  useEffect(() => {
+    if (studios.length === 1) {
+      setValue("studio_id", studios[0].id, {
+        shouldValidate: true,
+      });
+    }
+  }, [studios, setValue]);
 
   useEffect(() => {
     if (!selectedGuest) return;
@@ -298,20 +283,47 @@ export default function AddInterviewPage() {
 
             {/* Date */}
             <FormField label="Interview Date" required>
-              <FormInput<CreateInterviewInput>
-                name="interview_date"
-                control={control}
-                type="date"
-              />
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date | null) => {
+                    setSelectedDate(date);
+
+                    setValue(
+                      "interview_date",
+                      date ? date.toISOString().split("T")[0] : "",
+                      { shouldValidate: true },
+                    );
+                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select date"
+                  dateFormat="yyyy-MM-dd"
+                />
+              </div>
             </FormField>
 
             {/* Start Time */}
             <FormField label="Start Time" required>
-              <FormInput<CreateInterviewInput>
-                name="start_time"
-                control={control}
-                type="time"
-              />
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedTime}
+                  onChange={(date: Date | null) => {
+                    setSelectedTime(date);
+
+                    if (date) {
+                      const time = date.toTimeString().slice(0, 5);
+                      setValue("start_time", time, { shouldValidate: true });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="HH:mm"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select time"
+                />
+              </div>
             </FormField>
 
             <FormField label="Episode Number" required>

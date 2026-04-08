@@ -26,15 +26,15 @@ import { getHostUser } from "@/lib/api/user";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAuth } from "@/context/AuthContext";
-import SortableItem from "@/components/sortable/SortableItem";
-import SortableList from "@/components/sortable/SortableList";
+
 import { useSearchParams } from "next/navigation";
+import { useInterview } from "@/context/InterviewContext";
 
 export default function InterviewsPage() {
   const router = useRouter();
   const { hasPermission } = useAuth();
 
-  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const { interviews, setInterviews } = useInterview();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -81,6 +81,22 @@ export default function InterviewsPage() {
     else if (tabParam === "today") setTabValue(2);
     else setTabValue(0);
   }, [tabParam]);
+
+  const getPageTitle = () => {
+    if (!statusParam) return "Interviews";
+
+    const map: Record<string, string> = {
+      scheduled: "Scheduled",
+      recorded: "Recorded",
+      editing: "Edited",
+      post_editing: "Post Editing",
+      published: "Published",
+      postponed: "Postponed",
+      cancelled: "Cancelled",
+    };
+
+    return `Interviews : ${map[statusParam] || statusParam}`;
+  };
 
   /**
    * Convert 24-hour time (HH:mm or HH:mm:ss) to 12-hour AM/PM
@@ -485,7 +501,7 @@ export default function InterviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Interviews </h2>
         <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
         </div>
@@ -497,7 +513,9 @@ export default function InterviewsPage() {
     <div className="space-y-6">
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">Interviews</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {getPageTitle()}
+        </h2>
         {canAddInterview && (
           <AddButton
             href="/dashboard/interview/add"
@@ -522,7 +540,7 @@ export default function InterviewsPage() {
         </Box>
       )}
       {/* Search + Table */}
-      <Card className="shadow-sm bg-white border-none px-5 sm:px-0 py-5">
+      <Card className="shadow-sm bg-white border-none min-w-[950px] lg:w-auto  px-5 sm:px-0 py-5">
         <CardContent>
           {/* Search */}
           <div className="mb-4 flex gap-3 items-center justify-between">
@@ -559,7 +577,7 @@ export default function InterviewsPage() {
             <div className=" ">
               <div className="overflow-visible">
                 <div className="bg-white rounded-xl shadow-sm min-w-[900px]">
-                  <div className="grid grid-cols-11 lg:grid-cols-12 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
+                  <div className="grid grid-cols-12 lg:grid-cols-12 gap-2 lg:gap-4 bg-gray-100 text-gray-600 text-[12px] lg:text-vxs uppercase tracking-wider px-3 lg:px-6 py-3 lg:py-4 font-medium">
                     <div className="text-left text-vxs font-medium col-span-1 lg:col-span-1 text-gray-700">
                       Episode
                     </div>

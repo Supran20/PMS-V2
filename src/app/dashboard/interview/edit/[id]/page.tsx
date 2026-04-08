@@ -15,6 +15,7 @@ import YoutubeEmbedInput from "@/components/ui/YoutubeEmbedInput";
 import GuestSelectModal from "@/components/ui/GuestSelectModal";
 import { DeleteModal } from "@/components/ui/DeleteModal";
 import { useAuth } from "@/context/AuthContext";
+import DatePicker from "react-datepicker";
 
 import {
   updateInterviewSchema,
@@ -48,6 +49,9 @@ export default function EditInterviewPage() {
   const [maxEpisode, setMaxEpisode] = useState<number>(1);
   const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
   const [episodeInputEnabled, setEpisodeInputEnabled] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedStartTime, setSelectedStartTime] = useState<Date | null>(null);
+  const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
 
   const { hasPermission } = useAuth();
   const canEditInterview = hasPermission("interview.update");
@@ -97,6 +101,22 @@ export default function EditInterviewPage() {
           google_drive_link: interview.google_drive_link,
           youtube_link: interview.youtube_link,
         });
+
+        setSelectedDate(
+          interview.interview_date ? new Date(interview.interview_date) : null,
+        );
+
+        setSelectedStartTime(
+          interview.start_time
+            ? new Date(`1970-01-01T${interview.start_time}`)
+            : null,
+        );
+
+        setSelectedEndTime(
+          interview.end_time
+            ? new Date(`1970-01-01T${interview.end_time}`)
+            : null,
+        );
       } catch {
         toast.error("Failed to load interview");
         router.push("/dashboard/interview");
@@ -128,6 +148,14 @@ export default function EditInterviewPage() {
     };
     fetchEpisodes();
   }, [setValue, watch]);
+
+  useEffect(() => {
+    if (studios.length === 1) {
+      setValue("studio_id", studios[0].id, {
+        shouldValidate: true,
+      });
+    }
+  }, [studios, setValue]);
   /**
    * --------------------------------
    * Submit
@@ -281,17 +309,67 @@ export default function EditInterviewPage() {
 
             {/* Date */}
             <FormField label="Interview Date" required>
-              <FormInput name="interview_date" control={control} type="date" />
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date | null) => {
+                    setSelectedDate(date);
+                    setValue(
+                      "interview_date",
+                      date ? date.toISOString().split("T")[0] : "",
+                      { shouldValidate: true },
+                    );
+                  }}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select time"
+                />
+              </div>
             </FormField>
 
             {/* Start Time */}
             <FormField label="Start Time" required>
-              <FormInput name="start_time" control={control} type="time" />
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedStartTime}
+                  onChange={(date: Date | null) => {
+                    setSelectedStartTime(date);
+                    if (date) {
+                      setValue("start_time", date.toTimeString().slice(0, 5), {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  dateFormat="HH:mm"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select time"
+                />
+              </div>
             </FormField>
 
             {/* End Time */}
-            <FormField label="End Time">
-              <FormInput name="end_time" control={control} type="time" />
+            <FormField label="End Time" required>
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedEndTime}
+                  onChange={(date: Date | null) => {
+                    setSelectedEndTime(date);
+                    if (date) {
+                      setValue("end_time", date.toTimeString().slice(0, 5), {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  dateFormat="HH:mm"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select time"
+                />
+              </div>
             </FormField>
 
             <FormField label="Episode Number" required>
@@ -355,7 +433,7 @@ export default function EditInterviewPage() {
               <button
                 type="button"
                 onClick={() => router.push("/dashboard/interview")}
-                className="px-4 py-2 text-sm rounded-md border"
+                className="px-4 py-2 text-sm rounded-md border cursor-pointer"
               >
                 Cancel
               </button>
@@ -364,7 +442,7 @@ export default function EditInterviewPage() {
               <button
                 type="button"
                 onClick={() => setDeleteModalOpen(true)}
-                className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700"
+                className="px-4 py-2 text-sm rounded-md cursor-pointer bg-red-600 text-white hover:bg-red-700"
                 disabled={submitting}
               >
                 Delete
@@ -374,7 +452,7 @@ export default function EditInterviewPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 text-sm rounded-md cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
               >
                 {submitting ? "Updating..." : "Update Interview"}
               </button>

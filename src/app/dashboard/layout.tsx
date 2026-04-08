@@ -10,6 +10,7 @@ import { cn, getMediaUrl, getInitials } from "@/lib/utils";
 import Image from "next/image";
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getInterviews, Interview } from "@/lib/api/interview";
+import { useInterview } from "@/context/InterviewContext";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
@@ -55,7 +56,8 @@ export default function DashboardLayout({
   const mobileDrawerRef = React.useRef<HTMLDivElement | null>(null);
   const [offcanvasOpen, setOffcanvasOpen] = useState(false);
   const [pendingGuestCount, setPendingGuestCount] = React.useState<number>(0);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+
+  const { interviews, setInterviews } = useInterview();
 
   // Fetch pending guests
   useEffect(() => {
@@ -118,29 +120,18 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const fetchInterviewCounts = async () => {
-      try {
-        const data: Interview[] = await getInterviews();
+  const statusCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
 
-        const counts: Record<string, number> = {};
+    interviews.forEach((i) => {
+      const status = i.status || "";
+      counts[status] = (counts[status] || 0) + 1;
+    });
 
-        data.forEach((i) => {
-          const status = i.status || "";
-          counts[status] = (counts[status] || 0) + 1;
-        });
+    counts[""] = interviews.length;
 
-        // total count for "All"
-        counts[""] = data.length;
-
-        setStatusCounts(counts);
-      } catch (err) {
-        console.error("Failed to fetch interviews", err);
-      }
-    };
-
-    fetchInterviewCounts();
-  }, []);
+    return counts;
+  }, [interviews]);
 
   if (loading || !user) {
     return (
@@ -469,6 +460,7 @@ export default function DashboardLayout({
                                     ? `/dashboard/interview?status=${item.value}`
                                     : `/dashboard/interview`
                                 }
+                                onClick={() => setOffcanvasOpen(false)}
                                 className={cn(
                                   "block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md",
                                   !isSidebarOpen && "text-vxs",
@@ -494,6 +486,7 @@ export default function DashboardLayout({
                   <li key={tab.href}>
                     <Link
                       href={tab.href}
+                      onClick={() => setOffcanvasOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
