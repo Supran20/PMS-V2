@@ -289,11 +289,24 @@ export default function AddInterviewPage() {
                   onChange={(date: Date | null) => {
                     setSelectedDate(date);
 
-                    setValue(
-                      "interview_date",
-                      date ? date.toISOString().split("T")[0] : "",
-                      { shouldValidate: true },
-                    );
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0",
+                      );
+                      const day = String(date.getDate()).padStart(2, "0");
+
+                      const formattedDate = `${year}-${month}-${day}`;
+
+                      setValue("interview_date", formattedDate, {
+                        shouldValidate: true,
+                      });
+                    } else {
+                      setValue("interview_date", "", {
+                        shouldValidate: true,
+                      });
+                    }
                   }}
                   className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
                   placeholderText="Select date"

@@ -176,7 +176,7 @@ export default function DashboardPage() {
   const upcomingInterviewsWidget = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     let up_interview = interviews.filter(
-      (i) => i.interview_date && i.interview_date > today,
+      (i) => i.interview_date && i.interview_date >= today,
     );
 
     // Only show interviews where current user is host
