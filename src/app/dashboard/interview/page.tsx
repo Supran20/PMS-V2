@@ -825,17 +825,17 @@ export default function InterviewsPage() {
                                   </div>
                                 )}
                               </div>
-                              {canEditInterview && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditClick(interview);
-                                  }}
-                                  className=" rounded-lg text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors"
-                                >
-                                  <Icon icon="mdi:pencil" className="text-xl" />
-                                </button>
-                              )}
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditClick(interview);
+                                }}
+                                className=" rounded-lg text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors"
+                              >
+                                <Icon icon="mdi:pencil" className="text-xl" />
+                              </button>
+
                               {/* Google Drive Link */}
                               {interview.google_drive_link && (
                                 <a
