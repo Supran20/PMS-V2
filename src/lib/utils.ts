@@ -48,21 +48,21 @@ export function getInitials(fullName: string): string {
 export function formatDate(dateString?: string | null): string {
   if (!dateString) return "-";
 
-  const date = new Date(dateString);
+  const [year, month, day] = dateString.split("-").map(Number);
 
-  const day = date.getDate();
-  const year = date.getFullYear();
+  const date = new Date(year, month - 1, day); // local fixed date
 
   const weekday = date.toLocaleDateString("en-US", {
     weekday: "short",
   });
 
-  const month = date.toLocaleDateString("en-US", {
+  const monthName = date.toLocaleDateString("en-US", {
     month: "short",
   });
 
   const getOrdinal = (n: number) => {
     if (n > 3 && n < 21) return `${n}th`;
+
     switch (n % 10) {
       case 1:
         return `${n}st`;
@@ -75,5 +75,5 @@ export function formatDate(dateString?: string | null): string {
     }
   };
 
-  return `${weekday}, ${getOrdinal(day)} ${month} ${year}`;
+  return `${weekday}, ${getOrdinal(day)} ${monthName} ${year}`;
 }
