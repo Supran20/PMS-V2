@@ -17,7 +17,9 @@ jobs:
           host: 206.189.136.214
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
           script: |
+            set -euo pipefail
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             export PATH="$HOME/.local/share/pnpm:$HOME/.nvm/versions/node/$(node -v)/bin:$PATH"
