@@ -68,6 +68,7 @@ export default function InterviewsPage() {
     useState<Interview | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [initialized, setInitialized] = useState(false);
 
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
@@ -75,12 +76,14 @@ export default function InterviewsPage() {
   const showTabs = !statusParam;
 
   useEffect(() => {
-    if (!tabParam) return;
+    if (!tabParam || initialized) return;
 
     if (tabParam === "upcoming") setTabValue(1);
     else if (tabParam === "today") setTabValue(2);
     else setTabValue(0);
-  }, [tabParam]);
+
+    setInitialized(true); // ✅ prevent future override
+  }, [tabParam, initialized]);
 
   const getPageTitle = () => {
     if (!statusParam) return "Interviews";
@@ -195,21 +198,11 @@ export default function InterviewsPage() {
   const tabInterviews = useMemo(() => {
     if (statusParam) return interviews;
 
-    if (tabParam === "upcoming") return upcomingInterviews;
-    if (tabParam === "today") return todayInterviews;
-
     if (tabValue === 1) return upcomingInterviews;
     if (tabValue === 2) return todayInterviews;
 
     return interviews;
-  }, [
-    statusParam,
-    tabParam,
-    tabValue,
-    todayInterviews,
-    upcomingInterviews,
-    interviews,
-  ]);
+  }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -835,7 +828,6 @@ export default function InterviewsPage() {
                               >
                                 <Icon icon="mdi:pencil" className="text-xl" />
                               </button>
-
 
                               {/* Google Drive Link */}
                               {interview.google_drive_link && (

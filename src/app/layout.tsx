@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${dmSans.variable} antialiased classnan`}
+        className={`${poppins.variable} ${dmSans.variable} antialiased classname`}
       >
         <InterviewProvider>
           <AuthProvider>{children}</AuthProvider>
