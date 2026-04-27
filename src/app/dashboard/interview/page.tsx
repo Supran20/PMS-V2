@@ -78,8 +78,8 @@ export default function InterviewsPage() {
   useEffect(() => {
     if (!tabParam || initialized) return;
 
-    if (tabParam === "upcoming") setTabValue(1);
-    else if (tabParam === "today") setTabValue(2);
+    if (tabParam === "today") setTabValue(1);
+    else if (tabParam === "upcoming") setTabValue(2);
     else setTabValue(0);
 
     setInitialized(true); // ✅ prevent future override
@@ -198,8 +198,8 @@ export default function InterviewsPage() {
   const tabInterviews = useMemo(() => {
     if (statusParam) return interviews;
 
-    if (tabValue === 1) return upcomingInterviews;
-    if (tabValue === 2) return todayInterviews;
+    if (tabValue === 1) return todayInterviews;
+    if (tabValue === 2) return upcomingInterviews;
 
     return interviews;
   }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
@@ -527,8 +527,8 @@ export default function InterviewsPage() {
             allowScrollButtonsMobile
           >
             <Tab label={`All Interviews(${interviews.length})`} />
-            <Tab label={`Upcoming(${upcomingInterviews.length})`} />
             <Tab label={`Today(${todayInterviews.length})`} />
+            <Tab label={`Upcoming(${upcomingInterviews.length})`} />
           </Tabs>
         </Box>
       )}
