@@ -17,7 +17,12 @@ import { getInitials } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/utils";
 
-import { getInterviews, updateInterview, Interview } from "@/lib/api/interview";
+import {
+  getInterviews,
+  updateInterview,
+  reshuffleEpisodes,
+  Interview,
+} from "@/lib/api/interview";
 
 import { getGuests } from "@/lib/api/guest";
 
@@ -69,6 +74,7 @@ export default function InterviewsPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [initialized, setInitialized] = useState(false);
+  const [reshuffleLoading, setReshuffleLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
@@ -151,6 +157,22 @@ export default function InterviewsPage() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(1);
+  };
+
+  const handleReshuffle = async () => {
+    try {
+      setReshuffleLoading(true);
+
+      await reshuffleEpisodes();
+
+      toast.success("Episodes reshuffled successfully");
+
+      await fetchInterviews(); // refresh UI
+    } catch {
+      toast.error("Failed to reshuffle episodes");
+    } finally {
+      setReshuffleLoading(false);
+    }
   };
 
   //Modal Opening
@@ -509,12 +531,23 @@ export default function InterviewsPage() {
         <h2 className="text-xl font-semibold text-gray-900">
           {getPageTitle()}
         </h2>
-        {canAddInterview && (
-          <AddButton
-            href="/dashboard/interview/add"
-            label="Schedule Interview"
-          />
-        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleReshuffle}
+            disabled={reshuffleLoading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {reshuffleLoading ? "Reshuffling..." : "Reshuffle Episodes"}
+          </button>
+
+          {canAddInterview && (
+            <AddButton
+              href="/dashboard/interview/add"
+              label="Schedule Interview"
+            />
+          )}
+        </div>
       </div>
       {showTabs && (
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
