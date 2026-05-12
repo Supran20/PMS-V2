@@ -193,3 +193,13 @@ export const updateInterview = async (
 export const deleteInterview = async (id: string): Promise<void> => {
   await api.delete(`/interviews/${id}`);
 };
+
+/**
+ * --------------------------------
+ * RESHUFFLE EPISODES
+ * --------------------------------
+ */
+export const reshuffleEpisodes = async () => {
+  const response = await api.patch("/interviews/reshuffle");
+  return response.data;
+};

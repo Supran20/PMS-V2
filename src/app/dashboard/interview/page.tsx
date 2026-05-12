@@ -17,7 +17,12 @@ import { getInitials } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/utils";
 
-import { getInterviews, updateInterview, Interview } from "@/lib/api/interview";
+import {
+  getInterviews,
+  updateInterview,
+  reshuffleEpisodes,
+  Interview,
+} from "@/lib/api/interview";
 
 import { getGuests } from "@/lib/api/guest";
 
@@ -68,6 +73,8 @@ export default function InterviewsPage() {
     useState<Interview | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [initialized, setInitialized] = useState(false);
+  const [reshuffleLoading, setReshuffleLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
@@ -75,12 +82,14 @@ export default function InterviewsPage() {
   const showTabs = !statusParam;
 
   useEffect(() => {
-    if (!tabParam) return;
+    if (!tabParam || initialized) return;
 
-    if (tabParam === "upcoming") setTabValue(1);
-    else if (tabParam === "today") setTabValue(2);
+    if (tabParam === "today") setTabValue(1);
+    else if (tabParam === "upcoming") setTabValue(2);
     else setTabValue(0);
-  }, [tabParam]);
+
+    setInitialized(true); // ✅ prevent future override
+  }, [tabParam, initialized]);
 
   const getPageTitle = () => {
     if (!statusParam) return "Interviews";
@@ -150,6 +159,22 @@ export default function InterviewsPage() {
     setCurrentPage(1);
   };
 
+  const handleReshuffle = async () => {
+    try {
+      setReshuffleLoading(true);
+
+      await reshuffleEpisodes();
+
+      toast.success("Episodes reshuffled successfully");
+
+      await fetchInterviews(); // refresh UI
+    } catch {
+      toast.error("Failed to reshuffle episodes");
+    } finally {
+      setReshuffleLoading(false);
+    }
+  };
+
   //Modal Opening
 
   const handlePostponeClick = (interview: Interview) => {
@@ -195,21 +220,11 @@ export default function InterviewsPage() {
   const tabInterviews = useMemo(() => {
     if (statusParam) return interviews;
 
-    if (tabParam === "upcoming") return upcomingInterviews;
-    if (tabParam === "today") return todayInterviews;
-
-    if (tabValue === 1) return upcomingInterviews;
-    if (tabValue === 2) return todayInterviews;
+    if (tabValue === 1) return todayInterviews;
+    if (tabValue === 2) return upcomingInterviews;
 
     return interviews;
-  }, [
-    statusParam,
-    tabParam,
-    tabValue,
-    todayInterviews,
-    upcomingInterviews,
-    interviews,
-  ]);
+  }, [statusParam, tabValue, todayInterviews, upcomingInterviews, interviews]);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -516,12 +531,23 @@ export default function InterviewsPage() {
         <h2 className="text-xl font-semibold text-gray-900">
           {getPageTitle()}
         </h2>
-        {canAddInterview && (
-          <AddButton
-            href="/dashboard/interview/add"
-            label="Schedule Interview"
-          />
-        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleReshuffle}
+            disabled={reshuffleLoading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {reshuffleLoading ? "Reshuffling..." : "Reshuffle Episodes"}
+          </button>
+
+          {canAddInterview && (
+            <AddButton
+              href="/dashboard/interview/add"
+              label="Schedule Interview"
+            />
+          )}
+        </div>
       </div>
       {showTabs && (
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
@@ -534,8 +560,8 @@ export default function InterviewsPage() {
             allowScrollButtonsMobile
           >
             <Tab label={`All Interviews(${interviews.length})`} />
-            <Tab label={`Upcoming(${upcomingInterviews.length})`} />
             <Tab label={`Today(${todayInterviews.length})`} />
+            <Tab label={`Upcoming(${upcomingInterviews.length})`} />
           </Tabs>
         </Box>
       )}
@@ -835,7 +861,6 @@ export default function InterviewsPage() {
                               >
                                 <Icon icon="mdi:pencil" className="text-xl" />
                               </button>
-
 
                               {/* Google Drive Link */}
                               {interview.google_drive_link && (
