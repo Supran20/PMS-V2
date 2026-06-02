@@ -8,7 +8,11 @@ interface PostponeModalProps {
   open: boolean;
   onClose: () => void;
   interview: Interview | null;
-  onSubmit: (id: string, date: string, start_time: string) => void;
+  onSubmit: (
+    id: string,
+    date: string | null,
+    start_time: string | null,
+  ) => void;
 }
 
 export default function PostponeModal({
@@ -21,12 +25,12 @@ export default function PostponeModal({
   const [startTime, setStartTime] = useState("");
 
   useEffect(() => {
-    if (open && interview) {
+    if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDate(interview.interview_date ?? "");
-      setStartTime(interview.start_time ?? "");
+      setDate("");
+      setStartTime("");
     }
-  }, [open, interview]);
+  }, [open]);
 
   // ESC key closes modal
   useEffect(() => {
@@ -41,10 +45,7 @@ export default function PostponeModal({
 
   const handleSubmit = () => {
     if (!interview) return;
-    if (!date || !startTime) {
-      toast.error("Please select date and time");
-      return;
-    }
+
     onSubmit(interview.id, date, startTime);
   };
 

@@ -411,13 +411,13 @@ export default function InterviewsPage() {
 
   const handlePostponeSubmit = async (
     id: string,
-    date: string,
-    start_time: string,
+    date: string | null,
+    start_time: string | null,
   ) => {
     try {
       await updateInterview(id, {
-        interview_date: date,
-        start_time,
+        interview_date: date || null,
+        start_time: start_time || null,
         status: "postponed",
       });
 
