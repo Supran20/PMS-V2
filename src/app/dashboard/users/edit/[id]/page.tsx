@@ -31,7 +31,7 @@ const allowedMimeTypes = [
 
 const RESTRICTED_ROLES = ["Host", "Staff"];
 
-type VisibilityMode = "default" | "range";
+type VisibilityMode = "default" | "range" | "all";
 
 function formatDate(date: Date | null): string | undefined {
   if (!date) return undefined;
@@ -65,8 +65,8 @@ export default function EditUserPage() {
   const [visibilityEnd, setVisibilityEnd] = useState<Date | null>(null);
 
   // Tracks whether the fetched user originally had a role-init pass done,
-  // so the role-change effect doesn't wipe out dates we just loaded from
-  // the server on the very first render.
+  // so the role-change effect doesn't wipe out settings we just loaded
+  // from the server on the very first render.
   const [hasInitialized, setHasInitialized] = useState(false);
 
   const {
@@ -113,13 +113,26 @@ export default function EditUserPage() {
 
         setUserCreatedAt(user.created_at ? new Date(user.created_at) : null);
 
-        // Pre-select mode based on existing visibility window
-        if (user.visibility_start_date && user.visibility_end_date) {
-          setVisibilityMode("range");
-          setVisibilityStart(new Date(user.visibility_start_date));
-          setVisibilityEnd(new Date(user.visibility_end_date));
+        // Pre-select mode straight from the server's visibility_mode —
+        // no more inferring "range" from date presence, since "all" mode
+        // has no dates to infer from.
+        const serverMode: VisibilityMode =
+          (user.visibility_mode as VisibilityMode) ?? "default";
+
+        setVisibilityMode(serverMode);
+
+        if (serverMode === "range") {
+          setVisibilityStart(
+            user.visibility_start_date
+              ? new Date(user.visibility_start_date)
+              : null,
+          );
+          setVisibilityEnd(
+            user.visibility_end_date
+              ? new Date(user.visibility_end_date)
+              : null,
+          );
         } else {
-          setVisibilityMode("default");
           setVisibilityStart(null);
           setVisibilityEnd(null);
         }
@@ -143,7 +156,7 @@ export default function EditUserPage() {
 
   /**
    * If role switches away from Host/Staff (i.e. to Admin) AFTER initial
-   * load, the visibility window no longer applies — reset mode and clear
+   * load, visibility settings no longer apply — reset mode and clear
    * dates. Guarded by hasInitialized so this doesn't fire and wipe out
    * data we just loaded from the server on mount.
    */
@@ -155,6 +168,14 @@ export default function EditUserPage() {
       setVisibilityEnd(null);
     }
   }, [isRestrictedRole, hasInitialized]);
+
+  const handleVisibilityModeChange = (mode: VisibilityMode) => {
+    setVisibilityMode(mode);
+    if (mode !== "range") {
+      setVisibilityStart(null);
+      setVisibilityEnd(null);
+    }
+  };
 
   const onSubmit = async (data: UpdateUserInput) => {
     setSubmitting(true);
@@ -175,13 +196,32 @@ export default function EditUserPage() {
       };
 
       if (isRestrictedRole && visibilityMode === "range") {
+        payload.visibility_mode = "range";
         payload.visibility_start_date = formatDate(visibilityStart);
-        payload.visibility_end_date = formatDate(visibilityEnd);
-      } else {
-        // Default mode (or role is Admin) — explicitly send null so the
-        // backend revokes any previously granted window.
+        // End date is optional — omitting it means "start through now".
+        // Explicitly send null only if the admin had one set previously
+        // and just cleared it, so the backend actually revokes it rather
+        // than leaving a stale value untouched.
+        const end = formatDate(visibilityEnd);
+        payload.visibility_end_date = end ?? null;
+      } else if (isRestrictedRole && visibilityMode === "all") {
+        payload.visibility_mode = "all";
+        // Explicit null so the backend actively revokes any previously
+        // granted window rather than leaving it untouched.
         payload.visibility_start_date = null;
         payload.visibility_end_date = null;
+      } else {
+        // Default mode (or role is Admin) — explicitly send null/"default"
+        // so the backend revokes any previously granted window.
+        payload.visibility_mode = "default";
+        payload.visibility_start_date = null;
+        payload.visibility_end_date = null;
+      }
+
+      if (!isRestrictedRole) {
+        delete payload.visibility_mode;
+        delete payload.visibility_start_date;
+        delete payload.visibility_end_date;
       }
 
       await updateUser(id, payload);
@@ -267,11 +307,7 @@ export default function EditUserPage() {
                         type="radio"
                         className="mt-1"
                         checked={visibilityMode === "default"}
-                        onChange={() => {
-                          setVisibilityMode("default");
-                          setVisibilityStart(null);
-                          setVisibilityEnd(null);
-                        }}
+                        onChange={() => handleVisibilityModeChange("default")}
                       />
                       <span>
                         <span className="block text-sm font-medium text-gray-800">
@@ -281,8 +317,8 @@ export default function EditUserPage() {
                           {userCreatedAt
                             ? `This user can only see guests/interviews created after ${formatDisplayDate(
                                 userCreatedAt,
-                              )}, their account creation date.`
-                            : "This user will only see guests/interviews created after their account is created."}
+                              )}, their account creation date (plus anything directly assigned to them).`
+                            : "This user will only see guests/interviews created after their account is created (plus anything directly assigned to them)."}
                         </span>
                       </span>
                     </label>
@@ -292,7 +328,7 @@ export default function EditUserPage() {
                         type="radio"
                         className="mt-1"
                         checked={visibilityMode === "range"}
-                        onChange={() => setVisibilityMode("range")}
+                        onChange={() => handleVisibilityModeChange("range")}
                       />
                       <span>
                         <span className="block text-sm font-medium text-gray-800">
@@ -300,8 +336,28 @@ export default function EditUserPage() {
                         </span>
                         <span className="block text-xs text-gray-500">
                           In addition to their default access, this user will
-                          also be able to see content created between these
-                          dates.
+                          also be able to see all content created between these
+                          dates, regardless of assignment. Leave the end date
+                          empty to grant access from the start date through
+                          today.
+                        </span>
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "all"}
+                        onChange={() => handleVisibilityModeChange("all")}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          All records
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          This user will be able to see every guest and
+                          interview in the system, with no date restriction.
                         </span>
                       </span>
                     </label>
@@ -330,7 +386,8 @@ export default function EditUserPage() {
 
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">
-                          End Date
+                          End Date{" "}
+                          <span className="text-gray-400">(optional)</span>
                         </label>
                         <DatePicker
                           selected={visibilityEnd}
@@ -342,21 +399,21 @@ export default function EditUserPage() {
                           endDate={visibilityEnd}
                           minDate={visibilityStart ?? undefined}
                           maxDate={new Date()}
+                          isClearable
                           className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                          placeholderText="Select end date"
+                          placeholderText="Through today"
                           dateFormat="yyyy-MM-dd"
                         />
                       </div>
                     </div>
                   )}
 
-                  {visibilityMode === "range" &&
-                    (!visibilityStart || !visibilityEnd) && (
-                      <p className="text-xs text-amber-600">
-                        Both a start and end date are required to grant access
-                        to a historical range.
-                      </p>
-                    )}
+                  {visibilityMode === "range" && !visibilityStart && (
+                    <p className="text-xs text-amber-600">
+                      A start date is required to grant access to a historical
+                      range.
+                    </p>
+                  )}
                 </div>
               </FormField>
             )}
