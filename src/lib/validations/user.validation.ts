@@ -11,6 +11,14 @@ const dateField = z.preprocess((value) => {
   return value;
 }, z.coerce.date());
 
+const nullableDateField = z.preprocess((value) => {
+  if (value === "" || value === undefined) return undefined;
+  if (value === "null" || value === null) return null;
+  return value;
+}, z.coerce.date().nullable());
+
+const visibilityModeEnum = z.enum(["default", "range", "all"]);
+
 const baseUserSchema = z.object({
   full_name: z.string().min(3),
   email: z.string().email(),
@@ -24,6 +32,7 @@ const baseUserSchema = z.object({
   otp_in_mail: z.boolean().optional(),
   otp_in_sms: z.boolean().optional(),
 
+  visibility_mode: visibilityModeEnum.optional(),
   visibility_start_date: dateField.optional(),
   visibility_end_date: dateField.optional(),
 
@@ -50,28 +59,57 @@ export const createUserSchema = baseUserSchema
     },
   )
   .superRefine((data, ctx) => {
-    const start = data.visibility_start_date;
-    const end = data.visibility_end_date;
+    const {
+      visibility_mode: mode,
+      visibility_start_date: start,
+      visibility_end_date: end,
+    } = data;
 
-    if (data.role_name === "Admin" && (start || end)) {
+    const touchingVisibility =
+      mode !== undefined || start !== undefined || end !== undefined;
+
+    if (!touchingVisibility) return;
+
+    if (data.role_name === "Admin") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message: "Visibility dates are not allowed for Admin users.",
+        path: ["visibility_mode"],
+        message: "Visibility settings are not allowed for Admin users.",
       });
       return;
     }
 
-    if ((start && !end) || (!start && end)) {
+    const effectiveMode = mode ?? "default";
+
+    if (effectiveMode === "default" || effectiveMode === "all") {
+      if (start !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_start_date"],
+          message: `visibility_start_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      if (end !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_end_date"],
+          message: `visibility_end_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      return;
+    }
+
+    // effectiveMode === "range"
+    if (!start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date are required together.",
+        message: "visibility_start_date is required in range mode.",
       });
+      return;
     }
 
-    if (start && end) {
+    if (end !== undefined) {
       if (end < start) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -92,6 +130,7 @@ export const createUserSchema = baseUserSchema
   });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
 /**
  * --------------------------------
  * Update Schema
@@ -110,8 +149,9 @@ export const updateUserSchema = z
     otp_in_mail: z.boolean().optional(),
     otp_in_sms: z.boolean().optional(),
 
-    visibility_start_date: dateField.nullable().optional(),
-    visibility_end_date: dateField.nullable().optional(),
+    visibility_mode: visibilityModeEnum.optional(),
+    visibility_start_date: nullableDateField.optional(),
+    visibility_end_date: nullableDateField.optional(),
 
     role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
     file: z.any().optional(),
@@ -140,43 +180,52 @@ export const updateUserSchema = z
     },
   )
   .superRefine((data, ctx) => {
-    const start = data.visibility_start_date;
-    const end = data.visibility_end_date;
+    const {
+      visibility_mode: mode,
+      visibility_start_date: start,
+      visibility_end_date: end,
+    } = data;
 
-    if (
-      data.role_name === "Admin" &&
-      (start !== undefined || end !== undefined)
-    ) {
+    const touchingVisibility =
+      mode !== undefined || start !== undefined || end !== undefined;
+
+    if (!touchingVisibility) return;
+
+    if (data.role_name === "Admin") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message: "Visibility dates are not allowed for Admin users.",
+        path: ["visibility_mode"],
+        message: "Visibility settings are not allowed for Admin users.",
       });
       return;
     }
 
-    const provided =
-      data.visibility_start_date !== undefined ||
-      data.visibility_end_date !== undefined;
+    const effectiveMode = mode ?? "default";
 
-    if (!provided) return;
-
-    if ((start === null) !== (end === null)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date must be null together.",
-      });
+    if (effectiveMode === "default" || effectiveMode === "all") {
+      if (start !== undefined && start !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_start_date"],
+          message: `visibility_start_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      if (end !== undefined && end !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_end_date"],
+          message: `visibility_end_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
       return;
     }
 
-    if ((start && !end) || (!start && end)) {
+    // effectiveMode === "range"
+    if (!start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date are required together.",
+        message: "visibility_start_date is required in range mode.",
       });
       return;
     }
@@ -202,3 +251,50 @@ export const updateUserSchema = z
   });
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+/**
+ * Form schema for the edit page. Visibility dates are managed outside
+ * react-hook-form, so they are excluded to avoid z.coerce.date() turning
+ * bad values into Invalid Date objects during client-side validation.
+ */
+export const editUserFormSchema = z
+  .object({
+    full_name: z.string().min(3).optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(8).optional(),
+    confirm_password: z.string().optional(),
+    status: z.enum(["active", "inactive"]).optional(),
+
+    mobile_number: z.string().optional(),
+    enable_otp_login: z.boolean().optional(),
+    otp_in_mail: z.boolean().optional(),
+    otp_in_sms: z.boolean().optional(),
+
+    role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
+    file: z.any().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.password && !data.confirm_password) return true;
+      return data.password === data.confirm_password;
+    },
+    {
+      message: "Passwords do not match",
+      path: ["confirm_password"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (!data.enable_otp_login) return true;
+      return (
+        (data.otp_in_mail && !data.otp_in_sms) ||
+        (!data.otp_in_mail && data.otp_in_sms)
+      );
+    },
+    {
+      message: "Select exactly one OTP method (Email or SMS)",
+      path: ["otp_in_mail"],
+    },
+  );
+
+export type EditUserFormInput = z.infer<typeof editUserFormSchema>;

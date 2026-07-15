@@ -29,7 +29,7 @@ const allowedMimeTypes = [
 
 const RESTRICTED_ROLES = ["Host", "Staff"];
 
-type VisibilityMode = "default" | "range";
+type VisibilityMode = "default" | "range" | "all";
 
 function formatDate(date: Date | null): string | undefined {
   if (!date) return undefined;
@@ -64,6 +64,7 @@ export default function AddUserPage() {
       enable_otp_login: false,
       otp_in_mail: false,
       otp_in_sms: false,
+      visibility_mode: "default",
     },
   });
   const enableOtp = watch("enable_otp_login");
@@ -79,9 +80,9 @@ export default function AddUserPage() {
   }, [imagePreview]);
 
   /**
-   * If role switches away from Host/Staff (i.e. to Admin), the visibility
-   * window doesn't apply anymore — reset the mode and clear any dates
-   * the admin may have already picked, and clear form-level errors on
+   * If role switches away from Host/Staff (i.e. to Admin), visibility
+   * settings don't apply anymore — reset to default and clear any dates
+   * the admin may have already picked, and clear form-level values on
    * these fields since they're no longer relevant.
    */
   useEffect(() => {
@@ -89,10 +90,23 @@ export default function AddUserPage() {
       setVisibilityMode("default");
       setVisibilityStart(null);
       setVisibilityEnd(null);
+      setValue("visibility_mode", "default");
       setValue("visibility_start_date", undefined);
       setValue("visibility_end_date", undefined);
     }
   }, [isRestrictedRole, setValue]);
+
+  const handleVisibilityModeChange = (mode: VisibilityMode) => {
+    setVisibilityMode(mode);
+    setValue("visibility_mode", mode);
+
+    if (mode !== "range") {
+      setVisibilityStart(null);
+      setVisibilityEnd(null);
+      setValue("visibility_start_date", undefined);
+      setValue("visibility_end_date", undefined);
+    }
+  };
 
   const onSubmit = async (data: CreateUserInput) => {
     setSubmitting(true);
@@ -100,12 +114,29 @@ export default function AddUserPage() {
       const payload: any = { ...data };
 
       if (isRestrictedRole && visibilityMode === "range") {
+        payload.visibility_mode = "range";
         payload.visibility_start_date = formatDate(visibilityStart);
-        payload.visibility_end_date = formatDate(visibilityEnd);
-      } else {
-        // Default mode (or non-restricted role) — don't send a window
+        // End date is optional — a missing end means "start through now".
+        // Only send it if the admin actually picked one.
+        const end = formatDate(visibilityEnd);
+        if (end) {
+          payload.visibility_end_date = end;
+        } else {
+          delete payload.visibility_end_date;
+        }
+      } else if (isRestrictedRole && visibilityMode === "all") {
+        payload.visibility_mode = "all";
         delete payload.visibility_start_date;
         delete payload.visibility_end_date;
+      } else {
+        // Default mode (or non-restricted role) — no window, mode "default"
+        payload.visibility_mode = "default";
+        delete payload.visibility_start_date;
+        delete payload.visibility_end_date;
+      }
+
+      if (!isRestrictedRole) {
+        delete payload.visibility_mode;
       }
 
       await createUser(payload);
@@ -201,13 +232,7 @@ export default function AddUserPage() {
                         type="radio"
                         className="mt-1"
                         checked={visibilityMode === "default"}
-                        onChange={() => {
-                          setVisibilityMode("default");
-                          setVisibilityStart(null);
-                          setVisibilityEnd(null);
-                          setValue("visibility_start_date", undefined);
-                          setValue("visibility_end_date", undefined);
-                        }}
+                        onChange={() => handleVisibilityModeChange("default")}
                       />
                       <span>
                         <span className="block text-sm font-medium text-gray-800">
@@ -215,7 +240,8 @@ export default function AddUserPage() {
                         </span>
                         <span className="block text-xs text-gray-500">
                           This user will only see guests/interviews created
-                          after their account is created.
+                          after their account is created (plus anything directly
+                          assigned to them).
                         </span>
                       </span>
                     </label>
@@ -225,7 +251,7 @@ export default function AddUserPage() {
                         type="radio"
                         className="mt-1"
                         checked={visibilityMode === "range"}
-                        onChange={() => setVisibilityMode("range")}
+                        onChange={() => handleVisibilityModeChange("range")}
                       />
                       <span>
                         <span className="block text-sm font-medium text-gray-800">
@@ -233,8 +259,28 @@ export default function AddUserPage() {
                         </span>
                         <span className="block text-xs text-gray-500">
                           In addition to their default access, this user will
-                          also be able to see content created between these
-                          dates.
+                          also be able to see all content created between these
+                          dates, regardless of assignment. Leave the end date
+                          empty to grant access from the start date through
+                          today.
+                        </span>
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "all"}
+                        onChange={() => handleVisibilityModeChange("all")}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          All records
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          This user will be able to see every guest and
+                          interview in the system, with no date restriction.
                         </span>
                       </span>
                     </label>
@@ -248,9 +294,14 @@ export default function AddUserPage() {
                         </label>
                         <DatePicker
                           selected={visibilityStart}
-                          onChange={(date: Date | null) =>
-                            setVisibilityStart(date)
-                          }
+                          onChange={(date: Date | null) => {
+                            setVisibilityStart(date);
+                            setValue(
+                              "visibility_start_date",
+                              date ?? undefined,
+                              { shouldValidate: true },
+                            );
+                          }}
                           selectsStart
                           startDate={visibilityStart}
                           endDate={visibilityEnd}
@@ -263,33 +314,37 @@ export default function AddUserPage() {
 
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">
-                          End Date
+                          End Date{" "}
+                          <span className="text-gray-400">(optional)</span>
                         </label>
                         <DatePicker
                           selected={visibilityEnd}
-                          onChange={(date: Date | null) =>
-                            setVisibilityEnd(date)
-                          }
+                          onChange={(date: Date | null) => {
+                            setVisibilityEnd(date);
+                            setValue("visibility_end_date", date ?? undefined, {
+                              shouldValidate: true,
+                            });
+                          }}
                           selectsEnd
                           startDate={visibilityStart}
                           endDate={visibilityEnd}
                           minDate={visibilityStart ?? undefined}
                           maxDate={new Date()}
+                          isClearable
                           className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                          placeholderText="Select end date"
+                          placeholderText="Through today"
                           dateFormat="yyyy-MM-dd"
                         />
                       </div>
                     </div>
                   )}
 
-                  {visibilityMode === "range" &&
-                    (!visibilityStart || !visibilityEnd) && (
-                      <p className="text-xs text-amber-600">
-                        Both a start and end date are required to grant access
-                        to a historical range.
-                      </p>
-                    )}
+                  {visibilityMode === "range" && !visibilityStart && (
+                    <p className="text-xs text-amber-600">
+                      A start date is required to grant access to a historical
+                      range.
+                    </p>
+                  )}
 
                   {errors.visibility_start_date && (
                     <p className="text-sm text-red-600">
