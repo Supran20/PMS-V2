@@ -11,6 +11,8 @@ const dateField = z.preprocess((value) => {
   return value;
 }, z.coerce.date());
 
+const visibilityModeEnum = z.enum(["default", "range", "all"]);
+
 const baseUserSchema = z.object({
   full_name: z.string().min(3),
   email: z.string().email(),
@@ -24,6 +26,7 @@ const baseUserSchema = z.object({
   otp_in_mail: z.boolean().optional(),
   otp_in_sms: z.boolean().optional(),
 
+  visibility_mode: visibilityModeEnum.optional(),
   visibility_start_date: dateField.optional(),
   visibility_end_date: dateField.optional(),
 
@@ -50,28 +53,57 @@ export const createUserSchema = baseUserSchema
     },
   )
   .superRefine((data, ctx) => {
-    const start = data.visibility_start_date;
-    const end = data.visibility_end_date;
+    const {
+      visibility_mode: mode,
+      visibility_start_date: start,
+      visibility_end_date: end,
+    } = data;
 
-    if (data.role_name === "Admin" && (start || end)) {
+    const touchingVisibility =
+      mode !== undefined || start !== undefined || end !== undefined;
+
+    if (!touchingVisibility) return;
+
+    if (data.role_name === "Admin") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message: "Visibility dates are not allowed for Admin users.",
+        path: ["visibility_mode"],
+        message: "Visibility settings are not allowed for Admin users.",
       });
       return;
     }
 
-    if ((start && !end) || (!start && end)) {
+    const effectiveMode = mode ?? "default";
+
+    if (effectiveMode === "default" || effectiveMode === "all") {
+      if (start !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_start_date"],
+          message: `visibility_start_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      if (end !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_end_date"],
+          message: `visibility_end_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      return;
+    }
+
+    // effectiveMode === "range"
+    if (!start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date are required together.",
+        message: "visibility_start_date is required in range mode.",
       });
+      return;
     }
 
-    if (start && end) {
+    if (end !== undefined) {
       if (end < start) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -92,6 +124,7 @@ export const createUserSchema = baseUserSchema
   });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
 /**
  * --------------------------------
  * Update Schema
@@ -110,6 +143,7 @@ export const updateUserSchema = z
     otp_in_mail: z.boolean().optional(),
     otp_in_sms: z.boolean().optional(),
 
+    visibility_mode: visibilityModeEnum.optional(),
     visibility_start_date: dateField.nullable().optional(),
     visibility_end_date: dateField.nullable().optional(),
 
@@ -140,43 +174,52 @@ export const updateUserSchema = z
     },
   )
   .superRefine((data, ctx) => {
-    const start = data.visibility_start_date;
-    const end = data.visibility_end_date;
+    const {
+      visibility_mode: mode,
+      visibility_start_date: start,
+      visibility_end_date: end,
+    } = data;
 
-    if (
-      data.role_name === "Admin" &&
-      (start !== undefined || end !== undefined)
-    ) {
+    const touchingVisibility =
+      mode !== undefined || start !== undefined || end !== undefined;
+
+    if (!touchingVisibility) return;
+
+    if (data.role_name === "Admin") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message: "Visibility dates are not allowed for Admin users.",
+        path: ["visibility_mode"],
+        message: "Visibility settings are not allowed for Admin users.",
       });
       return;
     }
 
-    const provided =
-      data.visibility_start_date !== undefined ||
-      data.visibility_end_date !== undefined;
+    const effectiveMode = mode ?? "default";
 
-    if (!provided) return;
-
-    if ((start === null) !== (end === null)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date must be null together.",
-      });
+    if (effectiveMode === "default" || effectiveMode === "all") {
+      if (start !== undefined && start !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_start_date"],
+          message: `visibility_start_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
+      if (end !== undefined && end !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["visibility_end_date"],
+          message: `visibility_end_date is not allowed in "${effectiveMode}" mode.`,
+        });
+      }
       return;
     }
 
-    if ((start && !end) || (!start && end)) {
+    // effectiveMode === "range"
+    if (!start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["visibility_start_date"],
-        message:
-          "Both visibility_start_date and visibility_end_date are required together.",
+        message: "visibility_start_date is required in range mode.",
       });
       return;
     }
