@@ -16,6 +16,9 @@ export interface UserPayload {
   enable_otp_login?: boolean;
   otp_in_mail?: boolean;
   otp_in_sms?: boolean;
+
+  visibility_start_date?: string | null;
+  visibility_end_date?: string | null;
   role_name?: "Admin" | "Host" | "Staff";
 }
 
@@ -38,6 +41,10 @@ export interface User {
   profileImage?: Media | null;
   mobile_number?: string | null;
   enable_otp_login?: boolean;
+
+  visibility_start_date?: string | null;
+  visibility_end_date?: string | null;
+
   roles?: {
     id: string;
     role_name: string;

@@ -26,8 +26,8 @@ import {
 import {
   createInterview,
   getInterviews,
+  getEpisodeMeta,
   checkInterviewOverlap,
-  Interview,
 } from "@/lib/api/interview";
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getHostUser, User } from "@/lib/api/user";
@@ -75,28 +75,27 @@ export default function AddInterviewPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [guestData, userData, studioData, interviews] = await Promise.all(
-          [
+        const [guestData, userData, studioData, interviews, episodeMeta] =
+          await Promise.all([
             getGuests(),
             getHostUser(),
             getStudios(),
             getInterviews(), // fetch all interviews to get max episode
-          ],
-        );
+            getEpisodeMeta(),
+          ]);
 
         const approvedGuests = guestData.filter((g) => g.approved === true);
         setGuests(approvedGuests);
         setHosts(userData);
         setStudios(studioData);
 
-        // Determine max episode
-        const episodes = interviews.map((i) => i.episode);
+        // Determine max episode from unrestricted source
+        const episodes = episodeMeta.existingEpisodes.map((e) => e.episode);
         setExistingEpisodes(episodes);
-        const max = Math.max(...episodes, 0);
-        setMaxEpisode(max);
+        setMaxEpisode(episodeMeta.maxEpisode);
 
         // Set default episode in form
-        setValue("episode", max + 1);
+        setValue("episode", episodeMeta.maxEpisode + 1);
 
         if (guestIdFromUrl) {
           setValue("guest_id", guestIdFromUrl, { shouldValidate: true });
@@ -145,9 +144,9 @@ export default function AddInterviewPage() {
       const episodeExists = existingEpisodes.includes(data.episode);
       if (episodeExists) {
         // Fetch the interview to see if it is published
-        const allInterviews = await getInterviews();
-        const conflicting = allInterviews.find(
-          (i) => i.episode === data.episode,
+        const episodeMeta = await getEpisodeMeta();
+        const conflicting = episodeMeta.existingEpisodes.find(
+          (e) => e.episode === data.episode,
         );
 
         if (conflicting?.status === "published") {

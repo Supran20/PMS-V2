@@ -5,7 +5,7 @@ import type { FieldValues, Control, Path } from "react-hook-form";
 
 export interface FormInputProps<T extends FieldValues> {
   name: Path<T>;
-  control: Control<T>;
+  control: Control<T, any>;
   placeholder?: string;
   type?: string;
   className?: string;
