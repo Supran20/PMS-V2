@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { formatDateForFormData } from "@/lib/date-utils";
 
 /**
  * --------------------------------
@@ -72,20 +73,6 @@ export interface User {
  *   - Date      -> send as YYYY-MM-DD
  */
 
-const NULL_SENTINEL = "null";
-
-function formatDateForFormData(
-  value: Date | string | null | undefined,
-): string | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return NULL_SENTINEL;
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-
-  return date.toISOString().split("T")[0]; // YYYY-MM-DD
-}
-
 // Visibility fields need the sentinel-aware treatment above; every other
 // field just gets skipped if undefined, and stringified otherwise. Nulls
 // on non-visibility fields are treated as "don't send" — there's no
@@ -110,11 +97,9 @@ function appendPayloadToFormData(
       }
 
       // visibility_start_date / visibility_end_date
-      const formatted = allowNullDateClear
-        ? formatDateForFormData(value)
-        : value === null || value === undefined
-          ? undefined
-          : formatDateForFormData(value);
+      const formatted = formatDateForFormData(value, {
+        allowNull: allowNullDateClear,
+      });
 
       if (formatted === undefined) return;
       formData.append(key, formatted);

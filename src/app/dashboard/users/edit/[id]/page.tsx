@@ -6,9 +6,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { getUserById, updateUser } from "@/lib/api/user";
 import {
-  updateUserSchema,
-  UpdateUserInput,
+  editUserFormSchema,
+  EditUserFormInput,
 } from "@/lib/validations/user.validation";
+import { parseDateOnly, toDateOnlyString, isValidDate } from "@/lib/date-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -32,23 +33,6 @@ const allowedMimeTypes = [
 const RESTRICTED_ROLES = ["Host", "Staff"];
 
 type VisibilityMode = "default" | "range" | "all";
-
-function formatDate(date: Date | null): string | undefined {
-  if (!date) return undefined;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDisplayDate(date: Date | null): string {
-  if (!date) return "";
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -77,8 +61,8 @@ export default function EditUserPage() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<UpdateUserInput>({
-    resolver: zodResolver(updateUserSchema) as any,
+  } = useForm<EditUserFormInput>({
+    resolver: zodResolver(editUserFormSchema) as any,
     defaultValues: {
       enable_otp_login: false,
       otp_in_mail: false,
@@ -122,16 +106,8 @@ export default function EditUserPage() {
         setVisibilityMode(serverMode);
 
         if (serverMode === "range") {
-          setVisibilityStart(
-            user.visibility_start_date
-              ? new Date(user.visibility_start_date)
-              : null,
-          );
-          setVisibilityEnd(
-            user.visibility_end_date
-              ? new Date(user.visibility_end_date)
-              : null,
-          );
+          setVisibilityStart(parseDateOnly(user.visibility_start_date));
+          setVisibilityEnd(parseDateOnly(user.visibility_end_date));
         } else {
           setVisibilityStart(null);
           setVisibilityEnd(null);
@@ -177,7 +153,7 @@ export default function EditUserPage() {
     }
   };
 
-  const onSubmit = async (data: UpdateUserInput) => {
+  const onSubmit = async (data: EditUserFormInput) => {
     setSubmitting(true);
     try {
       const payload: any = {
@@ -196,14 +172,21 @@ export default function EditUserPage() {
       };
 
       if (isRestrictedRole && visibilityMode === "range") {
+        const start = toDateOnlyString(visibilityStart);
+        if (!start) {
+          toast.error("A valid start date is required for range visibility.");
+          return;
+        }
+
         payload.visibility_mode = "range";
-        payload.visibility_start_date = formatDate(visibilityStart);
-        // End date is optional — omitting it means "start through now".
-        // Explicitly send null only if the admin had one set previously
-        // and just cleared it, so the backend actually revokes it rather
-        // than leaving a stale value untouched.
-        const end = formatDate(visibilityEnd);
-        payload.visibility_end_date = end ?? null;
+        payload.visibility_start_date = start;
+
+        const end = toDateOnlyString(visibilityEnd);
+        if (end) {
+          payload.visibility_end_date = end;
+        } else {
+          delete payload.visibility_end_date;
+        }
       } else if (isRestrictedRole && visibilityMode === "all") {
         payload.visibility_mode = "all";
         // Explicit null so the backend actively revokes any previously
@@ -227,8 +210,11 @@ export default function EditUserPage() {
       await updateUser(id, payload);
       toast.success("User updated successfully");
       router.push("/dashboard/users");
-    } catch {
-      toast.error("Failed to update user");
+    } catch (error: any) {
+      const message = error?.response?.data?.message;
+      toast.error(
+        typeof message === "string" ? message : "Failed to update user",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -250,7 +236,7 @@ export default function EditUserPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <FormField label="Full Name" required>
-              <FormInput<UpdateUserInput>
+              <FormInput<EditUserFormInput>
                 name="full_name"
                 control={control as any}
                 placeholder="e.g. John Doe"
@@ -258,7 +244,7 @@ export default function EditUserPage() {
             </FormField>
 
             <FormField label="Email" required>
-              <FormInput<UpdateUserInput>
+              <FormInput<EditUserFormInput>
                 name="email"
                 control={control as any}
                 placeholder="e.g. john@example.com"
@@ -315,8 +301,13 @@ export default function EditUserPage() {
                         </span>
                         <span className="block text-xs text-gray-500">
                           {userCreatedAt
-                            ? `This user can only see guests/interviews created after ${formatDisplayDate(
-                                userCreatedAt,
+                            ? `This user can only see guests/interviews created after ${userCreatedAt.toLocaleDateString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
                               )}, their account creation date (plus anything directly assigned to them).`
                             : "This user will only see guests/interviews created after their account is created (plus anything directly assigned to them)."}
                         </span>
@@ -408,7 +399,7 @@ export default function EditUserPage() {
                     </div>
                   )}
 
-                  {visibilityMode === "range" && !visibilityStart && (
+                  {visibilityMode === "range" && !isValidDate(visibilityStart) && (
                     <p className="text-xs text-amber-600">
                       A start date is required to grant access to a historical
                       range.

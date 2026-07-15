@@ -294,9 +294,14 @@ export default function AddUserPage() {
                         </label>
                         <DatePicker
                           selected={visibilityStart}
-                          onChange={(date: Date | null) =>
-                            setVisibilityStart(date)
-                          }
+                          onChange={(date: Date | null) => {
+                            setVisibilityStart(date);
+                            setValue(
+                              "visibility_start_date",
+                              date ?? undefined,
+                              { shouldValidate: true },
+                            );
+                          }}
                           selectsStart
                           startDate={visibilityStart}
                           endDate={visibilityEnd}
@@ -314,9 +319,12 @@ export default function AddUserPage() {
                         </label>
                         <DatePicker
                           selected={visibilityEnd}
-                          onChange={(date: Date | null) =>
-                            setVisibilityEnd(date)
-                          }
+                          onChange={(date: Date | null) => {
+                            setVisibilityEnd(date);
+                            setValue("visibility_end_date", date ?? undefined, {
+                              shouldValidate: true,
+                            });
+                          }}
                           selectsEnd
                           startDate={visibilityStart}
                           endDate={visibilityEnd}
