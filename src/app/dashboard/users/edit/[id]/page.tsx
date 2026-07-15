@@ -17,6 +17,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { getMediaUrl } from "@/lib/utils";
+import DatePicker from "react-datepicker";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -28,6 +29,27 @@ const allowedMimeTypes = [
   "video/quicktime",
 ];
 
+const RESTRICTED_ROLES = ["Host", "Staff"];
+
+type VisibilityMode = "default" | "range";
+
+function formatDate(date: Date | null): string | undefined {
+  if (!date) return undefined;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(date: Date | null): string {
+  if (!date) return "";
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
@@ -35,6 +57,17 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [userCreatedAt, setUserCreatedAt] = useState<Date | null>(null);
+  const [visibilityMode, setVisibilityMode] =
+    useState<VisibilityMode>("default");
+  const [visibilityStart, setVisibilityStart] = useState<Date | null>(null);
+  const [visibilityEnd, setVisibilityEnd] = useState<Date | null>(null);
+
+  // Tracks whether the fetched user originally had a role-init pass done,
+  // so the role-change effect doesn't wipe out dates we just loaded from
+  // the server on the very first render.
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const {
     register,
@@ -45,7 +78,7 @@ export default function EditUserPage() {
     setValue,
     formState: { errors },
   } = useForm<UpdateUserInput>({
-    resolver: zodResolver(updateUserSchema),
+    resolver: zodResolver(updateUserSchema) as any,
     defaultValues: {
       enable_otp_login: false,
       otp_in_mail: false,
@@ -56,6 +89,8 @@ export default function EditUserPage() {
   });
 
   const enableOtp = watch("enable_otp_login");
+  const roleName = watch("role_name");
+  const isRestrictedRole = RESTRICTED_ROLES.includes(roleName ?? "");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -75,6 +110,20 @@ export default function EditUserPage() {
           otp_in_mail: user.otp_in_mail ?? false,
           otp_in_sms: user.otp_in_sms ?? false,
         });
+
+        setUserCreatedAt(user.created_at ? new Date(user.created_at) : null);
+
+        // Pre-select mode based on existing visibility window
+        if (user.visibility_start_date && user.visibility_end_date) {
+          setVisibilityMode("range");
+          setVisibilityStart(new Date(user.visibility_start_date));
+          setVisibilityEnd(new Date(user.visibility_end_date));
+        } else {
+          setVisibilityMode("default");
+          setVisibilityStart(null);
+          setVisibilityEnd(null);
+        }
+
         if (user.profileImage?.path) {
           const imageUrl = getMediaUrl(user.profileImage.path);
           setImagePreview(imageUrl);
@@ -84,15 +133,33 @@ export default function EditUserPage() {
         router.push("/dashboard/users");
       } finally {
         setLoading(false);
+        // Defer marking initialized until after this render settles, so
+        // the role-watch effect below doesn't fire on the initial reset.
+        setHasInitialized(true);
       }
     };
     fetchUser();
   }, [id, reset, router]);
 
+  /**
+   * If role switches away from Host/Staff (i.e. to Admin) AFTER initial
+   * load, the visibility window no longer applies — reset mode and clear
+   * dates. Guarded by hasInitialized so this doesn't fire and wipe out
+   * data we just loaded from the server on mount.
+   */
+  useEffect(() => {
+    if (!hasInitialized) return;
+    if (!isRestrictedRole) {
+      setVisibilityMode("default");
+      setVisibilityStart(null);
+      setVisibilityEnd(null);
+    }
+  }, [isRestrictedRole, hasInitialized]);
+
   const onSubmit = async (data: UpdateUserInput) => {
     setSubmitting(true);
     try {
-      await updateUser(id, {
+      const payload: any = {
         full_name: data.full_name,
         email: data.email,
         status: data.status,
@@ -105,7 +172,19 @@ export default function EditUserPage() {
         file: data.file,
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
-      });
+      };
+
+      if (isRestrictedRole && visibilityMode === "range") {
+        payload.visibility_start_date = formatDate(visibilityStart);
+        payload.visibility_end_date = formatDate(visibilityEnd);
+      } else {
+        // Default mode (or role is Admin) — explicitly send null so the
+        // backend revokes any previously granted window.
+        payload.visibility_start_date = null;
+        payload.visibility_end_date = null;
+      }
+
+      await updateUser(id, payload);
       toast.success("User updated successfully");
       router.push("/dashboard/users");
     } catch {
@@ -133,7 +212,7 @@ export default function EditUserPage() {
             <FormField label="Full Name" required>
               <FormInput<UpdateUserInput>
                 name="full_name"
-                control={control}
+                control={control as any}
                 placeholder="e.g. John Doe"
               />
             </FormField>
@@ -141,7 +220,7 @@ export default function EditUserPage() {
             <FormField label="Email" required>
               <FormInput<UpdateUserInput>
                 name="email"
-                control={control}
+                control={control as any}
                 placeholder="e.g. john@example.com"
                 type="email"
               />
@@ -177,6 +256,110 @@ export default function EditUserPage() {
                 </p>
               )}
             </FormField>
+
+            {/* Content Visibility — only relevant for Host/Staff */}
+            {isRestrictedRole && (
+              <FormField label="Content Visibility">
+                <div className="md:w-3/4 space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "default"}
+                        onChange={() => {
+                          setVisibilityMode("default");
+                          setVisibilityStart(null);
+                          setVisibilityEnd(null);
+                        }}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          Default (since account creation)
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          {userCreatedAt
+                            ? `This user can only see guests/interviews created after ${formatDisplayDate(
+                                userCreatedAt,
+                              )}, their account creation date.`
+                            : "This user will only see guests/interviews created after their account is created."}
+                        </span>
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "range"}
+                        onChange={() => setVisibilityMode("range")}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          Grant access to a historical date range
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          In addition to their default access, this user will
+                          also be able to see content created between these
+                          dates.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  {visibilityMode === "range" && (
+                    <div className="flex flex-col md:flex-row gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Start Date
+                        </label>
+                        <DatePicker
+                          selected={visibilityStart}
+                          onChange={(date: Date | null) =>
+                            setVisibilityStart(date)
+                          }
+                          selectsStart
+                          startDate={visibilityStart}
+                          endDate={visibilityEnd}
+                          maxDate={new Date()}
+                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                          placeholderText="Select start date"
+                          dateFormat="yyyy-MM-dd"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          End Date
+                        </label>
+                        <DatePicker
+                          selected={visibilityEnd}
+                          onChange={(date: Date | null) =>
+                            setVisibilityEnd(date)
+                          }
+                          selectsEnd
+                          startDate={visibilityStart}
+                          endDate={visibilityEnd}
+                          minDate={visibilityStart ?? undefined}
+                          maxDate={new Date()}
+                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                          placeholderText="Select end date"
+                          dateFormat="yyyy-MM-dd"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {visibilityMode === "range" &&
+                    (!visibilityStart || !visibilityEnd) && (
+                      <p className="text-xs text-amber-600">
+                        Both a start and end date are required to grant access
+                        to a historical range.
+                      </p>
+                    )}
+                </div>
+              </FormField>
+            )}
 
             <FormField label="Profile Image" required>
               <div className="space-y-4">

@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Podcast Frontend (rst-frontend)
+
+This is a modern web application built for managing a podcast studio and dashboard. It is built using the latest React and Next.js features, focusing on high performance, modern design aesthetics, and a smooth developer experience.
+
+## Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Library**: [React 19](https://react.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [Material UI](https://mui.com/)
+- **Form Management & Validation**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+- **Data Fetching**: [Axios](https://axios-http.com/) & [SWR](https://swr.vercel.app/) (Note: swr is in the root package.json, while other deps are in rst-frontend/package.json)
+- **Drag & Drop**: [@dnd-kit](https://dndkit.com/)
+- **Notifications**: [Sonner](https://sonner.emilkowal.ski/)
+- **Icons**: [@iconify/react](https://iconify.design/) and `@mui/icons-material`
+
+## Project Structure
+
+The project follows a standard Next.js App Router structure:
+
+- `/src/app`: Contains all Next.js routes, layouts, and page components.
+  - `/app/dashboard`: Main authenticated area with sub-modules like `guest`, `interview`, `media`, `settings`, `studio`, `tags`, and `users`.
+  - `/app/verify-otp`: Authentication and OTP verification flows.
+- `/src/components`: Reusable UI components.
+  - `/components/media`: Media playback and management components.
+  - `/components/sortable`: Drag-and-drop sortable components utilizing `dnd-kit`.
+  - `/components/ui`: Generic and headless UI components.
+- `/src/context`: React Context providers for global state management.
+- `/src/lib`: Utility functions, API configurations (e.g., Axios instances), and shared helpers.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (v20+ recommended)
+- `pnpm` (recommended package manager for this project)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Installation
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+2. Set up environment variables:
+   Review the existing `.env.local` or `.env` files and populate necessary variables.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run the development server:
+   ```bash
+   pnpm dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Context for Claude & AI Assistants
 
-## Learn More
+This section provides specific instructions for Claude (or other AI coding assistants) working on this project:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Routing and Layouts**: We use the Next.js **App Router** (`src/app`). Any new pages should be created as `page.tsx` within their respective directory in `src/app`. Layouts (`layout.tsx`) wrap specific route segments. Use Server Components by default unless client interactivity is required (then add `'use client'` at the top of the file).
+2. **Styling Approach**: The primary styling engine is **Tailwind CSS**. Prefer Tailwind utility classes over custom CSS. Material UI components are used for complex interactive widgets. We use `clsx` and `tailwind-merge` to conditionally join classes safely.
+3. **Forms and Validation**: Always use `react-hook-form` coupled with `zod` resolvers for form state and validation.
+4. **Data Fetching**: Use `axios` for REST API calls. For client-side data fetching and caching, utilize `swr`.
+5. **State Management**: For local state, use React hooks (`useState`, `useReducer`). For global state, refer to the providers in `src/context`. 
+6. **Imports**: Keep imports organized and follow the existing codebase structure.
+7. **Design & Code Quality**: Maintain a modern, vibrant, and responsive design language. Keep components modular (single-responsibility). Ensure accessibility (a11y) standards are met when building custom UI elements using `@headlessui/react`.

@@ -28,6 +28,7 @@ import {
   updateInterview,
   deleteInterview,
   getInterviews,
+  getEpisodeMeta,
 } from "@/lib/api/interview";
 
 import { getGuests, Guest } from "@/lib/api/guest";
@@ -131,6 +132,26 @@ export default function EditInterviewPage() {
   useEffect(() => {
     const fetchEpisodes = async () => {
       try {
+        const episodeMeta = await getEpisodeMeta();
+        const episodes = episodeMeta.existingEpisodes.map((e) => e.episode);
+        setExistingEpisodes(episodes);
+        setMaxEpisode(episodeMeta.maxEpisode);
+
+        // Only set default episode if the form has no episode set yet
+        const currentEpisode = watch("episode");
+        if (!currentEpisode) {
+          setValue("episode", episodeMeta.maxEpisode + 1);
+        }
+      } catch {
+        toast.error("Failed to fetch episodes");
+      }
+    };
+    fetchEpisodes();
+  }, [setValue, watch]);
+
+  useEffect(() => {
+    const fetchEpisodes = async () => {
+      try {
         const interviews = await getInterviews();
         const episodes = interviews.map((i) => i.episode);
         setExistingEpisodes(episodes);
@@ -170,10 +191,10 @@ export default function EditInterviewPage() {
     try {
       if (!formData.episode) formData.episode = maxEpisode + 1;
 
-      const allInterviews = await getInterviews();
+      const episodeMeta = await getEpisodeMeta();
 
-      const conflicting = allInterviews.find(
-        (i) => i.episode === formData.episode && i.id !== id,
+      const conflicting = episodeMeta.existingEpisodes.find(
+        (e) => e.episode === formData.episode && e.id !== id,
       );
 
       // only block published episode conflicts

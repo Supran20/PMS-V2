@@ -28,6 +28,11 @@ export interface InterviewPayload {
   youtube_link?: string | null;
 }
 
+export interface EpisodeMeta {
+  maxEpisode: number;
+  existingEpisodes: { id: string; episode: number; status: string }[];
+}
+
 export interface Interview {
   id: string;
   episode: number;
@@ -105,6 +110,16 @@ export const getInterviews = async (): Promise<Interview[]> => {
   return Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
 };
 
+/**
+ * --------------------------------
+ * GET EPISODE META
+ * --------------------------------
+ */
+export const getEpisodeMeta = async (): Promise<EpisodeMeta> => {
+  const response = await api.get("/interviews/episode-meta");
+  const res = response.data;
+  return res?.data ?? res;
+};
 /**
  * --------------------------------
  * GET INTERVIEW BY ID

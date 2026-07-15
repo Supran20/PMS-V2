@@ -15,7 +15,7 @@ import { FormField } from "@/components/ui/FormField";
 import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
-import { z } from "zod";
+import DatePicker from "react-datepicker";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -27,10 +27,27 @@ const allowedMimeTypes = [
   "video/quicktime",
 ];
 
+const RESTRICTED_ROLES = ["Host", "Staff"];
+
+type VisibilityMode = "default" | "range";
+
+function formatDate(date: Date | null): string | undefined {
+  if (!date) return undefined;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function AddUserPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [visibilityMode, setVisibilityMode] =
+    useState<VisibilityMode>("default");
+  const [visibilityStart, setVisibilityStart] = useState<Date | null>(null);
+  const [visibilityEnd, setVisibilityEnd] = useState<Date | null>(null);
 
   const {
     register,
@@ -40,7 +57,7 @@ export default function AddUserPage() {
     setValue,
     formState: { errors },
   } = useForm<CreateUserInput>({
-    resolver: zodResolver(createUserSchema),
+    resolver: zodResolver(createUserSchema) as any,
     defaultValues: {
       status: "active",
       role_name: "Staff",
@@ -50,6 +67,8 @@ export default function AddUserPage() {
     },
   });
   const enableOtp = watch("enable_otp_login");
+  const roleName = watch("role_name");
+  const isRestrictedRole = RESTRICTED_ROLES.includes(roleName);
 
   useEffect(() => {
     return () => {
@@ -59,10 +78,37 @@ export default function AddUserPage() {
     };
   }, [imagePreview]);
 
+  /**
+   * If role switches away from Host/Staff (i.e. to Admin), the visibility
+   * window doesn't apply anymore — reset the mode and clear any dates
+   * the admin may have already picked, and clear form-level errors on
+   * these fields since they're no longer relevant.
+   */
+  useEffect(() => {
+    if (!isRestrictedRole) {
+      setVisibilityMode("default");
+      setVisibilityStart(null);
+      setVisibilityEnd(null);
+      setValue("visibility_start_date", undefined);
+      setValue("visibility_end_date", undefined);
+    }
+  }, [isRestrictedRole, setValue]);
+
   const onSubmit = async (data: CreateUserInput) => {
     setSubmitting(true);
     try {
-      await createUser(data);
+      const payload: any = { ...data };
+
+      if (isRestrictedRole && visibilityMode === "range") {
+        payload.visibility_start_date = formatDate(visibilityStart);
+        payload.visibility_end_date = formatDate(visibilityEnd);
+      } else {
+        // Default mode (or non-restricted role) — don't send a window
+        delete payload.visibility_start_date;
+        delete payload.visibility_end_date;
+      }
+
+      await createUser(payload);
       toast.success("User created successfully");
       router.push("/dashboard/users");
     } catch {
@@ -82,7 +128,7 @@ export default function AddUserPage() {
             <FormField label="Full Name" required>
               <FormInput<CreateUserInput>
                 name="full_name"
-                control={control}
+                control={control as any}
                 placeholder="e.g. John Doe"
               />
             </FormField>
@@ -90,7 +136,7 @@ export default function AddUserPage() {
             <FormField label="Email" required>
               <FormInput<CreateUserInput>
                 name="email"
-                control={control}
+                control={control as any}
                 placeholder="e.g. john@example.com"
                 type="email"
               />
@@ -99,7 +145,7 @@ export default function AddUserPage() {
             <FormField label="Password" required>
               <FormInput<CreateUserInput>
                 name="password"
-                control={control}
+                control={control as any}
                 placeholder="Enter a strong password"
                 type="password"
               />
@@ -108,7 +154,7 @@ export default function AddUserPage() {
             <FormField label="Re-enter Password" required>
               <FormInput<CreateUserInput>
                 name="confirm_password"
-                control={control}
+                control={control as any}
                 placeholder="Re-enter password"
                 type="password"
               />
@@ -144,6 +190,120 @@ export default function AddUserPage() {
                 </p>
               )}
             </FormField>
+
+            {/* Content Visibility — only relevant for Host/Staff */}
+            {isRestrictedRole && (
+              <FormField label="Content Visibility">
+                <div className="md:w-3/4 space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "default"}
+                        onChange={() => {
+                          setVisibilityMode("default");
+                          setVisibilityStart(null);
+                          setVisibilityEnd(null);
+                          setValue("visibility_start_date", undefined);
+                          setValue("visibility_end_date", undefined);
+                        }}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          Default (since account creation)
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          This user will only see guests/interviews created
+                          after their account is created.
+                        </span>
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        checked={visibilityMode === "range"}
+                        onChange={() => setVisibilityMode("range")}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-800">
+                          Grant access to a historical date range
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          In addition to their default access, this user will
+                          also be able to see content created between these
+                          dates.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  {visibilityMode === "range" && (
+                    <div className="flex flex-col md:flex-row gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Start Date
+                        </label>
+                        <DatePicker
+                          selected={visibilityStart}
+                          onChange={(date: Date | null) =>
+                            setVisibilityStart(date)
+                          }
+                          selectsStart
+                          startDate={visibilityStart}
+                          endDate={visibilityEnd}
+                          maxDate={new Date()}
+                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                          placeholderText="Select start date"
+                          dateFormat="yyyy-MM-dd"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          End Date
+                        </label>
+                        <DatePicker
+                          selected={visibilityEnd}
+                          onChange={(date: Date | null) =>
+                            setVisibilityEnd(date)
+                          }
+                          selectsEnd
+                          startDate={visibilityStart}
+                          endDate={visibilityEnd}
+                          minDate={visibilityStart ?? undefined}
+                          maxDate={new Date()}
+                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                          placeholderText="Select end date"
+                          dateFormat="yyyy-MM-dd"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {visibilityMode === "range" &&
+                    (!visibilityStart || !visibilityEnd) && (
+                      <p className="text-xs text-amber-600">
+                        Both a start and end date are required to grant access
+                        to a historical range.
+                      </p>
+                    )}
+
+                  {errors.visibility_start_date && (
+                    <p className="text-sm text-red-600">
+                      {errors.visibility_start_date.message as string}
+                    </p>
+                  )}
+                  {errors.visibility_end_date && (
+                    <p className="text-sm text-red-600">
+                      {errors.visibility_end_date.message as string}
+                    </p>
+                  )}
+                </div>
+              </FormField>
+            )}
 
             {/* Profile Image */}
             <FormField label="Profile Image" required>
