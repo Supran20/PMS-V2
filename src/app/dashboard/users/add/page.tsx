@@ -459,7 +459,9 @@ export default function AddUserPage() {
                       }}
                     />
                     SMS
+
                   </label>
+                  
                 </div>
 
                 {errors.otp_in_mail && (
