@@ -18,6 +18,12 @@ import {
   Guest,
   updateGuestStatus,
 } from "@/lib/api/guest";
+import {
+  getReapprovalRequests,
+  approveReapprovalRequest,
+  rejectReapprovalRequest,
+  GuestReapprovalRequest,
+} from "@/lib/api/guestReapproval";
 import { getPermissionSettings } from "@/lib/api/permissionSettings";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +50,23 @@ export default function GuestsPage() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [guestToReject, setGuestToReject] = useState<Guest | null>(null);
   const [guestApprovers, setGuestApprovers] = useState<string[]>([]);
+
+  // --------------------------------
+  // Reapproval requests (separate source of truth from Guest.approved —
+  // needed to distinguish "brand new, never reviewed" guests from
+  // "previously approved, now under reapproval review" guests, since
+  // both look identical as `approved: false` on the Guest record alone)
+  // --------------------------------
+  const [reapprovalRequests, setReapprovalRequests] = useState<
+    GuestReapprovalRequest[]
+  >([]);
+  const [reapprovalLoading, setReapprovalLoading] = useState(true);
+  const [reapprovalApproveOpen, setReapprovalApproveOpen] = useState(false);
+  const [reapprovalToApprove, setReapprovalToApprove] =
+    useState<GuestReapprovalRequest | null>(null);
+  const [reapprovalRejectOpen, setReapprovalRejectOpen] = useState(false);
+  const [reapprovalToReject, setReapprovalToReject] =
+    useState<GuestReapprovalRequest | null>(null);
 
   const { hasPermission } = useAuth();
   // const canApproveGuest = hasPermission("guest.auto_approve");
@@ -73,12 +96,28 @@ export default function GuestsPage() {
     }
   };
 
+  const fetchReapprovalRequests = async () => {
+    setReapprovalLoading(true);
+    try {
+      const data = await getReapprovalRequests("pending");
+      setReapprovalRequests(data ?? []);
+    } catch {
+      // Non-fatal — approvers-only data; a normal Host/Staff user will
+      // 403 here, which is expected and shouldn't surface an error toast.
+      setReapprovalRequests([]);
+    } finally {
+      setReapprovalLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchGuests();
+    fetchReapprovalRequests();
   }, []);
 
   useEffect(() => {
     if (tabFromUrl === "pending") setTabValue(1);
+    if (tabFromUrl === "reapproval") setTabValue(4);
   }, [tabFromUrl]);
 
   useEffect(() => {
@@ -104,9 +143,22 @@ export default function GuestsPage() {
     setCurrentPage(1);
   };
 
+  // Guest ids that currently have an open reapproval request — used to
+  // keep "Potential" limited to genuinely-new, never-reviewed guests,
+  // and to badge those same guests distinctly wherever else they appear
+  // (e.g. the "All Guests" tab).
+  const pendingReapprovalGuestIds = useMemo(
+    () => new Set(reapprovalRequests.map((r) => r.guest_id)),
+    [reapprovalRequests],
+  );
+
   const pendingGuests = useMemo(
-    () => guests.filter((g) => !g.approved && !g.rejected),
-    [guests],
+    () =>
+      guests.filter(
+        (g) =>
+          !g.approved && !g.rejected && !pendingReapprovalGuestIds.has(g.id),
+      ),
+    [guests, pendingReapprovalGuestIds],
   );
 
   const approvedGuests = useMemo(
@@ -140,6 +192,19 @@ export default function GuestsPage() {
         (g.phone?.toLowerCase().includes(q) ?? false),
     );
   }, [tabGuests, search]);
+
+  const filteredReapprovalRequests = useMemo(() => {
+    if (!search.trim()) return reapprovalRequests;
+
+    const q = search.toLowerCase();
+
+    return reapprovalRequests.filter(
+      (r) =>
+        r.guest?.full_name?.toLowerCase().includes(q) ||
+        r.requester?.full_name?.toLowerCase().includes(q) ||
+        r.proposedHost?.full_name?.toLowerCase().includes(q),
+    );
+  }, [reapprovalRequests, search]);
 
   const handleApproveConfirm = async (guest: Guest) => {
     try {
@@ -202,9 +267,65 @@ export default function GuestsPage() {
     setApproveModalOpen(true);
   };
 
+  // --------------------------------
+  // Reapproval request actions — these go through the request-specific
+  // endpoints (not approveGuest/rejectGuest), since only these also
+  // reassign host_id to proposed_host_id and close out the request row.
+  // --------------------------------
+  const handleReapprovalApproveClick = (request: GuestReapprovalRequest) => {
+    setReapprovalToApprove(request);
+    setReapprovalApproveOpen(true);
+  };
+
+  const handleReapprovalRejectClick = (request: GuestReapprovalRequest) => {
+    setReapprovalToReject(request);
+    setReapprovalRejectOpen(true);
+  };
+
+  const handleReapprovalApproveConfirm = async (
+    request: GuestReapprovalRequest,
+  ) => {
+    try {
+      await approveReapprovalRequest(request.id);
+      toast.success("Reapproval request approved");
+      fetchGuests();
+      fetchReapprovalRequests();
+    } catch {
+      toast.error("Failed to approve reapproval request");
+    } finally {
+      setReapprovalApproveOpen(false);
+      setReapprovalToApprove(null);
+    }
+  };
+
+  const handleReapprovalRejectConfirm = async (
+    request: GuestReapprovalRequest,
+  ) => {
+    try {
+      await rejectReapprovalRequest(request.id);
+      toast.success("Reapproval request rejected");
+      fetchGuests();
+      fetchReapprovalRequests();
+    } catch {
+      toast.error("Failed to reject reapproval request");
+    } finally {
+      setReapprovalRejectOpen(false);
+      setReapprovalToReject(null);
+    }
+  };
+
   const totalPages = Math.ceil(filteredGuests.length / itemsPerPage);
 
   const paginatedGuests = filteredGuests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const reapprovalTotalPages = Math.ceil(
+    filteredReapprovalRequests.length / itemsPerPage,
+  );
+
+  const paginatedReapprovalRequests = filteredReapprovalRequests.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -213,10 +334,11 @@ export default function GuestsPage() {
     type ? type.startsWith("image/") : false;
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
+    const pages = tabValue === 4 ? reapprovalTotalPages : totalPages;
+    if (currentPage > pages) {
+      setCurrentPage(pages || 1);
     }
-  }, [filteredGuests, currentPage, totalPages]);
+  }, [filteredGuests, filteredReapprovalRequests, currentPage, totalPages, reapprovalTotalPages, tabValue]);
 
   const handleStatusChange = async (
     slug: string,
@@ -248,6 +370,9 @@ export default function GuestsPage() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  const triggerSourceLabel = (source: GuestReapprovalRequest["trigger_source"]) =>
+    source === "duplicate_guest_attempt" ? "Duplicate attempt" : "Repeat booking";
 
   if (loading) {
     return (
@@ -289,6 +414,7 @@ export default function GuestsPage() {
           <Tab label={`Potential (${pendingGuests.length})`} />
           <Tab label={`Approved (${approvedGuests.length})`} />
           <Tab label={`Rejected (${rejectedGuests.length})`} />
+          <Tab label={`Re-approval (${reapprovalRequests.length})`} />
         </Tabs>
       </Box>
 
@@ -307,194 +433,323 @@ export default function GuestsPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, designation or phone..."
+                placeholder={
+                  tabValue === 4
+                    ? "Search by guest, requester or proposed host..."
+                    : "Search by name, designation or phone..."
+                }
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
-          {/* Table */}
-          {filteredGuests.length === 0 ? (
+          {tabValue === 4 ? (
+            // --------------------------------
+            // Re-approval tab: driven by GuestReapprovalRequest, not
+            // Guest — a list layout since the important fields here are
+            // relational (requester, proposed host, trigger source)
+            // rather than the guest-card visuals used elsewhere.
+            // --------------------------------
+            reapprovalLoading ? (
+              <div className="flex justify-center items-center py-16">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+              </div>
+            ) : filteredReapprovalRequests.length === 0 ? (
+              <p className="text-gray-600 py-12 text-center">
+                No pending reapproval requests
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {paginatedReapprovalRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        {request.guest?.profileImage &&
+                        isImage(request.guest.profileImage.type) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getMediaUrl(request.guest.profileImage.path)}
+                            alt={request.guest.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Icon
+                            icon="mdi:account"
+                            className="text-2xl text-gray-500"
+                          />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <Link
+                          href={`/dashboard/guest/view/${request.guest?.slug ?? ""}`}
+                          className="font-semibold text-gray-900 text-sm truncate block hover:underline"
+                        >
+                          {request.guest?.full_name ?? "Unknown guest"}
+                        </Link>
+
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className="px-2 py-0.5 rounded-sm text-xs font-medium bg-amber-100 text-amber-700">
+                            {triggerSourceLabel(request.trigger_source)}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Requested by {request.requester?.full_name ?? "Unknown"}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-1">
+                          Proposed host:{" "}
+                          {request.proposedHost?.full_name ?? "Not specified"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        disabled={!canApproveGuest}
+                        onClick={() => handleReapprovalApproveClick(request)}
+                        className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                          canApproveGuest
+                            ? "bg-white text-gray-600 hover:text-green-500 border border-gray-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                        }`}
+                        title={
+                          canApproveGuest
+                            ? "Approve Request"
+                            : "You are not allowed to approve"
+                        }
+                      >
+                        <Icon
+                          icon="mdi:check-circle-outline"
+                          className="text-lg"
+                        />
+                      </button>
+
+                      <button
+                        disabled={!canApproveGuest}
+                        onClick={() => handleReapprovalRejectClick(request)}
+                        className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                          canApproveGuest
+                            ? "bg-white text-gray-600 hover:text-red-500 border border-gray-200"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                        }`}
+                        title={
+                          canApproveGuest
+                            ? "Reject Request"
+                            : "You are not allowed to reject"
+                        }
+                      >
+                        <Icon
+                          icon="mdi:close-circle-outline"
+                          className="text-lg"
+                        />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : filteredGuests.length === 0 ? (
             <p className="text-gray-600 py-12 text-center">No guests found</p>
           ) : (
             <div className="grid grid-cols-1  sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {paginatedGuests.map((guest) => (
-                <div
-                  key={guest.id}
-                  className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
-                >
-                  {/* Image */}
-                  <div className="sm:aspect-square h-50 sm:h-auto  relative ">
-                    <Link href={`/dashboard/guest/view/${guest.slug}`}>
-                      {guest.profileImage &&
-                      isImage(guest.profileImage.type) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={getMediaUrl(guest.profileImage.path)}
-                          alt={guest.full_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                          <Icon
-                            icon="mdi:account"
-                            className="text-4xl text-gray-500"
-                          />
-                        </div>
-                      )}
-                    </Link>
+              {paginatedGuests.map((guest) => {
+                const underReview = pendingReapprovalGuestIds.has(guest.id);
 
-                    {/* Overlay Actions */}
-                    {/* <div className="absolute inset-0 md:bg-black/50 bg-black/25 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleEditClick(guest)}
-                        className="p-2 rounded-lg bg-white text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                        title="Edit"
-                      >
-                        <Icon icon="mdi:pencil" className="text-xl" />
-                      </button>
-
-                      {canDeleteGuest && (
-                        <button
-                          onClick={() => handleDeleteClick(guest)}
-                          className="p-2 rounded-lg bg-white text-red-600 hover:bg-red-600 hover:text-white transition-colors"
-                          title="Delete"
-                        >
-                          <Icon icon="mdi:delete" className="text-xl" />
-                        </button>
-                      )}
-                    </div> */}
-                  </div>
-
-                  {/* Name + Designation */}
-                  <div className="p-3 flex items-start justify-between gap-2">
-                    {/* Name + Designation */}
-                    <div className="min-w-0">
+                return (
+                  <div
+                    key={guest.id}
+                    className="group relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50 hover:shadow-lg transition-shadow"
+                  >
+                    {/* Image */}
+                    <div className="sm:aspect-square h-50 sm:h-auto  relative ">
                       <Link href={`/dashboard/guest/view/${guest.slug}`}>
-                        <p className="text-vxs font-semibold text-gray-900 ">
-                          {guest.full_name}
-                        </p>
-                        <p className="text-vxs text-gray-500 truncate">
-                          {guest.designation ?? "—"}
-                        </p>
+                        {guest.profileImage &&
+                        isImage(guest.profileImage.type) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getMediaUrl(guest.profileImage.path)}
+                            alt={guest.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <Icon
+                              icon="mdi:account"
+                              className="text-4xl text-gray-500"
+                            />
+                          </div>
+                        )}
                       </Link>
-
-                      {!guest.rejected && (
-                        <div
-                          className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
-                            guest.status,
-                          )}`}
-                        >
-                          <select
-                            value={guest.status}
-                            onChange={(e) =>
-                              handleStatusChange(
-                                guest.slug,
-                                e.target.value as
-                                  | "not_started"
-                                  | "contacted"
-                                  | "follow_up"
-                                  | "confirmed",
-                              )
-                            }
-                            className="bg-transparent border-none focus:outline-none text-vxs font-medium capitalize cursor-pointer"
-                          >
-                            <option
-                              className="bg-gray-100 text-gray-700"
-                              value="not_started"
-                            >
-                              Not Started
-                            </option>
-                            <option
-                              className="bg-gray-100 text-gray-700"
-                              value="contacted"
-                            >
-                              Contacted
-                            </option>
-                            <option
-                              className="bg-gray-100 text-gray-700"
-                              value="follow_up"
-                            >
-                              Follow Up
-                            </option>
-                            <option
-                              className="bg-gray-100 text-gray-700"
-                              value="confirmed"
-                            >
-                              Confirmed
-                            </option>
-                          </select>
-                        </div>
-                      )}
                     </div>
-                    {/* </Link> */}
 
-                    <div className="flex flex-col items-center gap-1">
-                      {/* Already Approved */}
-                      {guest.approved ? (
-                        <div
-                          className="p-2 rounded-lg text-green-500"
-                          title="Approved"
-                        >
-                          <Icon icon="mdi:check-circle" className="text-lg" />
-                        </div>
-                      ) : guest.rejected ? (
-                        <div
-                          className="p-2 rounded-lg text-red-500"
-                          title="Rejected"
-                        >
-                          <Icon icon="mdi:close-circle" className="text-lg" />
-                        </div>
-                      ) : (
-                        <>
-                          {/* Approve Button */}
+                    {/* Name + Designation */}
+                    <div className="p-3 flex items-start justify-between gap-2">
+                      {/* Name + Designation */}
+                      <div className="min-w-0">
+                        <Link href={`/dashboard/guest/view/${guest.slug}`}>
+                          <p className="text-vxs font-semibold text-gray-900 ">
+                            {guest.full_name}
+                          </p>
+                          <p className="text-vxs text-gray-500 truncate">
+                            {guest.designation ?? "—"}
+                          </p>
+                        </Link>
+
+                        {!guest.rejected && (
+                          <div
+                            className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
+                              guest.status,
+                            )}`}
+                          >
+                            <select
+                              value={guest.status}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  guest.slug,
+                                  e.target.value as
+                                    | "not_started"
+                                    | "contacted"
+                                    | "follow_up"
+                                    | "confirmed",
+                                )
+                              }
+                              className="bg-transparent border-none focus:outline-none text-vxs font-medium capitalize cursor-pointer"
+                            >
+                              <option
+                                className="bg-gray-100 text-gray-700"
+                                value="not_started"
+                              >
+                                Not Started
+                              </option>
+                              <option
+                                className="bg-gray-100 text-gray-700"
+                                value="contacted"
+                              >
+                                Contacted
+                              </option>
+                              <option
+                                className="bg-gray-100 text-gray-700"
+                                value="follow_up"
+                              >
+                                Follow Up
+                              </option>
+                              <option
+                                className="bg-gray-100 text-gray-700"
+                                value="confirmed"
+                              >
+                                Confirmed
+                              </option>
+                            </select>
+                          </div>
+                        )}
+
+                        {underReview && (
                           <button
-                            disabled={!canApproveGuest}
-                            onClick={() => handleApproveClick(guest)}
-                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                              canApproveGuest
-                                ? "bg-gray-100 text-gray-600 hover:text-green-500"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            }`}
-                            title={
-                              canApproveGuest
-                                ? "Approve Guest"
-                                : "You are not allowed to approve"
-                            }
+                            onClick={() => {
+                              setSearch("");
+                              setTabValue(4);
+                              setCurrentPage(1);
+                            }}
+                            className="inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors cursor-pointer"
+                            title="View in Re-approval tab"
+                          >
+                            Under Review
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center gap-1">
+                        {/* Already Approved */}
+                        {guest.approved ? (
+                          <div
+                            className="p-2 rounded-lg text-green-500"
+                            title="Approved"
                           >
                             <Icon
-                              icon="mdi:check-circle-outline"
+                              icon="mdi:check-circle"
                               className="text-lg"
                             />
-                          </button>
-
-                          {/* Reject Button */}
-                          <button
-                            disabled={!canApproveGuest}
-                            onClick={() => handleRejectClick(guest)}
-                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                              canApproveGuest
-                                ? "bg-gray-100 text-gray-600 hover:text-red-500"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            }`}
-                            title={
-                              canApproveGuest
-                                ? "Reject Guest"
-                                : "You are not allowed to reject"
-                            }
+                          </div>
+                        ) : guest.rejected ? (
+                          <div
+                            className="p-2 rounded-lg text-red-500"
+                            title="Rejected"
                           >
                             <Icon
-                              icon="mdi:close-circle-outline"
+                              icon="mdi:close-circle"
                               className="text-lg"
                             />
-                          </button>
-                        </>
-                      )}
+                          </div>
+                        ) : underReview ? (
+                          // Guest is not brand-new — it's under an open
+                          // reapproval request. Route review to the
+                          // Re-approval tab instead of the plain
+                          // approveGuest/rejectGuest actions, which
+                          // don't know about the request row and would
+                          // leave it dangling.
+                          <div
+                            className="p-2 rounded-lg text-amber-500"
+                            title="Awaiting reapproval review"
+                          >
+                            <Icon
+                              icon="mdi:clock-alert-outline"
+                              className="text-lg"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            {/* Approve Button */}
+                            <button
+                              disabled={!canApproveGuest}
+                              onClick={() => handleApproveClick(guest)}
+                              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                                canApproveGuest
+                                  ? "bg-gray-100 text-gray-600 hover:text-green-500"
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              }`}
+                              title={
+                                canApproveGuest
+                                  ? "Approve Guest"
+                                  : "You are not allowed to approve"
+                              }
+                            >
+                              <Icon
+                                icon="mdi:check-circle-outline"
+                                className="text-lg"
+                              />
+                            </button>
+
+                            {/* Reject Button */}
+                            <button
+                              disabled={!canApproveGuest}
+                              onClick={() => handleRejectClick(guest)}
+                              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                                canApproveGuest
+                                  ? "bg-gray-100 text-gray-600 hover:text-red-500"
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              }`}
+                              title={
+                                canApproveGuest
+                                  ? "Reject Guest"
+                                  : "You are not allowed to reject"
+                              }
+                            >
+                              <Icon
+                                icon="mdi:close-circle-outline"
+                                className="text-lg"
+                              />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {/* </Link> */}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -502,7 +757,7 @@ export default function GuestsPage() {
 
       <Pagination
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={tabValue === 4 ? reapprovalTotalPages : totalPages}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
         onItemsPerPageChange={(value) => {
@@ -542,6 +797,38 @@ export default function GuestsPage() {
         onConfirm={handleRejectConfirm}
         title="Reject Guest"
         description={`Are you sure you want to reject ${guestToReject?.full_name}?`}
+        confirmText="Reject"
+        confirmVariant="danger"
+      />
+
+      {/* Reapproval Request Modals */}
+      <ConfirmModal<GuestReapprovalRequest>
+        open={reapprovalApproveOpen}
+        item={reapprovalToApprove}
+        onClose={() => {
+          setReapprovalApproveOpen(false);
+          setReapprovalToApprove(null);
+        }}
+        onConfirm={handleReapprovalApproveConfirm}
+        title="Approve Reapproval Request"
+        description={`Are you sure you want to approve reapproval for ${reapprovalToApprove?.guest?.full_name ?? "this guest"}? ${
+          reapprovalToApprove?.proposedHost
+            ? `The guest will be reassigned to ${reapprovalToApprove.proposedHost.full_name}.`
+            : ""
+        }`}
+        confirmText="Approve"
+        confirmVariant="primary"
+      />
+      <ConfirmModal<GuestReapprovalRequest>
+        open={reapprovalRejectOpen}
+        item={reapprovalToReject}
+        onClose={() => {
+          setReapprovalRejectOpen(false);
+          setReapprovalToReject(null);
+        }}
+        onConfirm={handleReapprovalRejectConfirm}
+        title="Reject Reapproval Request"
+        description={`Are you sure you want to reject reapproval for ${reapprovalToReject?.guest?.full_name ?? "this guest"}?`}
         confirmText="Reject"
         confirmVariant="danger"
       />
