@@ -24,6 +24,8 @@ import { FormActions } from "@/components/ui/FormActions";
 import { useAuth } from "@/context/AuthContext";
 import { getTags, createTag, Tag } from "@/lib/api/tags";
 import Select from "react-select";
+import GuestReapprovalModal from "@/components/guest/GuestReapprovalModal";
+import { parseReapprovalError, type ReapprovalErrorInfo } from "@/lib/utils";
 
 import { z } from "zod";
 
@@ -51,6 +53,12 @@ export default function AddGuestPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Option[]>([]);
+
+  // Set when createGuest 409s with a duplicate-guest code — drives the
+  // GuestReapprovalModal instead of a plain error toast.
+  const [reapprovalInfo, setReapprovalInfo] =
+    useState<ReapprovalErrorInfo | null>(null);
+  const [reapprovalGuestName, setReapprovalGuestName] = useState("");
 
   const { hasPermission, loading: authLoading } = useAuth();
 
@@ -122,8 +130,20 @@ export default function AddGuestPage() {
       await createGuest(data);
       toast.success("Guest created successfully");
       router.push("/dashboard/guest");
-    } catch {
-      toast.error("Failed to create guest");
+    } catch (err: any) {
+      const info = parseReapprovalError(err);
+
+      if (info) {
+        // Same guest already exists (matched by email/phone). Surface
+        // the reapproval modal instead of a plain error toast — the
+        // user typed `data.full_name`, which may differ slightly from
+        // the existing record's name, but it's the closest label we
+        // have without a follow-up fetch.
+        setReapprovalGuestName(data.full_name);
+        setReapprovalInfo(info);
+      } else {
+        toast.error("Failed to create guest");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -364,6 +384,24 @@ export default function AddGuestPage() {
           </form>
         </CardContent>
       </Card>
+
+      {reapprovalInfo && (
+        <GuestReapprovalModal
+          open={!!reapprovalInfo}
+          onClose={() => setReapprovalInfo(null)}
+          triggerSource={reapprovalInfo.triggerSource}
+          guestId={reapprovalInfo.guestId}
+          guestName={reapprovalGuestName}
+          proposedHostId={
+            isHostUser ? (user?.id ?? null) : (watch("host_id") ?? null)
+          }
+          reapprovalRequestId={reapprovalInfo.reapprovalRequestId}
+          onRequested={() => {
+            setReapprovalInfo(null);
+            router.push("/dashboard/guest");
+          }}
+        />
+      )}
     </div>
   );
 }

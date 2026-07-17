@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { ReapprovalTriggerSource } from "@/lib/api/guestReapproval";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,4 +77,55 @@ export function formatDate(dateString?: string | null): string {
   };
 
   return `${weekday}, ${getOrdinal(day)} ${monthName} ${year}`;
+}
+
+export interface ReapprovalErrorInfo {
+  triggerSource: ReapprovalTriggerSource;
+  status: "found" | "pending";
+  guestId: string;
+  guestName: string | null;
+  reapprovalRequestId: string | null;
+}
+
+const CODE_MAP: Record<
+  string,
+  Pick<ReapprovalErrorInfo, "triggerSource" | "status">
+> = {
+  GUEST_DUPLICATE_FOUND: {
+    triggerSource: "duplicate_guest_attempt",
+    status: "found",
+  },
+  GUEST_DUPLICATE_PENDING_REVIEW: {
+    triggerSource: "duplicate_guest_attempt",
+    status: "pending",
+  },
+  GUEST_REQUIRES_REAPPROVAL_NEW: {
+    triggerSource: "repeat_booking",
+    status: "found",
+  },
+  GUEST_REQUIRES_REAPPROVAL_PENDING: {
+    triggerSource: "repeat_booking",
+    status: "pending",
+  },
+};
+
+/**
+ * Returns structured info if this error is one of the guest-reapproval
+ * 409s, or null if it's an unrelated error the caller should handle
+ * normally (e.g. a generic toast).
+ */
+export function parseReapprovalError(error: any): ReapprovalErrorInfo | null {
+  const code = error?.response?.data?.code;
+  const mapping = code ? CODE_MAP[code] : undefined;
+  if (!mapping) return null;
+
+  const guestId = error?.response?.data?.guestId;
+  if (!guestId) return null;
+
+  return {
+    ...mapping,
+    guestId,
+    guestName: error?.response?.data?.guestName ?? null,
+    reapprovalRequestId: error?.response?.data?.reapprovalRequestId ?? null,
+  };
 }
