@@ -32,6 +32,8 @@ import {
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getHostUser, User } from "@/lib/api/user";
 import { getStudios, Studio } from "@/lib/api/studio";
+import GuestReapprovalModal from "@/components/guest/GuestReapprovalModal";
+import { parseReapprovalError, type ReapprovalErrorInfo } from "@/lib/utils";
 
 export default function AddInterviewPage() {
   const router = useRouter();
@@ -47,11 +49,21 @@ export default function AddInterviewPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 
+  // Set when createInterview 409s with a repeat-booking reapproval code
+  // — drives GuestReapprovalModal instead of a plain error toast. Note
+  // the matched guest may not be present in `guests` (that list is
+  // filtered to approved === true, and this guest just isn't), so the
+  // guest name shown here comes from the backend's error payload, not
+  // a local lookup.
+  const [reapprovalInfo, setReapprovalInfo] =
+    useState<ReapprovalErrorInfo | null>(null);
+
   const searchParams = useSearchParams();
   const guestIdFromUrl = searchParams.get("guest_id");
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
 
   const canEditInterview = hasPermission("interview.update");
+  const isHostUser = user?.roles?.includes("Host");
 
   const {
     register,
@@ -198,6 +210,17 @@ export default function AddInterviewPage() {
       toast.success("Interview scheduled successfully");
       router.push("/dashboard/interview");
     } catch (error: any) {
+      const info = parseReapprovalError(error);
+
+      if (info) {
+        // Guest has a prior published interview and Guest.approved is
+        // false — needs a reapproval request before this booking can
+        // proceed. Surface the modal instead of a plain error toast.
+        setReapprovalInfo(info);
+        setSubmitting(false);
+        return;
+      }
+
       const errorMessage = error.response?.data?.message || error.message;
       if (
         errorMessage.includes("Guest is already booked") ||
@@ -344,14 +367,6 @@ export default function AddInterviewPage() {
                   type="number"
                   {...register("episode", {
                     valueAsNumber: true,
-                    // onChange: (e) => {
-                    //   const val = Number(e.target.value);
-
-                    //   // Check if episode already exists
-                    //   if (existingEpisodes.includes(val)) {
-                    //     toast.error("This episode number already exists");
-                    //   }
-                    // },
                   })}
                   className={`w-32 px-3 py-2 text-sm rounded-md border border-gray-300 ${
                     episodeInputEnabled ? "bg-white" : "bg-gray-100"
@@ -424,6 +439,24 @@ export default function AddInterviewPage() {
           setGuestModalOpen(false);
         }}
       />
+
+      {reapprovalInfo && (
+        <GuestReapprovalModal
+          open={!!reapprovalInfo}
+          onClose={() => setReapprovalInfo(null)}
+          triggerSource={reapprovalInfo.triggerSource}
+          guestId={reapprovalInfo.guestId}
+          guestName={reapprovalInfo.guestName ?? "this guest"}
+          proposedHostId={
+            isHostUser ? (user?.id ?? null) : watch("host_id") || null
+          }
+          reapprovalRequestId={reapprovalInfo.reapprovalRequestId}
+          onRequested={() => {
+            setReapprovalInfo(null);
+            router.push("/dashboard/interview");
+          }}
+        />
+      )}
     </div>
   );
 }
