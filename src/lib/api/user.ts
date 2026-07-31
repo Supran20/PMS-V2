@@ -23,6 +23,7 @@ export interface UserPayload {
   visibility_mode?: VisibilityMode;
   visibility_start_date?: Date | string | null;
   visibility_end_date?: Date | string | null;
+  hide_guest_contacts?: boolean;
   role_name?: "Admin" | "Host" | "Staff";
 }
 
@@ -49,6 +50,7 @@ export interface User {
   visibility_mode?: VisibilityMode;
   visibility_start_date?: string | null;
   visibility_end_date?: string | null;
+  hide_guest_contacts?: boolean;
 
   roles?: {
     id: string;

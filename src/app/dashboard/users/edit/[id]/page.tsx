@@ -67,6 +67,7 @@ export default function EditUserPage() {
       enable_otp_login: false,
       otp_in_mail: false,
       otp_in_sms: false,
+      hide_guest_contacts: false,
       status: "active",
       role_name: "Staff",
     },
@@ -93,6 +94,7 @@ export default function EditUserPage() {
           enable_otp_login: user.enable_otp_login ?? false,
           otp_in_mail: user.otp_in_mail ?? false,
           otp_in_sms: user.otp_in_sms ?? false,
+          hide_guest_contacts: user.hide_guest_contacts ?? false,
         });
 
         setUserCreatedAt(user.created_at ? new Date(user.created_at) : null);
@@ -165,6 +167,7 @@ export default function EditUserPage() {
         enable_otp_login: data.enable_otp_login,
         otp_in_mail: data.otp_in_mail,
         otp_in_sms: data.otp_in_sms,
+        hide_guest_contacts: data.hide_guest_contacts,
 
         file: data.file,
         ...(data.password &&
@@ -399,12 +402,13 @@ export default function EditUserPage() {
                     </div>
                   )}
 
-                  {visibilityMode === "range" && !isValidDate(visibilityStart) && (
-                    <p className="text-xs text-amber-600">
-                      A start date is required to grant access to a historical
-                      range.
-                    </p>
-                  )}
+                  {visibilityMode === "range" &&
+                    !isValidDate(visibilityStart) && (
+                      <p className="text-xs text-amber-600">
+                        A start date is required to grant access to a historical
+                        range.
+                      </p>
+                    )}
                 </div>
               </FormField>
             )}
@@ -514,6 +518,30 @@ export default function EditUserPage() {
                   </p>
                 )}
               </FormField>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("hide_guest_contacts")}
+                id="hide_guest_contacts"
+                className="rounded border-gray-300"
+              />
+              <label
+                htmlFor="hide_guest_contacts"
+                className="text-sm font-medium text-gray-700"
+              >
+                Hide guest contact details
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 -mt-3">
+              When enabled, this user can only see the email/phone of guests
+              they created, are assigned to as host, or have interviewed.
+            </p>
+            {errors.hide_guest_contacts && (
+              <p className="text-red-600 text-sm">
+                {errors.hide_guest_contacts.message}
+              </p>
             )}
 
             {/* Buttons */}
