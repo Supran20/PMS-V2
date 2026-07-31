@@ -36,6 +36,8 @@ const baseUserSchema = z.object({
   visibility_start_date: dateField.optional(),
   visibility_end_date: dateField.optional(),
 
+  hide_guest_contacts: z.boolean().optional(),
+
   role_name: z.enum(["Admin", "Host", "Staff"]),
   file: z.any().optional(),
 });
@@ -153,6 +155,8 @@ export const updateUserSchema = z
     visibility_start_date: nullableDateField.optional(),
     visibility_end_date: nullableDateField.optional(),
 
+    hide_guest_contacts: z.boolean().optional(),
+
     role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
     file: z.any().optional(),
   })
@@ -269,7 +273,7 @@ export const editUserFormSchema = z
     enable_otp_login: z.boolean().optional(),
     otp_in_mail: z.boolean().optional(),
     otp_in_sms: z.boolean().optional(),
-
+    hide_guest_contacts: z.boolean().optional(),
     role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
     file: z.any().optional(),
   })

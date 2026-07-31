@@ -64,6 +64,7 @@ export default function AddUserPage() {
       enable_otp_login: false,
       otp_in_mail: false,
       otp_in_sms: false,
+      hide_guest_contacts: false,
       visibility_mode: "default",
     },
   });
@@ -448,8 +449,6 @@ export default function AddUserPage() {
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
-
-                    
                     <input
                       type="radio"
                       checked={watch("otp_in_sms") === true}
@@ -459,9 +458,7 @@ export default function AddUserPage() {
                       }}
                     />
                     SMS
-
                   </label>
-                  
                 </div>
 
                 {errors.otp_in_mail && (
@@ -470,6 +467,29 @@ export default function AddUserPage() {
                   </p>
                 )}
               </FormField>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("hide_guest_contacts")}
+                id="hide_guest_contacts"
+                className="rounded border-gray-300"
+              />
+              <label
+                htmlFor="hide_guest_contacts"
+                className="text-sm font-medium text-gray-700"
+              >
+                Hide guest contact details
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 -mt-3">
+              When enabled, this user can only see the email/phone of guests
+              they created, are assigned to as host, or have interviewed.
+            </p>
+            {errors.hide_guest_contacts && (
+              <p className="text-red-600 text-sm">
+                {errors.hide_guest_contacts.message}
+              </p>
             )}
 
             {/* Submit */}
