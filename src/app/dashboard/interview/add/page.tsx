@@ -34,6 +34,9 @@ import { getHostUser, User } from "@/lib/api/user";
 import { getStudios, Studio } from "@/lib/api/studio";
 import GuestReapprovalModal from "@/components/guest/GuestReapprovalModal";
 import { parseReapprovalError, type ReapprovalErrorInfo } from "@/lib/utils";
+import Select from "react-select";
+import { Controller } from "react-hook-form";
+import { getUsers, User as SystemUser } from "@/lib/api/user";
 
 export default function AddInterviewPage() {
   const router = useRouter();
@@ -48,6 +51,7 @@ export default function AddInterviewPage() {
   const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+  const [users, setUsers] = useState<SystemUser[]>([]);
 
   // Set when createInterview 409s with a repeat-booking reapproval code
   // — drives GuestReapprovalModal instead of a plain error toast. Note
@@ -87,19 +91,27 @@ export default function AddInterviewPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [guestData, userData, studioData, interviews, episodeMeta] =
-          await Promise.all([
-            getGuests(),
-            getHostUser(),
-            getStudios(),
-            getInterviews(), // fetch all interviews to get max episode
-            getEpisodeMeta(),
-          ]);
+        const [
+          guestData,
+          userData,
+          studioData,
+          interviews,
+          episodeMeta,
+          allUsers,
+        ] = await Promise.all([
+          getGuests(),
+          getHostUser(),
+          getStudios(),
+          getInterviews(), // fetch all interviews to get max episode
+          getEpisodeMeta(),
+          getUsers(),
+        ]);
 
         const approvedGuests = guestData.filter((g) => g.approved === true);
         setGuests(approvedGuests);
         setHosts(userData);
         setStudios(studioData);
+        setUsers(allUsers);
 
         // Determine max episode from unrestricted source
         const episodes = episodeMeta.existingEpisodes.map((e) => e.episode);
@@ -416,6 +428,41 @@ export default function AddInterviewPage() {
                 {errors.youtube_link && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.youtube_link.message}
+                  </p>
+                )}
+              </div>
+            </FormField>
+
+            {/* CC */}
+            <FormField label="CC">
+              <div className="md:w-3/4">
+                <Controller
+                  name="cc_user_ids"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      isMulti
+                      options={users.map((u) => ({
+                        value: u.id,
+                        label: `${u.full_name} `,
+                      }))}
+                      value={users
+                        .filter((u) => (field.value ?? []).includes(u.id))
+                        .map((u) => ({
+                          value: u.id,
+                          label: `${u.full_name}`,
+                        }))}
+                      onChange={(selected) =>
+                        field.onChange(selected.map((s) => s.value))
+                      }
+                      placeholder="Select users to CC..."
+                      classNamePrefix="react-select"
+                    />
+                  )}
+                />
+                {errors.cc_user_ids && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.cc_user_ids.message as string}
                   </p>
                 )}
               </div>

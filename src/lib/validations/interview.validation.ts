@@ -79,6 +79,11 @@ export const createInterviewSchema = z.object({
       "Invalid YouTube link",
     )
     .optional(),
+
+  cc_user_ids: z
+    .array(z.string().uuid("Invalid user ID"))
+    .optional()
+    .nullable(),
 });
 
 export type CreateInterviewInput = z.input<typeof createInterviewSchema>;
