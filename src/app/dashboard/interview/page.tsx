@@ -636,7 +636,7 @@ export default function InterviewsPage() {
                           <div className="text-vxs col-span-1 text-gray-600">
                             #{interview.episode ?? "-"}
                           </div>
-                          <div className="text-vxs flex items-center justify-left col-span-2 text-gray-600">
+                          <div className="text-vxs flex items-center justify-center col-span-2 text-gray-600">
                             {interview.guest ? (
                               <Link
                                 href={`/dashboard/guest/view/${interview.guest.slug}`}
@@ -667,7 +667,7 @@ export default function InterviewsPage() {
                           </div>
 
                           {/* Host Profile Image */}
-                          <div className="text-vxs flex items-center justify-left col-span-2 text-gray-600">
+                          <div className="text-vxs flex items-center justify-center col-span-2 text-gray-600">
                             {interview.host ? (
                               <div className="flex items-center gap-2">
                                 {interview.host.profileImage?.path ? (

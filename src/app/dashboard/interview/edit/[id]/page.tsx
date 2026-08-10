@@ -52,6 +52,7 @@ export default function EditInterviewPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [maxEpisode, setMaxEpisode] = useState<number>(1);
   const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
+  const [ccEnabled, setCcEnabled] = useState(false);
   const [episodeInputEnabled, setEpisodeInputEnabled] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<Date | null>(null);
@@ -83,13 +84,14 @@ export default function EditInterviewPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [interview, guestData, userData, studioData, allUsers] = await Promise.all([
-          getInterviewById(id),
-          getGuests(),
-          getHostUser(),
-          getStudios(),
-          getUsers(),
-        ]);
+        const [interview, guestData, userData, studioData, allUsers] =
+          await Promise.all([
+            getInterviewById(id),
+            getGuests(),
+            getHostUser(),
+            getStudios(),
+            getUsers(),
+          ]);
 
         const approvedGuests = guestData.filter((g) => g.approved === true);
         setGuests(approvedGuests);
@@ -108,8 +110,12 @@ export default function EditInterviewPage() {
           google_drive_link: interview.google_drive_link,
           youtube_link: interview.youtube_link,
           cc_user_ids: interview.cc_user_ids,
+          bcc_user_ids: interview.bcc_user_ids,
         });
-
+        setCcEnabled(
+          (!!interview.cc_user_ids && interview.cc_user_ids.length > 0) ||
+          (!!interview.bcc_user_ids && interview.bcc_user_ids.length > 0)
+        );
         setSelectedDate(
           interview.interview_date ? new Date(interview.interview_date) : null,
         );
@@ -456,33 +462,86 @@ export default function EditInterviewPage() {
               </div>
             </FormField>
 
-            {/* CC */}
-            <FormField label="CC">
-              <div className="md:w-3/4">
-                <Controller
-                  name="cc_user_ids"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      isMulti
-                      options={users.map((u) => ({
-                        value: u.id,
-                        label: `${u.full_name} `,
-                      }))}
-                      value={users
-                        .filter((u) => (field.value ?? []).includes(u.id))
-                        .map((u) => ({
-                          value: u.id,
-                          label: `${u.full_name}`,
-                        }))}
-                      onChange={(selected) =>
-                        field.onChange(selected.map((s) => s.value))
+            
+            {/* Notify Additional Users */}
+            <FormField label="Notify Additional Users">
+              <div className="md:w-3/4 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={ccEnabled}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setCcEnabled(checked);
+                      if (!checked) {
+                        setValue("cc_user_ids", [], { shouldValidate: true });
+                        setValue("bcc_user_ids", [], { shouldValidate: true });
                       }
-                      placeholder="Select users to CC..."
-                      classNamePrefix="react-select"
-                    />
-                  )}
-                />
+                    }}
+                    className="cursor-pointer"
+                  />
+                  Notify additional users about this interview
+                </label>
+
+                {ccEnabled && (
+                  <div className="space-y-3 mt-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CC</label>
+                      <Controller
+                        name="cc_user_ids"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            isMulti
+                            options={users.map((u) => ({
+                              value: u.id,
+                              label: `${u.full_name} `,
+                            }))}
+                            value={users
+                              .filter((u) => (field.value ?? []).includes(u.id))
+                              .map((u) => ({
+                                value: u.id,
+                                label: `${u.full_name}`,
+                              }))}
+                            onChange={(selected) =>
+                              field.onChange(selected.map((s) => s.value))
+                            }
+                            placeholder="Select users to CC..."
+                            classNamePrefix="react-select"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">BCC</label>
+                      <Controller
+                        name="bcc_user_ids"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            isMulti
+                            options={users.map((u) => ({
+                              value: u.id,
+                              label: `${u.full_name} `,
+                            }))}
+                            value={users
+                              .filter((u) => (field.value ?? []).includes(u.id))
+                              .map((u) => ({
+                                value: u.id,
+                                label: `${u.full_name}`,
+                              }))}
+                            onChange={(selected) =>
+                              field.onChange(selected.map((s) => s.value))
+                            }
+                            placeholder="Select users to BCC..."
+                            classNamePrefix="react-select"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {errors.cc_user_ids && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.cc_user_ids.message as string}

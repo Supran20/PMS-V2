@@ -84,6 +84,11 @@ export const createInterviewSchema = z.object({
     .array(z.string().uuid("Invalid user ID"))
     .optional()
     .nullable(),
+
+  bcc_user_ids: z
+    .array(z.string().uuid("Invalid user ID in BCC list"))
+    .optional()
+    .nullable(),
 });
 
 export type CreateInterviewInput = z.input<typeof createInterviewSchema>;
