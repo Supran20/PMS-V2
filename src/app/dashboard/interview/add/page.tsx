@@ -52,6 +52,9 @@ export default function AddInterviewPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
   const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
+  const [ccEnabled, setCcEnabled] = useState(false);
+  const [bccEnabled, setBccEnabled] = useState(false);
+
   const [users, setUsers] = useState<SystemUser[]>([]);
 
   // Set when createInterview 409s with a repeat-booking reapproval code
@@ -375,6 +378,7 @@ export default function AddInterviewPage() {
             </FormField>
 
             {/* End Time */}
+            {/*
             <FormField label="End Time" required>
               <div className="md:w-3/4">
                 <DatePicker
@@ -397,6 +401,7 @@ export default function AddInterviewPage() {
                 />
               </div>
             </FormField>
+            */}
 
             <FormField label="Episode Number" required>
               <div className="flex items-center gap-3 md:w-3/4">
@@ -458,39 +463,93 @@ export default function AddInterviewPage() {
               </div>
             </FormField>
 
-            {/* CC */}
-            <FormField label="CC">
-              <div className="md:w-3/4">
-                <Controller
-                  name="cc_user_ids"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      isMulti
-                      options={users.map((u) => ({
-                        value: u.id,
-                        label: `${u.full_name} `,
-                      }))}
-                      value={users
-                        .filter((u) => (field.value ?? []).includes(u.id))
-                        .map((u) => ({
-                          value: u.id,
-                          label: `${u.full_name}`,
-                        }))}
-                      onChange={(selected) =>
-                        field.onChange(selected.map((s) => s.value))
+            {/* Notify Additional Users */}
+            <FormField label="Notify Additional Users">
+              <div className="md:w-3/4 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={ccEnabled}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setCcEnabled(checked);
+                      if (!checked) {
+                        setValue("cc_user_ids", [], { shouldValidate: true });
+                        setValue("bcc_user_ids", [], { shouldValidate: true });
                       }
-                      placeholder="Select users to CC..."
-                      classNamePrefix="react-select"
-                    />
-                  )}
-                />
+                    }}
+                    className="cursor-pointer"
+                  />
+                  Notify additional users about this interview
+                </label>
+
+                {ccEnabled && (
+                  <div className="space-y-3 mt-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CC</label>
+                      <Controller
+                        name="cc_user_ids"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            isMulti
+                            options={users.map((u) => ({
+                              value: u.id,
+                              label: `${u.full_name} `,
+                            }))}
+                            value={users
+                              .filter((u) => (field.value ?? []).includes(u.id))
+                              .map((u) => ({
+                                value: u.id,
+                                label: `${u.full_name}`,
+                              }))}
+                            onChange={(selected) =>
+                              field.onChange(selected.map((s) => s.value))
+                            }
+                            placeholder="Select users to CC..."
+                            classNamePrefix="react-select"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">BCC</label>
+                      <Controller
+                        name="bcc_user_ids"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            isMulti
+                            options={users.map((u) => ({
+                              value: u.id,
+                              label: `${u.full_name} `,
+                            }))}
+                            value={users
+                              .filter((u) => (field.value ?? []).includes(u.id))
+                              .map((u) => ({
+                                value: u.id,
+                                label: `${u.full_name}`,
+                              }))}
+                            onChange={(selected) =>
+                              field.onChange(selected.map((s) => s.value))
+                            }
+                            placeholder="Select users to BCC..."
+                            classNamePrefix="react-select"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {errors.cc_user_ids && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.cc_user_ids.message as string}
                   </p>
                 )}
+                
               </div>
+
             </FormField>
 
             <FormActions
