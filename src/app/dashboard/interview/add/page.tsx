@@ -51,6 +51,7 @@ export default function AddInterviewPage() {
   const [existingEpisodes, setExistingEpisodes] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+  const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
   const [users, setUsers] = useState<SystemUser[]>([]);
 
   // Set when createInterview 409s with a repeat-booking reapproval code
@@ -360,6 +361,30 @@ export default function AddInterviewPage() {
                     if (date) {
                       const time = date.toTimeString().slice(0, 5);
                       setValue("start_time", time, { shouldValidate: true });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="HH:mm"
+                  className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  placeholderText="Select time"
+                />
+              </div>
+            </FormField>
+
+            {/* End Time */}
+            <FormField label="End Time" required>
+              <div className="md:w-3/4">
+                <DatePicker
+                  selected={selectedEndTime}
+                  onChange={(date: Date | null) => {
+                    setSelectedEndTime(date);
+
+                    if (date) {
+                      const time = date.toTimeString().slice(0, 5);
+                      setValue("end_time", time, { shouldValidate: true });
                     }
                   }}
                   showTimeSelect

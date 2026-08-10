@@ -39,9 +39,6 @@ export default function SettingsPage() {
   const [guestUsers, setGuestUsers] = useState<any[]>([]);
   const [guestPermissionId, setGuestPermissionId] = useState<string>("");
 
-  const [interviewUsers, setInterviewUsers] = useState<any[]>([]);
-  const [interviewPermissionId, setInterviewPermissionId] =
-    useState<string>("");
   const [settingsId, setSettingsId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
@@ -62,24 +59,10 @@ export default function SettingsPage() {
         (p) => p.permission_type === "guest_approver",
       );
 
-      const interviewPerm = permData.find(
-        (p) => p.permission_type === "interview_cc",
-      );
-
       if (guestPerm) {
         setGuestPermissionId(guestPerm.id);
         setGuestUsers(
           guestPerm.users?.map((u: any) => ({
-            value: u.id,
-            label: u.full_name,
-          })) || [],
-        );
-      }
-
-      if (interviewPerm) {
-        setInterviewPermissionId(interviewPerm.id);
-        setInterviewUsers(
-          interviewPerm.users?.map((u: any) => ({
             value: u.id,
             label: u.full_name,
           })) || [],
@@ -130,25 +113,6 @@ export default function SettingsPage() {
         );
       }
 
-      // Interview
-      const interview_ids = interviewUsers.map((u) => u.value);
-      if (interviewPermissionId) {
-        updates.push(
-          updatePermissionSetting(interviewPermissionId, {
-            user_ids: interview_ids,
-          }),
-        );
-      } else {
-        // create new record if not exists
-        updates.push(
-          createPermissionSetting({
-            settings_id: settingsId,
-            permission_type: "interview_cc",
-            user_ids: interview_ids,
-          }),
-        );
-      }
-
       await Promise.all(updates);
 
       toast.success("Permissions updated");
@@ -192,20 +156,6 @@ export default function SettingsPage() {
                 isMulti
                 value={guestUsers}
                 onChange={(val) => setGuestUsers(val as any)}
-                options={userOptions}
-              />
-            </div>
-            {/* Interview CC */}
-            <div className="max-w-xl">
-              <h2 className="text-lg font-semibold mb-3">
-                Interview CC Settings
-              </h2>
-
-              <Select
-                isMulti
-                components={animatedComponents}
-                value={interviewUsers}
-                onChange={(val) => setInterviewUsers(val as any)}
                 options={userOptions}
               />
             </div>
