@@ -207,16 +207,14 @@ export default function UsersPage() {
                           >
                             <Icon icon="mdi:pencil" className="text-xl" />
                           </button>
-                          {hasPermission("user.manage") &&
-                            currentUser?.id !== user.id && (
-                              <button
-                                onClick={() => handleDeleteClick(user)}
-                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                                title="Delete"
-                              >
-                                <Icon icon="mdi:delete" className="text-xl" />
-                              </button>
-                            )}
+
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            title="Delete"
+                          >
+                            <Icon icon="mdi:delete" className="text-xl" />
+                          </button>
                         </div>
                       </td>
                     </tr>

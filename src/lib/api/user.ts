@@ -1,13 +1,10 @@
 import api from "@/lib/axios";
-import { formatDateForFormData } from "@/lib/date-utils";
 
 /**
  * --------------------------------
  * Types
  * --------------------------------
  */
-
-export type VisibilityMode = "default" | "range" | "all";
 
 export interface UserPayload {
   full_name: string;
@@ -19,12 +16,7 @@ export interface UserPayload {
   enable_otp_login?: boolean;
   otp_in_mail?: boolean;
   otp_in_sms?: boolean;
-
-  visibility_mode?: VisibilityMode;
-  visibility_start_date?: Date | string | null;
-  visibility_end_date?: Date | string | null;
-  hide_guest_contacts?: boolean;
-  role_name?: "Admin" | "Host" | "Staff";
+  role_name?: "Admin" | "Host" | "Staff" | "Super Admin";
 }
 
 export interface Media {
@@ -47,11 +39,6 @@ export interface User {
   mobile_number?: string | null;
   enable_otp_login?: boolean;
 
-  visibility_mode?: VisibilityMode;
-  visibility_start_date?: string | null;
-  visibility_end_date?: string | null;
-  hide_guest_contacts?: boolean;
-
   roles?: {
     id: string;
     role_name: string;
@@ -64,50 +51,12 @@ export interface User {
  * --------------------------------
  * FormData serialization helpers
  * --------------------------------
- * FormData can only carry strings, so a JS `null` and a JS `undefined`
- * both risk collapsing into the same (wrong) thing if handled naively:
- *   - String(null)      -> "null"      (a literal string, not cleared)
- *   - String(undefined) -> "undefined" (also wrong, and shouldn't even
- *                                        be sent — means "untouched")
- * These helpers keep the three states distinct:
- *   - undefined -> omit the key entirely ("don't touch this field")
- *   - null      -> send the "null" sentinel ("explicitly clear this")
- *   - Date      -> send as YYYY-MM-DD
  */
-
-// Visibility fields need the sentinel-aware treatment above; every other
-// field just gets skipped if undefined, and stringified otherwise. Nulls
-// on non-visibility fields are treated as "don't send" — there's no
-// other field today that needs an explicit-null-clear semantic.
-const VISIBILITY_KEYS = new Set([
-  "visibility_mode",
-  "visibility_start_date",
-  "visibility_end_date",
-]);
-
 function appendPayloadToFormData(
   formData: FormData,
   payload: Record<string, any>,
-  { allowNullDateClear }: { allowNullDateClear: boolean },
 ) {
   Object.entries(payload).forEach(([key, value]) => {
-    if (VISIBILITY_KEYS.has(key)) {
-      if (key === "visibility_mode") {
-        if (value === undefined) return;
-        formData.append(key, String(value));
-        return;
-      }
-
-      // visibility_start_date / visibility_end_date
-      const formatted = formatDateForFormData(value, {
-        allowNull: allowNullDateClear,
-      });
-
-      if (formatted === undefined) return;
-      formData.append(key, formatted);
-      return;
-    }
-
     if (value === undefined || value === null) return;
     formData.append(key, String(value));
   });
@@ -153,16 +102,13 @@ export const getAdminUser = async (): Promise<User[]> => {
  * --------------------------------
  * CREATE USER
  * --------------------------------
- * Create never needs the null-clear sentinel — there's nothing to
- * revoke yet on a brand-new user, so visibility_start_date/end_date are
- * either a real date (range mode) or simply omitted (default/all mode).
  */
 export const createUser = async (payload: any): Promise<User> => {
   const formData = new FormData();
 
   const { confirm_password, file, ...rest } = payload;
 
-  appendPayloadToFormData(formData, rest, { allowNullDateClear: false });
+  appendPayloadToFormData(formData, rest);
 
   if (file instanceof File) {
     formData.append("file", file);
@@ -179,19 +125,13 @@ export const createUser = async (payload: any): Promise<User> => {
  * --------------------------------
  * UPDATE USER
  * --------------------------------
- * Update DOES need the null-clear sentinel — this is how an Admin
- * revokes a previously granted window by switching back to
- * default/all mode. visibility_start_date/end_date sent as JS `null`
- * in the payload get serialized as the "null" sentinel string, which
- * the backend's nullableDateField preprocessing converts back to a
- * real null.
  */
 export const updateUser = async (id: string, payload: any): Promise<User> => {
   const formData = new FormData();
 
   const { file, ...rest } = payload;
 
-  appendPayloadToFormData(formData, rest, { allowNullDateClear: true });
+  appendPayloadToFormData(formData, rest);
 
   if (file instanceof File) {
     formData.append("file", file);

@@ -2,14 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { getUserById, updateUser } from "@/lib/api/user";
 import {
   editUserFormSchema,
   EditUserFormInput,
 } from "@/lib/validations/user.validation";
-import { parseDateOnly, toDateOnlyString, isValidDate } from "@/lib/date-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -18,7 +16,6 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { getMediaUrl } from "@/lib/utils";
-import DatePicker from "react-datepicker";
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -30,10 +27,6 @@ const allowedMimeTypes = [
   "video/quicktime",
 ];
 
-const RESTRICTED_ROLES = ["Host", "Staff"];
-
-type VisibilityMode = "default" | "range" | "all";
-
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
@@ -41,17 +34,6 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [userCreatedAt, setUserCreatedAt] = useState<Date | null>(null);
-  const [visibilityMode, setVisibilityMode] =
-    useState<VisibilityMode>("default");
-  const [visibilityStart, setVisibilityStart] = useState<Date | null>(null);
-  const [visibilityEnd, setVisibilityEnd] = useState<Date | null>(null);
-
-  // Tracks whether the fetched user originally had a role-init pass done,
-  // so the role-change effect doesn't wipe out settings we just loaded
-  // from the server on the very first render.
-  const [hasInitialized, setHasInitialized] = useState(false);
 
   const {
     register,
@@ -67,15 +49,12 @@ export default function EditUserPage() {
       enable_otp_login: false,
       otp_in_mail: false,
       otp_in_sms: false,
-      hide_guest_contacts: false,
       status: "active",
       role_name: "Staff",
     },
   });
 
   const enableOtp = watch("enable_otp_login");
-  const roleName = watch("role_name");
-  const isRestrictedRole = RESTRICTED_ROLES.includes(roleName ?? "");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -88,32 +67,13 @@ export default function EditUserPage() {
           email: user.email,
           status: (user.status as "active" | "inactive") ?? "active",
           role_name:
-            (user.roles?.[0]?.role_name as "Admin" | "Host" | "Staff") ??
+            (user.roles?.[0]?.role_name as "Admin" | "Host" | "Staff" | "Super Admin") ??
             "Staff",
           mobile_number: user.mobile_number ?? undefined,
           enable_otp_login: user.enable_otp_login ?? false,
           otp_in_mail: user.otp_in_mail ?? false,
           otp_in_sms: user.otp_in_sms ?? false,
-          hide_guest_contacts: user.hide_guest_contacts ?? false,
         });
-
-        setUserCreatedAt(user.created_at ? new Date(user.created_at) : null);
-
-        // Pre-select mode straight from the server's visibility_mode —
-        // no more inferring "range" from date presence, since "all" mode
-        // has no dates to infer from.
-        const serverMode: VisibilityMode =
-          (user.visibility_mode as VisibilityMode) ?? "default";
-
-        setVisibilityMode(serverMode);
-
-        if (serverMode === "range") {
-          setVisibilityStart(parseDateOnly(user.visibility_start_date));
-          setVisibilityEnd(parseDateOnly(user.visibility_end_date));
-        } else {
-          setVisibilityStart(null);
-          setVisibilityEnd(null);
-        }
 
         if (user.profileImage?.path) {
           const imageUrl = getMediaUrl(user.profileImage.path);
@@ -124,36 +84,10 @@ export default function EditUserPage() {
         router.push("/dashboard/users");
       } finally {
         setLoading(false);
-        // Defer marking initialized until after this render settles, so
-        // the role-watch effect below doesn't fire on the initial reset.
-        setHasInitialized(true);
       }
     };
     fetchUser();
   }, [id, reset, router]);
-
-  /**
-   * If role switches away from Host/Staff (i.e. to Admin) AFTER initial
-   * load, visibility settings no longer apply — reset mode and clear
-   * dates. Guarded by hasInitialized so this doesn't fire and wipe out
-   * data we just loaded from the server on mount.
-   */
-  useEffect(() => {
-    if (!hasInitialized) return;
-    if (!isRestrictedRole) {
-      setVisibilityMode("default");
-      setVisibilityStart(null);
-      setVisibilityEnd(null);
-    }
-  }, [isRestrictedRole, hasInitialized]);
-
-  const handleVisibilityModeChange = (mode: VisibilityMode) => {
-    setVisibilityMode(mode);
-    if (mode !== "range") {
-      setVisibilityStart(null);
-      setVisibilityEnd(null);
-    }
-  };
 
   const onSubmit = async (data: EditUserFormInput) => {
     setSubmitting(true);
@@ -167,48 +101,10 @@ export default function EditUserPage() {
         enable_otp_login: data.enable_otp_login,
         otp_in_mail: data.otp_in_mail,
         otp_in_sms: data.otp_in_sms,
-        hide_guest_contacts: data.hide_guest_contacts,
-
         file: data.file,
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
       };
-
-      if (isRestrictedRole && visibilityMode === "range") {
-        const start = toDateOnlyString(visibilityStart);
-        if (!start) {
-          toast.error("A valid start date is required for range visibility.");
-          return;
-        }
-
-        payload.visibility_mode = "range";
-        payload.visibility_start_date = start;
-
-        const end = toDateOnlyString(visibilityEnd);
-        if (end) {
-          payload.visibility_end_date = end;
-        } else {
-          delete payload.visibility_end_date;
-        }
-      } else if (isRestrictedRole && visibilityMode === "all") {
-        payload.visibility_mode = "all";
-        // Explicit null so the backend actively revokes any previously
-        // granted window rather than leaving it untouched.
-        payload.visibility_start_date = null;
-        payload.visibility_end_date = null;
-      } else {
-        // Default mode (or role is Admin) — explicitly send null/"default"
-        // so the backend revokes any previously granted window.
-        payload.visibility_mode = "default";
-        payload.visibility_start_date = null;
-        payload.visibility_end_date = null;
-      }
-
-      if (!isRestrictedRole) {
-        delete payload.visibility_mode;
-        delete payload.visibility_start_date;
-        delete payload.visibility_end_date;
-      }
 
       await updateUser(id, payload);
       toast.success("User updated successfully");
@@ -286,133 +182,6 @@ export default function EditUserPage() {
                 </p>
               )}
             </FormField>
-
-            {/* Content Visibility — only relevant for Host/Staff */}
-            {isRestrictedRole && (
-              <FormField label="Content Visibility">
-                <div className="md:w-3/4 space-y-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        className="mt-1"
-                        checked={visibilityMode === "default"}
-                        onChange={() => handleVisibilityModeChange("default")}
-                      />
-                      <span>
-                        <span className="block text-sm font-medium text-gray-800">
-                          Default (since account creation)
-                        </span>
-                        <span className="block text-xs text-gray-500">
-                          {userCreatedAt
-                            ? `This user can only see guests/interviews created after ${userCreatedAt.toLocaleDateString(
-                                undefined,
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}, their account creation date (plus anything directly assigned to them).`
-                            : "This user will only see guests/interviews created after their account is created (plus anything directly assigned to them)."}
-                        </span>
-                      </span>
-                    </label>
-
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        className="mt-1"
-                        checked={visibilityMode === "range"}
-                        onChange={() => handleVisibilityModeChange("range")}
-                      />
-                      <span>
-                        <span className="block text-sm font-medium text-gray-800">
-                          Grant access to a historical date range
-                        </span>
-                        <span className="block text-xs text-gray-500">
-                          In addition to their default access, this user will
-                          also be able to see all content created between these
-                          dates, regardless of assignment. Leave the end date
-                          empty to grant access from the start date through
-                          today.
-                        </span>
-                      </span>
-                    </label>
-
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        className="mt-1"
-                        checked={visibilityMode === "all"}
-                        onChange={() => handleVisibilityModeChange("all")}
-                      />
-                      <span>
-                        <span className="block text-sm font-medium text-gray-800">
-                          All records
-                        </span>
-                        <span className="block text-xs text-gray-500">
-                          This user will be able to see every guest and
-                          interview in the system, with no date restriction.
-                        </span>
-                      </span>
-                    </label>
-                  </div>
-
-                  {visibilityMode === "range" && (
-                    <div className="flex flex-col md:flex-row gap-3 pt-1">
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">
-                          Start Date
-                        </label>
-                        <DatePicker
-                          selected={visibilityStart}
-                          onChange={(date: Date | null) =>
-                            setVisibilityStart(date)
-                          }
-                          selectsStart
-                          startDate={visibilityStart}
-                          endDate={visibilityEnd}
-                          maxDate={new Date()}
-                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                          placeholderText="Select start date"
-                          dateFormat="yyyy-MM-dd"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">
-                          End Date{" "}
-                          <span className="text-gray-400">(optional)</span>
-                        </label>
-                        <DatePicker
-                          selected={visibilityEnd}
-                          onChange={(date: Date | null) =>
-                            setVisibilityEnd(date)
-                          }
-                          selectsEnd
-                          startDate={visibilityStart}
-                          endDate={visibilityEnd}
-                          minDate={visibilityStart ?? undefined}
-                          maxDate={new Date()}
-                          isClearable
-                          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                          placeholderText="Through today"
-                          dateFormat="yyyy-MM-dd"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {visibilityMode === "range" &&
-                    !isValidDate(visibilityStart) && (
-                      <p className="text-xs text-amber-600">
-                        A start date is required to grant access to a historical
-                        range.
-                      </p>
-                    )}
-                </div>
-              </FormField>
-            )}
 
             <FormField label="Profile Image" required>
               <div className="space-y-4">
@@ -519,30 +288,6 @@ export default function EditUserPage() {
                   </p>
                 )}
               </FormField>
-            )}
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                {...register("hide_guest_contacts")}
-                id="hide_guest_contacts"
-                className="rounded border-gray-300"
-              />
-              <label
-                htmlFor="hide_guest_contacts"
-                className="text-sm font-medium text-gray-700"
-              >
-                Hide guest contact details
-              </label>
-            </div>
-            <p className="text-xs text-gray-500 -mt-3">
-              When enabled, this user can only see the email/phone of guests
-              they created, are assigned to as host, or have interviewed.
-            </p>
-            {errors.hide_guest_contacts && (
-              <p className="text-red-600 text-sm">
-                {errors.hide_guest_contacts.message}
-              </p>
             )}
 
             {/* Buttons */}
