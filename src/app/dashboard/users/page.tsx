@@ -46,10 +46,10 @@ export default function UsersPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!hasPermission("user.manage")) {
-      router.replace("/dashboard");
-      return;
-    }
+    // if (!hasPermission("user.manage")) {
+    //   router.replace("/dashboard");
+    //   return;
+    // }
 
     fetchUsers();
   }, [authLoading]);

@@ -38,7 +38,7 @@ const baseUserSchema = z.object({
 
   hide_guest_contacts: z.boolean().optional(),
 
-  role_name: z.enum(["Admin", "Host", "Staff"]),
+  role_name: z.enum(["Admin", "Host", "Staff", "Super Admin"]),
   file: z.any().optional(),
 });
 
@@ -157,7 +157,7 @@ export const updateUserSchema = z
 
     hide_guest_contacts: z.boolean().optional(),
 
-    role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
+    role_name: z.enum(["Admin", "Host", "Staff", "Super Admin"]).optional(),
     file: z.any().optional(),
   })
   .refine(
@@ -274,7 +274,7 @@ export const editUserFormSchema = z
     otp_in_mail: z.boolean().optional(),
     otp_in_sms: z.boolean().optional(),
     hide_guest_contacts: z.boolean().optional(),
-    role_name: z.enum(["Admin", "Host", "Staff"]).optional(),
+    role_name: z.enum(["Admin", "Host", "Staff", "Super Admin"]).optional(),
     file: z.any().optional(),
   })
   .refine(

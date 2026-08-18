@@ -215,6 +215,7 @@ export default function AddUserPage() {
                 <option value="Admin">Admin</option>
                 <option value="Host">Host</option>
                 <option value="Staff">Staff</option>
+                <option value="Super Admin">Super Admin</option>
               </select>
               {errors.role_name && (
                 <p className="text-red-600 text-sm mt-1">
