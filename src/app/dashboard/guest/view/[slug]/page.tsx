@@ -43,7 +43,7 @@ export default function GuestViewPage() {
   const params = useParams();
   const slug = params?.slug as string;
 
-  const { hasPermission } = useAuth();
+  // const { hasPermission } = useAuth();
 
   const [guest, setGuest] = useState<Guest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,15 +62,15 @@ export default function GuestViewPage() {
     title: "",
     description: "",
   });
-  const canAddInterview = hasPermission("interview.create");
-  const canSchedule = canAddInterview && guest?.approved && !guest?.rejected;
+  // const canAddInterview = hasPermission("interview.create");
+  const canSchedule = guest?.approved && !guest?.rejected;
   const isDisabled = !canSchedule;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  const canEditGuest = hasPermission("guest.update");
+  // const canEditGuest = hasPermission("guest.update");
 
   useEffect(() => {
     if (!slug) return;
@@ -271,20 +271,18 @@ export default function GuestViewPage() {
             <Icon icon="mdi:pencil" className="text-xl" />
             <span className="">Edit Guest</span>
           </button>
-          {canAddInterview && (
-            <AddButton
-              href={`/dashboard/interview/add?guest_id=${guest.id}`}
-              label="Schedule Interview"
-              disabled={isDisabled}
-              onClick={(e) => {
-                if (isDisabled) {
-                  e.preventDefault();
-                  e.stopPropagation(); // 🔥 VERY IMPORTANT
-                  toast.error("Guest must be approved and not rejected");
-                }
-              }}
-            />
-          )}
+          <AddButton
+            href={`/dashboard/interview/add?guest_id=${guest.id}`}
+            label="Schedule Interview"
+            disabled={isDisabled}
+            onClick={(e) => {
+              if (isDisabled) {
+                e.preventDefault();
+                e.stopPropagation(); // 🔥 VERY IMPORTANT
+                toast.error("Guest must be approved and not rejected");
+              }
+            }}
+          />
         </div>
       </div>
 

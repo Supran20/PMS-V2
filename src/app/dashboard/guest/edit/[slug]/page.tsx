@@ -65,10 +65,10 @@ export default function EditGuestPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Option[]>([]);
 
-  const { hasPermission, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const { user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
-  const canDeleteGuest = hasPermission("guest.delete");
+  // const canDeleteGuest = hasPermission("guest.delete");
 
   const {
     register,
@@ -155,7 +155,7 @@ export default function EditGuestPage() {
       }
     };
     fetchUsers();
-  }, [authLoading, hasPermission, router, slug, reset, setValue]);
+  }, [authLoading, router, slug, reset, setValue]);
 
   useEffect(() => {
     return () => {
@@ -446,17 +446,16 @@ export default function EditGuestPage() {
 
             {/* Buttons */}
             <div className="flex items-center justify-between gap-4">
-              {canDeleteGuest && (
-                <button
-                  type="button"
-                  onClick={() => guest && handleDeleteClick(guest)}
-                  className=" flex items-center mt-6 gap-2 py-2 px-4 rounded-md shadow-sm border-gray-200  bg-white text-red-600 hover:bg-red-600 hover:shadow-lg cursor-pointer hover:text-white transition-colors"
-                  title="Delete"
-                >
-                  <Icon icon="mdi:delete" className="text-xl" />
-                  <span className="">Delete Guest</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => guest && handleDeleteClick(guest)}
+                className=" flex items-center mt-6 gap-2 py-2 px-4 rounded-md shadow-sm border-gray-200  bg-white text-red-600 hover:bg-red-600 hover:shadow-lg cursor-pointer hover:text-white transition-colors"
+                title="Delete"
+              >
+                <Icon icon="mdi:delete" className="text-xl" />
+                <span className="">Delete Guest</span>
+              </button>
+
               <FormActions
                 cancelHref="/dashboard/guest"
                 submitLabel="Update Guest"
