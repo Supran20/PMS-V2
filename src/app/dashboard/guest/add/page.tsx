@@ -60,7 +60,7 @@ export default function AddGuestPage() {
     useState<ReapprovalErrorInfo | null>(null);
   const [reapprovalGuestName, setReapprovalGuestName] = useState("");
 
-  const { hasPermission, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
 
   const { user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
@@ -82,10 +82,10 @@ export default function AddGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!hasPermission("guest.create")) {
-      router.replace("/dashboard/guest");
-      return;
-    }
+    // if (!hasPermission("guest.create")) {
+    //   router.replace("/dashboard/guest");
+    //   return;
+    // }
 
     const fetchData = async () => {
       try {
@@ -106,7 +106,7 @@ export default function AddGuestPage() {
     };
 
     fetchData();
-  }, [authLoading, hasPermission, router]);
+  }, [authLoading, router]);
 
   useEffect(() => {
     return () => {

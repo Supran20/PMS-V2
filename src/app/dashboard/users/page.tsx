@@ -28,7 +28,7 @@ export default function UsersPage() {
   );
   const [itemsPerPage, setItemsPerPage] = useState(50);
 
-  const { user: currentUser, hasPermission, loading: authLoading } = useAuth();
+  const { user: currentUser, loading: authLoading } = useAuth();
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -46,10 +46,10 @@ export default function UsersPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!hasPermission("user.manage")) {
-      router.replace("/dashboard");
-      return;
-    }
+    // if (!hasPermission("user.manage")) {
+    //   router.replace("/dashboard");
+    //   return;
+    // }
 
     fetchUsers();
   }, [authLoading]);
@@ -191,15 +191,14 @@ export default function UsersPage() {
                       </td>
                       <td className="py-3 px-4 ">
                         <div className="flex items-center justify-start gap-2">
-                          {hasPermission("user.manage") && ( // Only Admin sees password icon
-                            <button
-                              onClick={() => handlePasswordClick(user)}
-                              className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
-                              title="Change Password"
-                            >
-                              <Icon icon="mdi:key" className="text-xl" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handlePasswordClick(user)}
+                            className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
+                            title="Change Password"
+                          >
+                            <Icon icon="mdi:key" className="text-xl" />
+                          </button>
+
                           <button
                             onClick={() => handleEditClick(user)}
                             className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
@@ -207,16 +206,14 @@ export default function UsersPage() {
                           >
                             <Icon icon="mdi:pencil" className="text-xl" />
                           </button>
-                          {hasPermission("user.manage") &&
-                            currentUser?.id !== user.id && (
-                              <button
-                                onClick={() => handleDeleteClick(user)}
-                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                                title="Delete"
-                              >
-                                <Icon icon="mdi:delete" className="text-xl" />
-                              </button>
-                            )}
+
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            title="Delete"
+                          >
+                            <Icon icon="mdi:delete" className="text-xl" />
+                          </button>
                         </div>
                       </td>
                     </tr>

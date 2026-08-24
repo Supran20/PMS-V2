@@ -37,7 +37,7 @@ import { useInterview } from "@/context/InterviewContext";
 
 export default function InterviewsPage() {
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  // const { hasPermission } = useAuth();
 
   const { interviews, setInterviews } = useInterview();
   const [loading, setLoading] = useState(true);
@@ -46,8 +46,8 @@ export default function InterviewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
 
-  const canAddInterview = hasPermission("interview.create");
-  const canEditInterview = hasPermission("interview.update");
+  // const canAddInterview = hasPermission("interview.create");
+  // const canEditInterview = hasPermission("interview.update");
 
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -541,12 +541,10 @@ export default function InterviewsPage() {
             {reshuffleLoading ? "Reshuffling..." : "Reshuffle Episodes"}
           </button>
 
-          {canAddInterview && (
-            <AddButton
-              href="/dashboard/interview/add"
-              label="Schedule Interview"
-            />
-          )}
+          <AddButton
+            href="/dashboard/interview/add"
+            label="Schedule Interview"
+          />
         </div>
       </div>
       {showTabs && (

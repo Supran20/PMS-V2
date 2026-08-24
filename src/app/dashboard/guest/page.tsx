@@ -68,12 +68,12 @@ export default function GuestsPage() {
   const [reapprovalToReject, setReapprovalToReject] =
     useState<GuestReapprovalRequest | null>(null);
 
-  const { hasPermission } = useAuth();
+  // const { hasPermission } = useAuth();
   // const canApproveGuest = hasPermission("guest.auto_approve");
 
-  const canAddGuest = hasPermission("guest.create");
-  const canEditGuest = hasPermission("guest.update");
-  const canDeleteGuest = hasPermission("guest.delete");
+  // const canAddGuest = hasPermission("guest.create");
+  // const canEditGuest = hasPermission("guest.update");
+  // const canDeleteGuest = hasPermission("guest.delete");
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const { user } = useAuth();
@@ -338,7 +338,14 @@ export default function GuestsPage() {
     if (currentPage > pages) {
       setCurrentPage(pages || 1);
     }
-  }, [filteredGuests, filteredReapprovalRequests, currentPage, totalPages, reapprovalTotalPages, tabValue]);
+  }, [
+    filteredGuests,
+    filteredReapprovalRequests,
+    currentPage,
+    totalPages,
+    reapprovalTotalPages,
+    tabValue,
+  ]);
 
   const handleStatusChange = async (
     slug: string,
@@ -371,8 +378,12 @@ export default function GuestsPage() {
     }
   };
 
-  const triggerSourceLabel = (source: GuestReapprovalRequest["trigger_source"]) =>
-    source === "duplicate_guest_attempt" ? "Duplicate attempt" : "Repeat booking";
+  const triggerSourceLabel = (
+    source: GuestReapprovalRequest["trigger_source"],
+  ) =>
+    source === "duplicate_guest_attempt"
+      ? "Duplicate attempt"
+      : "Repeat booking";
 
   if (loading) {
     return (
@@ -390,9 +401,7 @@ export default function GuestsPage() {
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Guests</h2>
-        {canAddGuest && (
-          <AddButton href="/dashboard/guest/add" label="Add Guest" />
-        )}
+        <AddButton href="/dashboard/guest/add" label="Add Guest" />
       </div>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
@@ -496,7 +505,8 @@ export default function GuestsPage() {
                             {triggerSourceLabel(request.trigger_source)}
                           </span>
                           <span className="text-xs text-gray-500">
-                            Requested by {request.requester?.full_name ?? "Unknown"}
+                            Requested by{" "}
+                            {request.requester?.full_name ?? "Unknown"}
                           </span>
                         </div>
 
@@ -669,20 +679,14 @@ export default function GuestsPage() {
                             className="p-2 rounded-lg text-green-500"
                             title="Approved"
                           >
-                            <Icon
-                              icon="mdi:check-circle"
-                              className="text-lg"
-                            />
+                            <Icon icon="mdi:check-circle" className="text-lg" />
                           </div>
                         ) : guest.rejected ? (
                           <div
                             className="p-2 rounded-lg text-red-500"
                             title="Rejected"
                           >
-                            <Icon
-                              icon="mdi:close-circle"
-                              className="text-lg"
-                            />
+                            <Icon icon="mdi:close-circle" className="text-lg" />
                           </div>
                         ) : underReview ? (
                           // Guest is not brand-new — it's under an open
