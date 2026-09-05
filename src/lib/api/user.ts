@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { Permission } from "./permissions";
 
 /**
  * --------------------------------
@@ -17,6 +18,7 @@ export interface UserPayload {
   otp_in_mail?: boolean;
   otp_in_sms?: boolean;
   role_name?: "Admin" | "Host" | "Staff" | "Super Admin";
+  permission_ids?: string[];
 }
 
 export interface Media {
@@ -43,6 +45,7 @@ export interface User {
     id: string;
     role_name: string;
   }[];
+  permissions?: Permission[];
   created_at: string;
   updated_at: string;
 }
@@ -58,6 +61,17 @@ function appendPayloadToFormData(
 ) {
   Object.entries(payload).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
+
+    // Arrays (e.g. permission_ids) can't survive multipart form-data as
+    // repeated keys — multer overwrites same-name fields rather than
+    // collecting them into an array. Send as a JSON string instead; the
+    // backend Zod schema must z.preprocess() this field back into an array
+    // before validation (see user.validation.ts on the backend).
+    if (Array.isArray(value)) {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+
     formData.append(key, String(value));
   });
 }

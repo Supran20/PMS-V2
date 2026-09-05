@@ -9,7 +9,9 @@ const baseUserSchema = z.object({
   full_name: z.string().min(3, "Full name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  confirm_password: z.string().min(8, "Confirm password must be at least 8 characters"),
+  confirm_password: z
+    .string()
+    .min(8, "Confirm password must be at least 8 characters"),
   status: z.enum(["active", "inactive"]).optional(),
 
   mobile_number: z
@@ -24,6 +26,10 @@ const baseUserSchema = z.object({
 
   role_name: z.enum(["Admin", "Host", "Staff", "Super Admin"]),
   file: z.any().optional(),
+
+  // Presence of this key (even []) signals an explicit permission override;
+  // absence means "inherit role defaults" per the backend contract.
+  permission_ids: z.array(z.string().uuid()).optional(),
 });
 
 export const createUserSchema = baseUserSchema
@@ -54,9 +60,16 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
  */
 export const updateUserSchema = z
   .object({
-    full_name: z.string().min(3, "Full name must be at least 3 characters").optional(),
+    full_name: z
+      .string()
+      .min(3, "Full name must be at least 3 characters")
+      .optional(),
     email: z.string().email("Invalid email address").optional(),
-    password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .optional()
+      .or(z.literal("")),
     confirm_password: z.string().optional().or(z.literal("")),
     status: z.enum(["active", "inactive"]).optional(),
 
@@ -67,6 +80,8 @@ export const updateUserSchema = z
 
     role_name: z.enum(["Admin", "Host", "Staff", "Super Admin"]).optional(),
     file: z.any().optional(),
+
+    permission_ids: z.array(z.string().uuid()).optional(),
   })
   .refine(
     (data) => {
