@@ -329,13 +329,15 @@ export default function DashboardLayout({
               <div>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                    <Link
-                      href="/dashboard/users"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:account-group" className="text-lg" />
-                      Users
-                    </Link>
+                    {hasPermission("users.view") && (
+                      <Link
+                        href="/dashboard/users"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:account-group" className="text-lg" />
+                        Users
+                      </Link>
+                    )}
 
                     <Link
                       href="/dashboard/studio"
