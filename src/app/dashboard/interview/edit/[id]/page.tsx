@@ -59,7 +59,7 @@ export default function EditInterviewPage() {
   const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
   const [users, setUsers] = useState<SystemUser[]>([]);
 
-  const { hasPermission } = useAuth();
+  const { loading: authLoading, hasPermission } = useAuth();
   const canEditInterview = hasPermission("interview.update");
 
   const {
@@ -82,6 +82,12 @@ export default function EditInterviewPage() {
    * --------------------------------
    */
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("interviews.edit")) {
+      router.replace("/dashboard/interview");
+      return;
+    }
     const fetchData = async () => {
       try {
         const [interview, guestData, userData, studioData, allUsers] =
@@ -114,7 +120,7 @@ export default function EditInterviewPage() {
         });
         setCcEnabled(
           (!!interview.cc_user_ids && interview.cc_user_ids.length > 0) ||
-          (!!interview.bcc_user_ids && interview.bcc_user_ids.length > 0)
+            (!!interview.bcc_user_ids && interview.bcc_user_ids.length > 0),
         );
         setSelectedDate(
           interview.interview_date ? new Date(interview.interview_date) : null,
@@ -462,7 +468,6 @@ export default function EditInterviewPage() {
               </div>
             </FormField>
 
-            
             {/* Notify Additional Users */}
             <FormField label="Notify Additional Users">
               <div className="md:w-3/4 space-y-2">
@@ -486,7 +491,9 @@ export default function EditInterviewPage() {
                 {ccEnabled && (
                   <div className="space-y-3 mt-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">CC</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CC
+                      </label>
                       <Controller
                         name="cc_user_ids"
                         control={control}
@@ -513,7 +520,9 @@ export default function EditInterviewPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">BCC</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        BCC
+                      </label>
                       <Controller
                         name="bcc_user_ids"
                         control={control}

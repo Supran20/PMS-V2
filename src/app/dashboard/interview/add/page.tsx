@@ -68,7 +68,7 @@ export default function AddInterviewPage() {
 
   const searchParams = useSearchParams();
   const guestIdFromUrl = searchParams.get("guest_id");
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, loading: authLoading, user } = useAuth();
 
   const canEditInterview = hasPermission("interview.update");
   const isHostUser = user?.roles?.includes("Host");
@@ -85,6 +85,15 @@ export default function AddInterviewPage() {
   });
 
   const selectedGuest = guests.find((g) => g.id === watch("guest_id"));
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("interviews.create")) {
+      router.replace("/dashboard/interview");
+      return;
+    }
+  }, [authLoading, hasPermission, router]);
 
   /**
    * -------------------------
@@ -251,6 +260,14 @@ export default function AddInterviewPage() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading || !hasPermission("interviews.create")) {
+    return (
+      <div className="flex justify-center items-center py-16">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <PageHeader title="Schedule Interview" backHref="/dashboard/interview" />
@@ -486,7 +503,9 @@ export default function AddInterviewPage() {
                 {ccEnabled && (
                   <div className="space-y-3 mt-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">CC</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CC
+                      </label>
                       <Controller
                         name="cc_user_ids"
                         control={control}
@@ -513,7 +532,9 @@ export default function AddInterviewPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">BCC</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        BCC
+                      </label>
                       <Controller
                         name="bcc_user_ids"
                         control={control}
@@ -547,9 +568,7 @@ export default function AddInterviewPage() {
                     {errors.cc_user_ids.message as string}
                   </p>
                 )}
-                
               </div>
-
             </FormField>
 
             <FormActions

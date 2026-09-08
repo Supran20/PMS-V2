@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -17,10 +17,22 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddStudioPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+
+  const { loading: authLoading, hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("studio.create")) {
+      router.replace("/dashboard/studio");
+      return;
+    }
+  }, [authLoading, hasPermission, router]);
 
   const {
     register,
@@ -54,6 +66,14 @@ export default function AddStudioPage() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading || !hasPermission("studio.create")) {
+    return (
+      <div className="flex justify-center items-center py-16">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

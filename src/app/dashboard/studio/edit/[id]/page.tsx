@@ -18,6 +18,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FormActions } from "@/components/ui/FormActions";
 import { slugify } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function EditStudioPage() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function EditStudioPage() {
   const id = params.id as string;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const { loading: authLoading, hasPermission } = useAuth();
 
   const {
     register,
@@ -41,6 +44,13 @@ export default function EditStudioPage() {
   const studioName = watch("studio_name");
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("studio.edit")) {
+      router.replace("/dashboard/studio");
+      return;
+    }
+
     const fetchStudio = async () => {
       if (!id) return;
       setLoading(true);
@@ -59,7 +69,7 @@ export default function EditStudioPage() {
       }
     };
     fetchStudio();
-  }, [id, reset, router]);
+  }, [authLoading, hasPermission, id, reset, router]);
 
   const onSubmit = async (data: UpdateStudioInput) => {
     setSubmitting(true);
@@ -82,7 +92,7 @@ export default function EditStudioPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading || !hasPermission("studio.edit")) {
     return (
       <div className="flex justify-center items-center py-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
