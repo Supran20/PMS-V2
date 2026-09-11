@@ -70,7 +70,7 @@ export default function AddInterviewPage() {
   const guestIdFromUrl = searchParams.get("guest_id");
   const { hasPermission, loading: authLoading, user } = useAuth();
 
-  const canEditInterview = hasPermission("interview.update");
+  const canEditInterview = hasPermission("interviews.edit");
   const isHostUser = user?.roles?.includes("Host");
 
   const {
@@ -102,6 +102,7 @@ export default function AddInterviewPage() {
    */
 
   useEffect(() => {
+    if (authLoading || !hasPermission("interviews.create")) return;
     const fetchData = async () => {
       try {
         const [
@@ -260,7 +261,6 @@ export default function AddInterviewPage() {
       setSubmitting(false);
     }
   };
-
   if (authLoading || !hasPermission("interviews.create")) {
     return (
       <div className="flex justify-center items-center py-16">
