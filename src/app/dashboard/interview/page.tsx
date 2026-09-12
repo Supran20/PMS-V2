@@ -37,6 +37,7 @@ import { useInterview } from "@/context/InterviewContext";
 
 export default function InterviewsPage() {
   const router = useRouter();
+
   // const { hasPermission } = useAuth();
 
   const { interviews, setInterviews } = useInterview();
@@ -80,6 +81,8 @@ export default function InterviewsPage() {
   const statusParam = searchParams.get("status");
   const tabParam = searchParams.get("tab");
   const showTabs = !statusParam;
+
+  const { loading: authLoading, hasPermission } = useAuth();
 
   useEffect(() => {
     if (!tabParam || initialized) return;
@@ -513,7 +516,7 @@ export default function InterviewsPage() {
    * Loading State
    * ------------------------------
    */
-  if (loading) {
+  if (authLoading || loading || !hasPermission("interviews.view")) {
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900">Interviews </h2>
@@ -533,18 +536,21 @@ export default function InterviewsPage() {
         </h2>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleReshuffle}
-            disabled={reshuffleLoading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {reshuffleLoading ? "Reshuffling..." : "Reshuffle Episodes"}
-          </button>
-
-          <AddButton
-            href="/dashboard/interview/add"
-            label="Schedule Interview"
-          />
+          {hasPermission("interviews.edit") && (
+            <button
+              onClick={handleReshuffle}
+              disabled={reshuffleLoading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {reshuffleLoading ? "Reshuffling..." : "Reshuffle Episodes"}
+            </button>
+          )}
+          {hasPermission("interviews.create") && (
+            <AddButton
+              href="/dashboard/interview/add"
+              label="Schedule Interview"
+            />
+          )}
         </div>
       </div>
       {showTabs && (
@@ -850,15 +856,17 @@ export default function InterviewsPage() {
                                 )}
                               </div>
 
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditClick(interview);
-                                }}
-                                className=" rounded-lg text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors"
-                              >
-                                <Icon icon="mdi:pencil" className="text-xl" />
-                              </button>
+                              {hasPermission("interviews.edit") && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditClick(interview);
+                                  }}
+                                  className=" rounded-lg text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors"
+                                >
+                                  <Icon icon="mdi:pencil" className="text-xl" />
+                                </button>
+                              )}
 
                               {/* Google Drive Link */}
                               {interview.google_drive_link && (

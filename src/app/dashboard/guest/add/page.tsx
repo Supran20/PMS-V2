@@ -60,9 +60,8 @@ export default function AddGuestPage() {
     useState<ReapprovalErrorInfo | null>(null);
   const [reapprovalGuestName, setReapprovalGuestName] = useState("");
 
-  const { loading: authLoading } = useAuth();
+  const { hasPermission, loading: authLoading, user } = useAuth();
 
-  const { user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
 
   const {
@@ -82,10 +81,10 @@ export default function AddGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // if (!hasPermission("guest.create")) {
-    //   router.replace("/dashboard/guest");
-    //   return;
-    // }
+    if (!hasPermission("guests.create")) {
+      router.replace("/dashboard/guest");
+      return;
+    }
 
     const fetchData = async () => {
       try {
@@ -157,6 +156,13 @@ export default function AddGuestPage() {
     );
   }
 
+  if (!hasPermission("guests.create")) {
+    return (
+      <div className="flex justify-center items-center py-16">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );  
+  }
   return (
     <div className="space-y-6">
       {/* Header */}

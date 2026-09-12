@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { getUserById, updateUser } from "@/lib/api/user";
+import { getPermissions, Permission } from "@/lib/api/permissions";
+import { getRoles, getRolePermissions, Role } from "@/lib/api/roles";
 import {
   editUserFormSchema,
   EditUserFormInput,
@@ -27,6 +29,40 @@ const allowedMimeTypes = [
   "video/quicktime",
 ];
 
+/**
+ * --------------------------------
+ * Permission grouping helpers
+ * --------------------------------
+ */
+function groupPermissions(permissions: Permission[]): [string, Permission[]][] {
+  const map = new Map<string, Permission[]>();
+  permissions.forEach((permission) => {
+    const [resource] = permission.permission_type.split(".");
+    if (resource === "logs" || resource === "settings") return;
+    const key = resource || "other";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(permission);
+  });
+  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+}
+
+function formatGroupLabel(resource: string): string {
+  return resource
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatPermissionLabel(permission: Permission): string {
+  if (permission.description) return permission.description;
+  const [, action] = permission.permission_type.split(".");
+  if (!action) return permission.permission_type;
+  return action
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
@@ -34,6 +70,12 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
+  const prevRoleRef = useRef<string | null>(null);
 
   const {
     register,
@@ -51,29 +93,52 @@ export default function EditUserPage() {
       otp_in_sms: false,
       status: "active",
       role_name: "Staff",
+      permission_ids: [],
     },
   });
 
   const enableOtp = watch("enable_otp_login");
+  const roleName = watch("role_name");
+  const permissionIds = watch("permission_ids") ?? [];
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserData = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const user = await getUserById(id);
+        const [user, permsData, rolesData] = await Promise.all([
+          getUserById(id),
+          getPermissions(),
+          getRoles(),
+        ]);
+
+        setPermissions(permsData);
+        setRoles(rolesData);
+        setLoadingPermissions(false);
+
+        const userRole =
+          (user.roles?.[0]?.role_name as
+            | "Admin"
+            | "Host"
+            | "Staff"
+            | "Super Admin") ?? "Staff";
+        const userPermIds = user.permissions
+          ? user.permissions.map((p) => p.id)
+          : [];
+
         reset({
           full_name: user.full_name,
           email: user.email,
           status: (user.status as "active" | "inactive") ?? "active",
-          role_name:
-            (user.roles?.[0]?.role_name as "Admin" | "Host" | "Staff" | "Super Admin") ??
-            "Staff",
+          role_name: userRole,
           mobile_number: user.mobile_number ?? undefined,
           enable_otp_login: user.enable_otp_login ?? false,
           otp_in_mail: user.otp_in_mail ?? false,
           otp_in_sms: user.otp_in_sms ?? false,
+          permission_ids: userPermIds,
         });
+
+        prevRoleRef.current = userRole;
 
         if (user.profileImage?.path) {
           const imageUrl = getMediaUrl(user.profileImage.path);
@@ -86,8 +151,49 @@ export default function EditUserPage() {
         setLoading(false);
       }
     };
-    fetchUser();
+    fetchUserData();
   }, [id, reset, router]);
+
+  // Whenever the selected role changes after initial load,
+  // update permission_ids with that role's default permission set.
+  useEffect(() => {
+    if (!roles.length || !prevRoleRef.current) return;
+    if (roleName === prevRoleRef.current) return;
+
+    prevRoleRef.current = roleName ?? null;
+
+    if (roleName === "Super Admin") {
+      setValue("permission_ids", []);
+      return;
+    }
+
+    const role = roles.find((r) => r.role_name === roleName);
+    if (!role) return;
+
+    (async () => {
+      setLoadingDefaults(true);
+      try {
+        const defaults = await getRolePermissions(role.id);
+        setValue(
+          "permission_ids",
+          defaults.map((p) => p.id),
+          { shouldValidate: true }
+        );
+      } catch {
+        toast.error("Failed to load default permissions for role");
+      } finally {
+        setLoadingDefaults(false);
+      }
+    })();
+  }, [roleName, roles, setValue]);
+
+  const togglePermission = (idToToggle: string) => {
+    const current = watch("permission_ids") ?? [];
+    const next = current.includes(idToToggle)
+      ? current.filter((pid) => pid !== idToToggle)
+      : [...current, idToToggle];
+    setValue("permission_ids", next, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: EditUserFormInput) => {
     setSubmitting(true);
@@ -102,6 +208,8 @@ export default function EditUserPage() {
         otp_in_mail: data.otp_in_mail,
         otp_in_sms: data.otp_in_sms,
         file: data.file,
+        permission_ids:
+          data.role_name === "Super Admin" ? [] : data.permission_ids ?? [],
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
       };
@@ -182,6 +290,60 @@ export default function EditUserPage() {
                 </p>
               )}
             </FormField>
+
+            {/* Permissions */}
+            {roleName === "Super Admin" ? (
+              <FormField label="Permissions">
+                <p className="text-sm text-gray-500 italic">
+                  Super Admin has full access to everything. Individual
+                  permissions don&apos;t apply and won&apos;t be assigned.
+                </p>
+              </FormField>
+            ) : (
+              <FormField label="Permissions" required>
+                {loadingPermissions ? (
+                  <p className="text-sm text-gray-500">
+                    Loading permissions...
+                  </p>
+                ) : (
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    {loadingDefaults && (
+                      <p className="text-xs text-blue-600">
+                        Loading {roleName} defaults...
+                      </p>
+                    )}
+                    {groupPermissions(permissions).map(([resource, perms]) => (
+                      <div key={resource}>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">
+                          {formatGroupLabel(resource)}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {perms.map((permission) => (
+                            <label
+                              key={permission.id}
+                              className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={permissionIds.includes(permission.id)}
+                                onChange={() => togglePermission(permission.id)}
+                                className="rounded border-gray-300"
+                              />
+                              {formatPermissionLabel(permission)}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errors.permission_ids && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.permission_ids.message as string}
+                  </p>
+                )}
+              </FormField>
+            )}
 
             <FormField label="Profile Image" required>
               <div className="space-y-4">
@@ -303,3 +465,4 @@ export default function EditUserPage() {
     </div>
   );
 }
+

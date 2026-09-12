@@ -36,6 +36,7 @@ const SIDEBAR_TABS = [
     label: "Interview",
     href: "/dashboard/interview",
     icon: "mdi:chat-question",
+    permission: "interviews.view",
   },
 ];
 
@@ -168,6 +169,10 @@ export default function DashboardLayout({
           <nav className="flex-1 overflow-y-auto py-4 px-3">
             <ul className="space-y-1">
               {SIDEBAR_TABS.map((tab) => {
+                if (tab.permission && !hasPermission(tab.permission)) {
+                  return null;
+                }
+
                 const isInterview = tab.href === "/dashboard/interview";
 
                 if (isInterview) {
@@ -329,21 +334,25 @@ export default function DashboardLayout({
               <div>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                    <Link
-                      href="/dashboard/users"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:account-group" className="text-lg" />
-                      Users
-                    </Link>
+                    {hasPermission("users.view") && (
+                      <Link
+                        href="/dashboard/users"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:account-group" className="text-lg" />
+                        Users
+                      </Link>
+                    )}
 
-                    <Link
-                      href="/dashboard/studio"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:microphone" className="text-lg" />
-                      Studio
-                    </Link>
+                    {hasPermission("studio.view") && (
+                      <Link
+                        href="/dashboard/studio"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:microphone" className="text-lg" />
+                        Studio
+                      </Link>
+                    )}
 
                     <Link
                       href="/dashboard/media"
@@ -353,21 +362,15 @@ export default function DashboardLayout({
                       Media
                     </Link>
 
-                    <Link
-                      href="/dashboard/tags"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:tag-multiple" className="text-lg" />
-                      Tags
-                    </Link>
-
-                    <Link
-                      href="/dashboard/settings"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon icon="mdi:cog" className="text-lg" />
-                      Settings
-                    </Link>
+                    {hasPermission("tags.view") && (
+                      <Link
+                        href="/dashboard/tags"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:tag-multiple" className="text-lg" />
+                        Tags
+                      </Link>
+                    )}
 
                     <div className="border-t my-1" />
 
@@ -412,6 +415,10 @@ export default function DashboardLayout({
           <nav className="flex-1 overflow-y-auto py-4 px-3">
             <ul className="space-y-1">
               {SIDEBAR_TABS.map((tab) => {
+                if (tab.permission && !hasPermission(tab.permission)) {
+                  return null;
+                }
+
                 const isInterview = tab.href === "/dashboard/interview";
 
                 if (isInterview) {

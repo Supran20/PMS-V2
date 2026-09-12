@@ -28,7 +28,7 @@ export default function UsersPage() {
   );
   const [itemsPerPage, setItemsPerPage] = useState(50);
 
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user: currentUser, loading: authLoading, hasPermission } = useAuth();
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -46,10 +46,10 @@ export default function UsersPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // if (!hasPermission("user.manage")) {
-    //   router.replace("/dashboard");
-    //   return;
-    // }
+    if (!hasPermission("users.view")) {
+      router.replace("/dashboard");
+      return;
+    }
 
     fetchUsers();
   }, [authLoading]);
@@ -115,7 +115,7 @@ export default function UsersPage() {
     }
   }, [users]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !hasPermission("users.view")) {
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900">Users</h2>
@@ -130,7 +130,9 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Users</h2>
-        <AddButton href="/dashboard/users/add" label="Add User" />
+        {hasPermission("users.create") && (
+          <AddButton href="/dashboard/users/add" label="Add User" />
+        )}
       </div>
 
       <Card className="shadow-lg bg-white border-none px-5 md:px-0 py-5">
@@ -166,7 +168,6 @@ export default function UsersPage() {
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       <td className="py-3 px-4 text-gray-900 flex items-center gap-2">
-                        {/* User Profile Image */}
                         {user.profileImage?.path ? (
                           <img
                             src={getMediaUrl(user.profileImage.path)}
@@ -191,29 +192,35 @@ export default function UsersPage() {
                       </td>
                       <td className="py-3 px-4 ">
                         <div className="flex items-center justify-start gap-2">
-                          <button
-                            onClick={() => handlePasswordClick(user)}
-                            className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
-                            title="Change Password"
-                          >
-                            <Icon icon="mdi:key" className="text-xl" />
-                          </button>
+                          {hasPermission("users.edit") && (
+                            <button
+                              onClick={() => handlePasswordClick(user)}
+                              className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
+                              title="Change Password"
+                            >
+                              <Icon icon="mdi:key" className="text-xl" />
+                            </button>
+                          )}
 
-                          <button
-                            onClick={() => handleEditClick(user)}
-                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Edit"
-                          >
-                            <Icon icon="mdi:pencil" className="text-xl" />
-                          </button>
+                          {hasPermission("users.edit") && (
+                            <button
+                              onClick={() => handleEditClick(user)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Edit"
+                            >
+                              <Icon icon="mdi:pencil" className="text-xl" />
+                            </button>
+                          )}
 
-                          <button
-                            onClick={() => handleDeleteClick(user)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                            title="Delete"
-                          >
-                            <Icon icon="mdi:delete" className="text-xl" />
-                          </button>
+                          {hasPermission("users.delete") && (
+                            <button
+                              onClick={() => handleDeleteClick(user)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Icon icon="mdi:delete" className="text-xl" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

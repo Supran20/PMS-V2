@@ -10,6 +10,7 @@ import { getStudios, deleteStudio, Studio } from "@/lib/api/studio";
 import { toast } from "sonner";
 import { AddButton } from "@/components/ui/AddButton";
 import { Pagination } from "@/components/ui/Pagination";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudioPage() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function StudioPage() {
   const [studioToDelete, setStudioToDelete] = useState<Studio | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+
+  const { loading: authLoading, hasPermission } = useAuth();
 
   const fetchStudios = async () => {
     setLoading(true);
@@ -35,8 +38,15 @@ export default function StudioPage() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!hasPermission("studio.view")) {
+      router.replace("/dashboard");
+      return;
+    }
+
     fetchStudios();
-  }, []);
+  }, [authLoading, hasPermission, router]);
 
   const filteredStudios = useMemo(() => {
     if (!search.trim()) return studios;
@@ -81,7 +91,7 @@ export default function StudioPage() {
     }
   }, [filteredStudios, currentPage, totalPages]);
 
-  if (loading) {
+  if (authLoading || loading || !hasPermission("studio.view")) {
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-gray-900">Studio</h2>
@@ -96,7 +106,9 @@ export default function StudioPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Studio</h2>
-        <AddButton href="/dashboard/studio/add" label="Add Studio" />
+        {hasPermission("studio.create") && (
+          <AddButton href="/dashboard/studio/add" label="Add Studio" />
+        )}
       </div>
 
       <Card className="shadow-lg bg-white border-none py-5 px-5 md:px-0">
@@ -157,20 +169,24 @@ export default function StudioPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditClick(studio)}
-                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Edit"
-                          >
-                            <Icon icon="mdi:pencil" className="text-xl" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(studio)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                            title="Delete"
-                          >
-                            <Icon icon="mdi:delete" className="text-xl" />
-                          </button>
+                          {hasPermission("studio.edit") && (
+                            <button
+                              onClick={() => handleEditClick(studio)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Edit"
+                            >
+                              <Icon icon="mdi:pencil" className="text-xl" />
+                            </button>
+                          )}
+                          {hasPermission("studio.delete") && (
+                            <button
+                              onClick={() => handleDeleteClick(studio)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Icon icon="mdi:delete" className="text-xl" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

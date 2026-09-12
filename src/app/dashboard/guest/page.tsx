@@ -24,7 +24,6 @@ import {
   rejectReapprovalRequest,
   GuestReapprovalRequest,
 } from "@/lib/api/guestReapproval";
-import { getPermissionSettings } from "@/lib/api/permissionSettings";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AddButton } from "@/components/ui/AddButton";
@@ -43,13 +42,12 @@ export default function GuestsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
-  const [guestToApprove, setGuestToApprove] = useState<Guest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [guestToReject, setGuestToReject] = useState<Guest | null>(null);
-  const [guestApprovers, setGuestApprovers] = useState<string[]>([]);
+  const [guestToApprove, setGuestToApprove] = useState<Guest | null>(null);
 
   // --------------------------------
   // Reapproval requests (separate source of truth from Guest.approved —
@@ -68,8 +66,7 @@ export default function GuestsPage() {
   const [reapprovalToReject, setReapprovalToReject] =
     useState<GuestReapprovalRequest | null>(null);
 
-  // const { hasPermission } = useAuth();
-  // const canApproveGuest = hasPermission("guest.auto_approve");
+  const { loading: authLoading, hasPermission } = useAuth();
 
   // const canAddGuest = hasPermission("guest.create");
   // const canEditGuest = hasPermission("guest.update");
@@ -78,10 +75,7 @@ export default function GuestsPage() {
   const tabFromUrl = searchParams.get("tab");
   const { user } = useAuth();
 
-  const canApproveGuest = useMemo(() => {
-    if (!user) return false;
-    return guestApprovers.includes(user.id);
-  }, [user, guestApprovers]);
+  const canApproveGuest = hasPermission("guests.approve");
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -119,24 +113,6 @@ export default function GuestsPage() {
     if (tabFromUrl === "pending") setTabValue(1);
     if (tabFromUrl === "reapproval") setTabValue(4);
   }, [tabFromUrl]);
-
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        const data = await getPermissionSettings();
-
-        const approver = data.find(
-          (p) => p.permission_type === "guest_approver",
-        );
-
-        setGuestApprovers(approver?.user_ids || []);
-      } catch (err) {
-        console.error("Failed to fetch permissions", err);
-      }
-    };
-
-    fetchPermissions();
-  }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -401,7 +377,9 @@ export default function GuestsPage() {
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Guests</h2>
-        <AddButton href="/dashboard/guest/add" label="Add Guest" />
+        {hasPermission("guests.create") && (
+          <AddButton href="/dashboard/guest/add" label="Add Guest" />
+        )}
       </div>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>

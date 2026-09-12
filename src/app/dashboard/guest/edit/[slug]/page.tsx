@@ -65,8 +65,7 @@ export default function EditGuestPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Option[]>([]);
 
-  const { loading: authLoading } = useAuth();
-  const { user } = useAuth();
+  const { hasPermission, loading: authLoading, user } = useAuth();
   const isHostUser = user?.roles?.includes("Host");
   // const canDeleteGuest = hasPermission("guest.delete");
 
@@ -86,10 +85,10 @@ export default function EditGuestPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // if (!hasPermission("guest.update")) {
-    //   router.replace("/dashboard/guest");
-    //   return;
-    // }
+    if (!hasPermission("interviews.create")) {
+      router.replace("/dashboard/guest");
+      return;
+    }
 
     // Only fetch data if permission is ok
     const fetchGuest = async () => {
