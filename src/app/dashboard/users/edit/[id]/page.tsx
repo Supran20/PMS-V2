@@ -38,7 +38,8 @@ function groupPermissions(permissions: Permission[]): [string, Permission[]][] {
   const map = new Map<string, Permission[]>();
   permissions.forEach((permission) => {
     const [resource] = permission.permission_type.split(".");
-    if (resource === "logs" || resource === "settings") return;
+    if (resource === "logs" || resource === "settings" || resource === "roles")
+      return;
     const key = resource || "other";
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(permission);
@@ -177,7 +178,7 @@ export default function EditUserPage() {
         setValue(
           "permission_ids",
           defaults.map((p) => p.id),
-          { shouldValidate: true }
+          { shouldValidate: true },
         );
       } catch {
         toast.error("Failed to load default permissions for role");
@@ -209,7 +210,7 @@ export default function EditUserPage() {
         otp_in_sms: data.otp_in_sms,
         file: data.file,
         permission_ids:
-          data.role_name === "Super Admin" ? [] : data.permission_ids ?? [],
+          data.role_name === "Super Admin" ? [] : (data.permission_ids ?? []),
         ...(data.password &&
           data.password.length > 0 && { password: data.password }),
       };
@@ -465,4 +466,3 @@ export default function EditUserPage() {
     </div>
   );
 }
-

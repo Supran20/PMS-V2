@@ -37,7 +37,8 @@ function groupPermissions(permissions: Permission[]): [string, Permission[]][] {
   const map = new Map<string, Permission[]>();
   permissions.forEach((permission) => {
     const [resource] = permission.permission_type.split(".");
-    if (resource === "logs" || resource === "settings") return;
+    if (resource === "logs" || resource === "settings" || resource === "roles")
+      return;
     const key = resource || "other";
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(permission);
