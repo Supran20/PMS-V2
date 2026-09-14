@@ -7,6 +7,10 @@ import { Icon } from "@iconify/react";
 import { useEffect, useState, useMemo } from "react";
 import { getUsers } from "@/lib/api/user";
 import { getGuests, Guest } from "@/lib/api/guest";
+import {
+  getReapprovalRequests,
+  GuestReapprovalRequest,
+} from "@/lib/api/guestReapproval";
 import { getInterviews, Interview } from "@/lib/api/interview";
 import { useRouter } from "next/navigation";
 import { getMediaUrl } from "@/lib/utils";
@@ -52,6 +56,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const [reapprovalRequests, setReapprovalRequests] = useState<
+    GuestReapprovalRequest[]
+  >([]);
+
   /**
    * --------------------------------
    * FETCH STATS
@@ -85,7 +93,7 @@ export default function DashboardPage() {
 
   /**
    * --------------------------------
-   * FETCH GUESTS
+   * FETCH GUESTS AND REAPPROVALS
    * --------------------------------
    */
   useEffect(() => {
@@ -103,6 +111,19 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const fetchReapprovalRequests = async () => {
+      try {
+        const data = await getReapprovalRequests("pending");
+        setReapprovalRequests(data ?? []);
+      } catch {
+        setReapprovalRequests([]);
+      }
+    };
+
+    fetchReapprovalRequests();
+  }, []);
+
+  useEffect(() => {
     const fetchInterviews = async () => {
       try {
         setLoading(true);
@@ -116,13 +137,20 @@ export default function DashboardPage() {
     fetchInterviews();
   }, []);
 
+  const pendingReapprovalGuestIds = useMemo(
+    () => new Set(reapprovalRequests.map((r) => r.guest_id)),
+    [reapprovalRequests],
+  );
+
   /**
    * --------------------------------
    * FILTER PENDING GUESTS
    * --------------------------------
    */
   const pendingGuests = useMemo(() => {
-    let filtered = guests.filter((g) => !g.approved && !g.rejected);
+    let filtered = guests.filter(
+      (g) => (!g.approved && !g.rejected) || pendingReapprovalGuestIds.has(g.id),
+    );
 
     const hasRole = (roles: any[] | undefined, roleName: string) =>
       roles?.some((r) =>
@@ -136,10 +164,12 @@ export default function DashboardPage() {
     }
 
     return filtered.slice(0, 3); // limit 3
-  }, [guests, user]);
+  }, [guests, user, pendingReapprovalGuestIds]);
 
   const recentApprovedGuests = useMemo(() => {
-    let data = guests.filter((g) => g.approved === true);
+    let data = guests.filter(
+      (g) => g.approved === true && !pendingReapprovalGuestIds.has(g.id),
+    );
 
     const hasRole = (roles: any[] | undefined, roleName: string) =>
       roles?.some((r) =>
@@ -159,13 +189,13 @@ export default function DashboardPage() {
     );
 
     return data.slice(0, 3);
-  }, [guests, user]);
+  }, [guests, user, pendingReapprovalGuestIds]);
 
   const isPendingMode = pendingGuests.length > 0;
 
   const displayGuests = isPendingMode ? pendingGuests : recentApprovedGuests;
 
-  const title = isPendingMode ? "Requested Approval" : "Approved Guests";
+  const title = isPendingMode ? "Request for Approval" : "Recently Approved Guest";
 
   /**
    * --------------------------------
@@ -333,8 +363,33 @@ export default function DashboardPage() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleGuestClick = (g: Guest) => {
+    if (!isPendingMode) {
+      router.push(`/dashboard/guest/view/${g.slug}`);
+    } else {
+      if (pendingReapprovalGuestIds.has(g.id)) {
+        router.push("/dashboard/guest?tab=reapproval");
+      } else if (g.approved) {
+        router.push("/dashboard/guest?tab=approved");
+      } else {
+        router.push("/dashboard/guest?tab=pending");
+      }
+    }
+  };
+
   const handleWidgetClick = () => {
-    router.push("/dashboard/guest?tab=pending");
+    if (isPendingMode) {
+      if (
+        reapprovalRequests.length > 0 &&
+        pendingGuests.every((g) => pendingReapprovalGuestIds.has(g.id))
+      ) {
+        router.push("/dashboard/guest?tab=reapproval");
+      } else {
+        router.push("/dashboard/guest?tab=pending");
+      }
+    } else {
+      router.push("/dashboard/guest?tab=approved");
+    }
   };
 
   const handleUpcomingWidgetClick = () => {
@@ -405,7 +460,11 @@ export default function DashboardPage() {
                 {displayGuests.map((g) => (
                   <div
                     key={g.id}
-                    className="flex items-center justify-between p-2 rounded bg-gray-50 hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGuestClick(g);
+                    }}
+                    className="flex items-center justify-between p-2 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <img
