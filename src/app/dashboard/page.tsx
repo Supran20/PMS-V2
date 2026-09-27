@@ -393,7 +393,19 @@ export default function DashboardPage() {
   };
 
   const handleUpcomingWidgetClick = () => {
-    router.push("/dashboard/interview?tab=upcoming");
+    if (isUpcomingMode) {
+      router.push("/dashboard/interview?tab=upcoming");
+    } else {
+      router.push("/dashboard/interview");
+    }
+  };
+
+  const handleInterviewClick = (i: Interview) => {
+    if (i.status) {
+      router.push(`/dashboard/interview?status=${i.status}`);
+    } else {
+      router.push("/dashboard/interview");
+    }
   };
 
   /**
@@ -513,7 +525,11 @@ export default function DashboardPage() {
                 {displayInterviews.map((i) => (
                   <div
                     key={i.id}
-                    className="flex items-start justify-between p-2 rounded bg-gray-50 hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInterviewClick(i);
+                    }}
+                    className="flex items-start justify-between p-2 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <img

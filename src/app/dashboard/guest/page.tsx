@@ -590,7 +590,7 @@ export default function GuestsPage() {
                           </p>
                         </Link>
 
-                        {!guest.rejected && (
+                        {guest.approved && (
                           <div
                             className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
                               guest.status,

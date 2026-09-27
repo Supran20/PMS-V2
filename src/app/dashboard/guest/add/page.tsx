@@ -75,6 +75,7 @@ export default function AddGuestPage() {
     resolver: zodResolver(createGuestSchema),
     defaultValues: {
       record: false,
+      
     },
   });
 
@@ -201,7 +202,7 @@ export default function AddGuestPage() {
             </FormField>
 
             {/* Phone */}
-            <FormField label="Phone">
+            <FormField label="Phone" required>
               <FormInput
                 name="phone"
                 control={control}
