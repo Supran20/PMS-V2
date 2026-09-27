@@ -10,10 +10,15 @@ const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
  * CREATE INTERVIEW
  * --------------------------------
  */
+
 export const createInterviewSchema = z.object({
-  guest_id: z.string().uuid("Invalid guest ID"),
-  host_id: z.string().uuid("Invalid host ID"),
-  studio_id: z.string().uuid("Invalid studio ID"),
+  guest_id: z.string({ error: "Guest is required" }).uuid("Invalid guest ID"),
+
+  host_id: z.string({ error: "Host is required" }).uuid("Invalid host ID"),
+
+  studio_id: z
+    .string({ error: "Studio is required" })
+    .uuid("Invalid studio ID"),
 
   episode: z.coerce.number().min(1, "Episode must be at least 1"),
 
@@ -99,6 +104,7 @@ export type CreateInterviewOutput = z.output<typeof createInterviewSchema>;
  * UPDATE INTERVIEW
  * --------------------------------
  */
+
 export const updateInterviewSchema = createInterviewSchema.partial();
 
 export type UpdateInterviewInput = z.input<typeof updateInterviewSchema>;

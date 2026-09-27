@@ -102,7 +102,7 @@ export default function EditGuestPage() {
           designation: data.designation,
           bio: data.bio,
           email: data.email,
-          phone: data.phone,
+          phone: data.phone ?? "",
           referred_by: data.referred_by,
           host_id: data.host_id ?? "",
           record: data.record ?? false,
@@ -257,7 +257,7 @@ export default function EditGuestPage() {
             </FormField>
 
             {/* Phone */}
-            <FormField label="Phone">
+            <FormField label="Phone" required>
               <FormInput<UpdateGuestInput>
                 name="phone"
                 control={control}

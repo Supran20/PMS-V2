@@ -110,7 +110,10 @@ export default function GuestsPage() {
   }, []);
 
   useEffect(() => {
-    if (tabFromUrl === "pending") setTabValue(1);
+    if (tabFromUrl === "all") setTabValue(0);
+    if (tabFromUrl === "pending" || tabFromUrl === "potential") setTabValue(1);
+    if (tabFromUrl === "approved") setTabValue(2);
+    if (tabFromUrl === "rejected") setTabValue(3);
     if (tabFromUrl === "reapproval") setTabValue(4);
   }, [tabFromUrl]);
 
@@ -587,7 +590,7 @@ export default function GuestsPage() {
                           </p>
                         </Link>
 
-                        {!guest.rejected && (
+                        {guest.approved && (
                           <div
                             className={`inline-block mt-2 px-2 py-1 rounded-sm text-xs font-medium capitalize ${getStatusClass(
                               guest.status,
