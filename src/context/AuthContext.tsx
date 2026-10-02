@@ -19,6 +19,7 @@ interface User {
   roles: string[];
   permissions: string[];
   profileImage?: Media | null;
+  is_platform_admin: boolean;
 }
 
 interface AuthContextType {

@@ -40,6 +40,42 @@ const SIDEBAR_TABS = [
   },
 ];
 
+interface SidebarTab {
+  label: string;
+  href: string;
+  icon: string;
+  permission?: string;
+}
+
+const CHANNEL_SIDEBAR_TABS: SidebarTab[] = [
+  { label: "Overview", href: "/dashboard", icon: "mdi:view-dashboard" },
+  { label: "Guest", href: "/dashboard/guest", icon: "mdi:account-voice" },
+  {
+    label: "Interview",
+    href: "/dashboard/interview",
+    icon: "mdi:chat-question",
+    permission: "interviews.view",
+  },
+];
+
+const PLATFORM_ADMIN_SIDEBAR_TABS: SidebarTab[] = [
+  {
+    label: "Channels",
+    href: "/dashboard/platform-admin/channels",
+    icon: "mdi:domain",
+  },
+  {
+    label: "Subscription Plans",
+    href: "/dashboard/platform-admin/plans",
+    icon: "mdi:credit-card-outline",
+  },
+  {
+    label: "Platform Admins",
+    href: "/dashboard/platform-admin/admins",
+    icon: "mdi:shield-account",
+  },
+];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -59,6 +95,11 @@ export default function DashboardLayout({
   const [pendingGuestCount, setPendingGuestCount] = React.useState<number>(0);
 
   const { interviews, setInterviews } = useInterview();
+
+  const isPlatformAdminArea = pathname.startsWith("/dashboard/platform-admin");
+  const SIDEBAR_TABS = isPlatformAdminArea
+    ? PLATFORM_ADMIN_SIDEBAR_TABS
+    : CHANNEL_SIDEBAR_TABS;
 
   // Fetch pending guests
   useEffect(() => {
@@ -102,10 +143,10 @@ export default function DashboardLayout({
 
   // Protect route
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
+    if (!loading && user && isPlatformAdminArea && !user.is_platform_admin) {
+      router.replace("/dashboard");
     }
-  }, [user, loading, router]);
+  }, [user, loading, isPlatformAdminArea, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -334,6 +375,15 @@ export default function DashboardLayout({
               <div>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {user.is_platform_admin && (
+                      <Link
+                        href="/dashboard/platform-admin/channels"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:shield-crown" className="text-lg" />
+                        Platform Dashboard
+                      </Link>
+                    )}
                     {hasPermission("users.view") && (
                       <Link
                         href="/dashboard/users"
