@@ -23,10 +23,24 @@ export default function AddPlatformAdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const { control, handleSubmit, setValue } =
-    useForm<CreatePlatformAdminInput>({
-      resolver: zodResolver(createPlatformAdminSchema),
-    });
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CreatePlatformAdminInput>({
+    resolver: zodResolver(createPlatformAdminSchema),
+    defaultValues: {
+      status: "active",
+      enable_otp_login: false,
+      otp_in_mail: false,
+      otp_in_sms: false,
+    },
+  });
+
+  const enableOtp = watch("enable_otp_login");
 
   useEffect(() => {
     return () => {
@@ -99,6 +113,21 @@ export default function AddPlatformAdminPage() {
               />
             </FormField>
 
+            <FormField label="Status" required>
+              <select
+                {...register("status")}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              {errors.status && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.status.message}
+                </p>
+              )}
+            </FormField>
+
             <FormField label="Mobile Number">
               <FormInput<CreatePlatformAdminInput>
                 name="mobile_number"
@@ -107,7 +136,7 @@ export default function AddPlatformAdminPage() {
               />
             </FormField>
 
-            {/* Profile Image (optional — not enforced by the backend schema) */}
+            {/* Profile Image (optional) */}
             <FormField label="Profile Image">
               <div className="space-y-4">
                 <input
@@ -152,6 +181,60 @@ export default function AddPlatformAdminPage() {
                 )}
               </div>
             </FormField>
+
+            {/* OTP Login */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("enable_otp_login")}
+                id="enable_otp_login"
+                className="rounded border-gray-300"
+              />
+              <label
+                htmlFor="enable_otp_login"
+                className="text-sm font-medium text-gray-700"
+              >
+                Enable OTP Login
+              </label>
+            </div>
+
+            {enableOtp && (
+              <FormField label="OTP Method (Select One)" required>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_mail") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", true, { shouldValidate: true });
+                        setValue("otp_in_sms", false, { shouldValidate: true });
+                      }}
+                    />
+                    Email
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={watch("otp_in_sms") === true}
+                      onChange={() => {
+                        setValue("otp_in_mail", false, {
+                          shouldValidate: true,
+                        });
+                        setValue("otp_in_sms", true, { shouldValidate: true });
+                      }}
+                    />
+                    SMS
+                  </label>
+                </div>
+
+                {errors.otp_in_mail && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.otp_in_mail.message}
+                  </p>
+                )}
+              </FormField>
+            )}
 
             <FormActions
               cancelHref="/dashboard/platform-admin/admins"

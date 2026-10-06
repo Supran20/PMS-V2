@@ -22,6 +22,9 @@ export interface PlatformAdminUser {
   mobile_number?: string | null;
   profile_image?: string | null;
   profileImage?: PlatformAdminMedia | null;
+  enable_otp_login?: boolean;
+  otp_in_mail?: boolean;
+  otp_in_sms?: boolean;
 }
 
 export interface PlatformAdmin {
@@ -38,7 +41,22 @@ export interface CreatePlatformAdminPayload {
   full_name: string;
   email: string;
   password: string;
+  status?: "active" | "inactive";
   mobile_number?: string;
+  enable_otp_login?: boolean;
+  otp_in_mail?: boolean;
+  otp_in_sms?: boolean;
+  file?: File;
+}
+
+export interface UpdatePlatformAdminPayload {
+  full_name: string;
+  password?: string;
+  status?: "active" | "inactive";
+  mobile_number?: string;
+  enable_otp_login?: boolean;
+  otp_in_mail?: boolean;
+  otp_in_sms?: boolean;
   file?: File;
 }
 
@@ -116,4 +134,43 @@ export const createPlatformAdmin = async (
  */
 export const revokePlatformAdmin = async (id: string): Promise<void> => {
   await api.delete(`${BASE_PATH}/${id}`);
+};
+
+/**
+ * --------------------------------
+ * UPDATE PLATFORM ADMIN
+ * --------------------------------
+ * mobile_number is always sent (even as "") so it can be cleared, and the
+ * OTP flags are always sent so turning OTP off actually persists.
+ * password and status are only sent when set.
+ */
+export const updatePlatformAdmin = async (
+  id: string,
+  payload: UpdatePlatformAdminPayload,
+): Promise<PlatformAdmin> => {
+  const formData = new FormData();
+
+  formData.append("full_name", payload.full_name);
+  formData.append("mobile_number", payload.mobile_number ?? "");
+  formData.append("enable_otp_login", String(!!payload.enable_otp_login));
+  formData.append("otp_in_mail", String(!!payload.otp_in_mail));
+  formData.append("otp_in_sms", String(!!payload.otp_in_sms));
+
+  if (payload.status) {
+    formData.append("status", payload.status);
+  }
+
+  if (payload.password) {
+    formData.append("password", payload.password);
+  }
+
+  if (payload.file instanceof File) {
+    formData.append("file", payload.file);
+  }
+
+  const response = await api.put(`${BASE_PATH}/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data.data;
 };

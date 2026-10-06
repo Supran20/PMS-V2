@@ -12,6 +12,7 @@ import {
   revokePlatformAdmin,
   PlatformAdmin,
 } from "@/lib/api/platformAdmin";
+import Link from "next/link";
 
 export default function PlatformAdminsPage() {
   const { user } = useAuth();
@@ -139,19 +140,28 @@ export default function PlatformAdminsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <button
-                          onClick={() => handleRevoke(admin)}
-                          disabled={isSelf || revokingId === admin.id}
-                          title={
-                            isSelf
-                              ? "You cannot revoke your own access"
-                              : "Revoke access"
-                          }
-                          className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
-                        >
-                          <Icon icon="mdi:shield-off-outline" />
-                          {revokingId === admin.id ? "Revoking..." : "Revoke"}
-                        </button>
+                        <div className="inline-flex items-center gap-4">
+                          <Link
+                            href={`/dashboard/platform-admin/admins/${admin.id}/edit`}
+                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            <Icon icon="mdi:pencil-outline" />
+                          </Link>
+
+                          <button
+                            onClick={() => handleRevoke(admin)}
+                            disabled={isSelf || revokingId === admin.id}
+                            title={
+                              isSelf
+                                ? "You cannot revoke your own access"
+                                : "Revoke access"
+                            }
+                            className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
+                          >
+                            <Icon icon="mdi:shield-off-outline" />
+                            {revokingId === admin.id ? "Revoking..." : "Revoke"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
