@@ -11,6 +11,7 @@ import Image from "next/image";
 import { getGuests, Guest } from "@/lib/api/guest";
 import { getInterviews, Interview } from "@/lib/api/interview";
 import { useInterview } from "@/context/InterviewContext";
+import { ChannelBrand } from "@/components/channels/ChannelBrand";
 
 const INTERVIEW_STATUS_MENU = [
   { label: "All", value: "" },
@@ -198,11 +199,9 @@ export default function DashboardLayout({
         >
           <div className="p-5 border-b border-gray-200 flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Image
-                src="/rst.png"
-                alt="RST"
-                width={isSidebarOpen ? 110 : 50}
-                height={50}
+              <ChannelBrand
+                collapsed={!isSidebarOpen}
+                platform={isPlatformAdminArea}
               />
             </Link>
           </div>
@@ -419,6 +418,16 @@ export default function DashboardLayout({
                       >
                         <Icon icon="mdi:tag-multiple" className="text-lg" />
                         Tags
+                      </Link>
+                    )}
+
+                    {hasPermission("settings.view") && (
+                      <Link
+                        href="/dashboard/settings"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Icon icon="mdi:cog-outline" className="text-lg" />
+                        Settings
                       </Link>
                     )}
 

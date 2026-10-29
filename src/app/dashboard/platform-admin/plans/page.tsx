@@ -12,6 +12,8 @@ import {
   deletePlan,
   SubscriptionPlan,
 } from "@/lib/api/subscriptionPlan";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 const formatPrice = (price: string | number) =>
   `NPR ${Number(price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -23,6 +25,10 @@ export default function SubscriptionPlansPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const confirm = useConfirmDialog<{
+    plan: SubscriptionPlan;
+    action: "deactivate" | "delete";
+  }>();
 
   const loadPlans = async () => {
     setLoading(true);
@@ -40,17 +46,8 @@ export default function SubscriptionPlansPage() {
     loadPlans();
   }, []);
 
-  const handleToggleActive = async (plan: SubscriptionPlan) => {
+  const toggleActive = async (plan: SubscriptionPlan): Promise<boolean> => {
     const next = !plan.is_active;
-
-    if (
-      !next &&
-      !window.confirm(
-        `Deactivate "${plan.plan_name}"? It can no longer be assigned to channels. Channels already on it keep it.`,
-      )
-    ) {
-      return;
-    }
 
     setBusyId(plan.id);
     try {
@@ -60,34 +57,43 @@ export default function SubscriptionPlansPage() {
       setPlans((prev) =>
         prev.map((p) => (p.id === plan.id ? { ...p, ...updated } : p)),
       );
+      return true;
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err?.response?.data?.message ?? "Failed to update plan");
+      return false;
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleDelete = async (plan: SubscriptionPlan) => {
-    if (
-      !window.confirm(`Delete plan "${plan.plan_name}"? This cannot be undone.`)
-    ) {
-      return;
-    }
-
+  const removePlan = async (plan: SubscriptionPlan): Promise<boolean> => {
     setBusyId(plan.id);
     try {
       await deletePlan(plan.id);
       toast.success("Plan deleted");
       setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      return true;
     } catch (error) {
       // Surfaces the backend's 409 "assigned to N channel(s)" message.
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err?.response?.data?.message ?? "Failed to delete plan");
+      return false;
     } finally {
       setBusyId(null);
     }
   };
+
+  const handleConfirm = async () => {
+    if (!confirm.item) return;
+    const { plan, action } = confirm.item;
+
+    const ok =
+      action === "delete" ? await removePlan(plan) : await toggleActive(plan);
+    if (ok) confirm.close();
+  };
+
+  const isDeleteAction = confirm.item?.action === "delete";
 
   return (
     <div className="space-y-6">
@@ -181,7 +187,11 @@ export default function SubscriptionPlansPage() {
                           </Link>
 
                           <button
-                            onClick={() => handleToggleActive(plan)}
+                            onClick={() =>
+                              plan.is_active
+                                ? confirm.open({ plan, action: "deactivate" })
+                                : toggleActive(plan)
+                            }
                             disabled={busy}
                             className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
                           >
@@ -197,7 +207,9 @@ export default function SubscriptionPlansPage() {
 
                           {!inUse && (
                             <button
-                              onClick={() => handleDelete(plan)}
+                              onClick={() =>
+                                confirm.open({ plan, action: "delete" })
+                              }
                               disabled={busy}
                               title="Delete plan"
                               className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
@@ -216,6 +228,24 @@ export default function SubscriptionPlansPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirm.isOpen}
+        tone={isDeleteAction ? "danger" : "warning"}
+        icon={
+          isDeleteAction ? "mdi:trash-can-outline" : "mdi:pause-circle-outline"
+        }
+        title={isDeleteAction ? "Delete this plan?" : "Deactivate this plan?"}
+        highlight={confirm.item?.plan.plan_name}
+        description={
+          isDeleteAction
+            ? "This cannot be undone."
+            : "It can no longer be assigned to channels. Channels already on it keep it."
+        }
+        confirmLabel={isDeleteAction ? "Delete plan" : "Deactivate"}
+        loading={busyId !== null}
+        onConfirm={handleConfirm}
+        onClose={confirm.close}
+      />
     </div>
   );
 }

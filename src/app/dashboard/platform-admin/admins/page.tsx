@@ -13,12 +13,15 @@ import {
   PlatformAdmin,
 } from "@/lib/api/platformAdmin";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 export default function PlatformAdminsPage() {
   const { user } = useAuth();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const confirm = useConfirmDialog<PlatformAdmin>();
 
   const loadAdmins = async () => {
     setLoading(true);
@@ -36,27 +39,23 @@ export default function PlatformAdminsPage() {
     loadAdmins();
   }, []);
 
-  const handleRevoke = async (admin: PlatformAdmin) => {
-    if (
-      !window.confirm(
-        `Revoke platform admin access for ${admin.user?.full_name}? Their regular channel account will be unaffected.`,
-      )
-    ) {
-      return;
-    }
+  const handleRevoke = async () => {
+    const admin = confirm.item;
+    if (!admin) return;
 
     setRevokingId(admin.id);
     try {
       await revokePlatformAdmin(admin.id);
       toast.success("Platform admin access revoked");
       setAdmins((prev) => prev.filter((a) => a.id !== admin.id));
+      confirm.close();
     } catch (error) {
       // Surfaces backend messages: "cannot revoke your own access",
       // "cannot remove the last remaining platform admin", etc.
       const err = error as { response?: { data?: { message?: string } } };
-      const message =
-        err?.response?.data?.message ?? "Failed to revoke platform admin";
-      toast.error(message);
+      toast.error(
+        err?.response?.data?.message ?? "Failed to revoke platform admin",
+      );
     } finally {
       setRevokingId(null);
     }
@@ -149,7 +148,7 @@ export default function PlatformAdminsPage() {
                           </Link>
 
                           <button
-                            onClick={() => handleRevoke(admin)}
+                            onClick={() => confirm.open(admin)}
                             disabled={isSelf || revokingId === admin.id}
                             title={
                               isSelf
@@ -171,6 +170,18 @@ export default function PlatformAdminsPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirm.isOpen}
+        tone="danger"
+        icon="mdi:shield-off-outline"
+        title="Revoke platform admin access?"
+        highlight={confirm.item?.user?.full_name}
+        description="They will lose access to the platform dashboard immediately. Their regular channel account will be unaffected."
+        confirmLabel="Revoke access"
+        loading={revokingId !== null}
+        onConfirm={handleRevoke}
+        onClose={confirm.close}
+      />
     </div>
   );
 }

@@ -11,6 +11,13 @@ export interface Media {
   tag_id?: string | null;
 }
 
+export interface UserChannel {
+  id: string;
+  channel_name: string;
+  slug: string;
+  logo: Media | null;
+}
+
 interface User {
   full_name: string;
   id: string;
@@ -20,6 +27,7 @@ interface User {
   permissions: string[];
   profileImage?: Media | null;
   is_platform_admin: boolean;
+  channel?: UserChannel | null;
 }
 
 interface AuthContextType {
@@ -27,6 +35,7 @@ interface AuthContextType {
   loading: boolean;
   refreshUser: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
+  updateUserChannel: (channel: UserChannel | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,6 +48,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return false;
     if (user.roles?.includes("Super Admin")) return true;
     return user.permissions?.includes(permission) ?? false;
+  };
+
+  const updateUserChannel = (channel: UserChannel | null) => {
+    setUser((prev) => (prev ? { ...prev, channel } : prev));
   };
 
   const refreshUser = async () => {
@@ -67,7 +80,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser, hasPermission }}>
+    <AuthContext.Provider
+      value={{ user, loading, refreshUser, hasPermission, updateUserChannel }}
+    >
       {children}
     </AuthContext.Provider>
   );

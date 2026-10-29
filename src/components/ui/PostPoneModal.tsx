@@ -1,8 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Interview } from "@/lib/api/interview";
-import { toast } from "sonner";
+import {
+  FormModal,
+  FormModalField,
+  formInputClass,
+} from "@/components/ui/FormModal";
+
+// Local date (YYYY-MM-DD). toISOString() would give the UTC date, which is
+// yesterday for part of the morning in Nepal.
+const getTodayLocal = () => {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+};
+
+const schema = z.object({
+  date: z
+    .string()
+    .min(1, "Please select a new date")
+    .refine((value) => value >= getTodayLocal(), "Date cannot be in the past"),
+  start_time: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 interface PostponeModalProps {
   open: boolean;
@@ -12,7 +38,7 @@ interface PostponeModalProps {
     id: string,
     date: string | null,
     start_time: string | null,
-  ) => void;
+  ) => void | Promise<void>;
 }
 
 export default function PostponeModal({
@@ -21,82 +47,67 @@ export default function PostponeModal({
   interview,
   onSubmit,
 }: PostponeModalProps) {
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { date: "", start_time: "" },
+  });
 
   useEffect(() => {
-    if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDate("");
-      setStartTime("");
-    }
-  }, [open]);
+    if (open) reset({ date: "", start_time: "" });
+  }, [open, reset]);
 
-  // ESC key closes modal
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (open) window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const handleSubmit = () => {
+  const submit = handleSubmit(async (values) => {
     if (!interview) return;
-
-    onSubmit(interview.id, date, startTime);
-  };
+    await onSubmit(interview.id, values.date, values.start_time || null);
+  });
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onClose}
+    <FormModal
+      open={open}
+      icon="mdi:calendar-clock-outline"
+      tone="warning"
+      title="Postpone Interview"
+      subtitle={
+        interview?.guest
+          ? `Interview with ${interview.guest.full_name}`
+          : undefined
+      }
+      loading={isSubmitting}
+      onSubmit={submit}
+      onClose={onClose}
     >
-      <div
-        className="bg-white rounded-xl p-6 w-[400px] space-y-5"
-        onClick={(e) => e.stopPropagation()}
+      <FormModalField
+        label="New Interview Date"
+        htmlFor="postpone_date"
+        error={errors.date?.message}
       >
-        <h3 className="text-lg font-semibold">Postpone Interview</h3>
+        <input
+          id="postpone_date"
+          type="date"
+          autoFocus
+          min={getTodayLocal()}
+          className={formInputClass(!!errors.date)}
+          {...register("date")}
+        />
+      </FormModalField>
 
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col text-sm text-gray-700">
-            Interview Date
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
-            />
-          </label>
-
-          <label className="flex flex-col text-sm text-gray-700">
-            Start Time
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
-            />
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-1 bg-white text-gray-600 cursor-pointer transition text-xs rounded-md border hover:scale-[0.96]"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-1 bg-blue-600 text-white cursor-pointer transition text-xs rounded-md hover:bg-blue-700 hover:scale-[0.96]"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+      <FormModalField
+        label="Start Time (optional)"
+        htmlFor="postpone_time"
+        error={errors.start_time?.message}
+      >
+        <input
+          id="postpone_time"
+          type="time"
+          className={formInputClass(!!errors.start_time)}
+          {...register("start_time")}
+        />
+      </FormModalField>
+    </FormModal>
   );
 }

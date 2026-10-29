@@ -1,14 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Interview } from "@/lib/api/interview";
-import { toast } from "sonner";
+import {
+  FormModal,
+  FormModalField,
+  formInputClass,
+} from "@/components/ui/FormModal";
+
+function isYoutubeUrl(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.replace(/^(www\.|m\.)/, "");
+    return host === "youtube.com" || host === "youtu.be";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeYoutubeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+
+    // handle embed link
+    if (u.hostname.includes("youtube.com") && u.pathname.includes("/embed/")) {
+      const videoId = u.pathname.split("/embed/")[1];
+      return `https://www.youtube.com/watch?v=${videoId}`;
+    }
+
+    // handle youtu.be short link
+    if (u.hostname === "youtu.be") {
+      const videoId = u.pathname.slice(1);
+      return `https://www.youtube.com/watch?v=${videoId}`;
+    }
+
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+const schema = z.object({
+  youtube_link: z
+    .string()
+    .trim()
+    .min(1, "Please enter YouTube link")
+    .url("Enter a valid link, e.g. https://youtube.com/...")
+    .refine(isYoutubeUrl, "Enter a valid YouTube link"),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 interface PublishModalProps {
   open: boolean;
   onClose: () => void;
   interview: Interview | null;
-  onSubmit: (id: string, youtube_link: string) => void;
+  onSubmit: (id: string, youtube_link: string) => void | Promise<void>;
 }
 
 export default function PublishModal({
@@ -17,102 +66,54 @@ export default function PublishModal({
   interview,
   onSubmit,
 }: PublishModalProps) {
-  const [youtubeLink, setYoutubeLink] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { youtube_link: "" },
+  });
 
   useEffect(() => {
-    if (open && interview) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setYoutubeLink(interview.youtube_link ?? "");
-    }
-  }, [open, interview]);
+    if (open) reset({ youtube_link: interview?.youtube_link ?? "" });
+  }, [open, interview, reset]);
 
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    if (open) window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  function normalizeYoutubeUrl(url: string): string {
-    try {
-      const u = new URL(url);
-
-      // handle embed link
-      if (
-        u.hostname.includes("youtube.com") &&
-        u.pathname.includes("/embed/")
-      ) {
-        const videoId = u.pathname.split("/embed/")[1];
-        return `https://www.youtube.com/watch?v=${videoId}`;
-      }
-
-      // handle youtu.be short link
-      if (u.hostname === "youtu.be") {
-        const videoId = u.pathname.slice(1);
-        return `https://www.youtube.com/watch?v=${videoId}`;
-      }
-
-      return url;
-    } catch {
-      return url;
-    }
-  }
-
-  const handleSubmit = () => {
+  const submit = handleSubmit(async (values) => {
     if (!interview) return;
-
-    if (!youtubeLink.trim()) {
-      toast.error("Please enter YouTube link");
-      return;
-    }
-
-    const normalized = normalizeYoutubeUrl(youtubeLink);
-    onSubmit(interview.id, normalized);
-  };
+    await onSubmit(interview.id, normalizeYoutubeUrl(values.youtube_link));
+  });
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onClose}
+    <FormModal
+      open={open}
+      icon="mdi:publish"
+      tone="success"
+      title="Publish Interview"
+      subtitle={
+        interview?.guest
+          ? `Interview with ${interview.guest.full_name}`
+          : undefined
+      }
+      loading={isSubmitting}
+      onSubmit={submit}
+      onClose={onClose}
     >
-      <div
-        className="bg-white rounded-xl p-6 w-[420px] space-y-5"
-        onClick={(e) => e.stopPropagation()}
+      <FormModalField
+        label="YouTube Link"
+        htmlFor="youtube_link"
+        error={errors.youtube_link?.message}
       >
-        <h3 className="text-lg font-semibold">Publish Interview</h3>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-700">YouTube Link</label>
-
-          <input
-            type="url"
-            placeholder="https://youtube.com/..."
-            value={youtubeLink}
-            onChange={(e) => setYoutubeLink(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-1 bg-white text-gray-600 cursor-pointer transition text-xs rounded-md border hover:scale-[0.96]"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-1 bg-green-600 text-white cursor-pointer transition text-xs rounded-md hover:bg-green-700 hover:scale-[0.96]"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+        <input
+          id="youtube_link"
+          type="url"
+          autoFocus
+          placeholder="https://youtube.com/..."
+          className={formInputClass(!!errors.youtube_link)}
+          {...register("youtube_link")}
+        />
+      </FormModalField>
+    </FormModal>
   );
 }
