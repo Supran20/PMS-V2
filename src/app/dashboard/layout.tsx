@@ -312,14 +312,14 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2">
               <div className="md:hidden block border-b border-gray-200 flex items-center justify-between">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                  <Image src="/rst.png" alt="RST" width={50} height={50} />
-                </Link>
+                  <Image src="/rst.png" alt="RST" width={50} height={50} /> 
+                </Link> 
               </div>
               <button
                 onClick={() => setSidebarOpen(!isSidebarOpen)}
                 className="p-2 rounded-md md:block hidden hover:bg-gray-200 cursor-pointer"
               >
-                <Icon icon="mdi:menu" className="text-xl" />
+                <Icon icon="mdi:menu" className="text-xl" /> 
               </button>
 
               {/* offcanvas button toogle  */}

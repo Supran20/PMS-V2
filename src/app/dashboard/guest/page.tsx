@@ -363,6 +363,39 @@ export default function GuestsPage() {
     source === "duplicate_guest_attempt"
       ? "Duplicate attempt"
       : "Repeat booking";
+  const handleExportCSV = () => {
+    const headers = ["full_name", "designation", "email", "phone", "status"];
+
+    const getGuestStatus = (g: Guest): string => {
+      if (g.approved) return g.status ?? "not_started";
+      if (g.rejected) return "rejected";
+      if (pendingReapprovalGuestIds.has(g.id)) return "under_review";
+      return "potential";
+    };
+
+    const rows = filteredGuests.map((g) => [
+      g.full_name ?? "",
+      g.designation ?? "",
+      g.email ?? "",
+      g.phone ?? "",
+      getGuestStatus(g),
+    ]);
+
+    const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
+
+    const csvContent = [
+      headers.map(escape).join(","),
+      ...rows.map((r) => r.map(escape).join(",")),
+    ].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "guests.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -380,9 +413,18 @@ export default function GuestsPage() {
       {/* Header + Add Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Guests</h2>
-        {hasPermission("guests.create") && (
-          <AddButton href="/dashboard/guest/add" label="Add Guest" />
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            <Icon icon="mdi:download" className="text-lg" />
+            Export CSV
+          </button>
+          {hasPermission("guests.create") && (
+            <AddButton href="/dashboard/guest/add" label="Add Guest" />
+          )}
+        </div>
       </div>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
