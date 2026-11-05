@@ -129,3 +129,14 @@ export function parseReapprovalError(error: any): ReapprovalErrorInfo | null {
     reapprovalRequestId: error?.response?.data?.reapprovalRequestId ?? null,
   };
 }
+
+export function userHasRole(
+  roles: Array<string | { role_name: string }> | null | undefined,
+  roleName: string,
+): boolean {
+  return (
+    roles?.some((r) =>
+      typeof r === "string" ? r === roleName : r.role_name === roleName,
+    ) ?? false
+  );
+}
