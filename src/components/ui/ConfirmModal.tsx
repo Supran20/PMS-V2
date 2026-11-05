@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "./Button";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type ConfirmModalProps<T> = {
   open: boolean;
@@ -28,9 +28,9 @@ export function ConfirmModal<T>({
 }: ConfirmModalProps<T>) {
   const [loading, setLoading] = useState(false);
 
-  if (!open || !item) return null;
-
   const handleConfirm = async () => {
+    if (!item) return;
+
     try {
       setLoading(true);
       await onConfirm(item);
@@ -39,43 +39,16 @@ export function ConfirmModal<T>({
     }
   };
 
-  const confirmClasses =
-    confirmVariant === "danger"
-      ? "bg-red-600 text-white rounded-md"
-      : "bg-blue-600 text-white rounded-md";
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000040]">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <h3
-          className={`text-lg font-semibold mb-4 ${
-            confirmVariant === "danger" ? "text-red-600" : "text-blue-600"
-          }`}
-        >
-          {title}
-        </h3>
-
-        <p className="mb-6 text-sm text-gray-600">{description}</p>
-
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            className="rounded-md border-gray-400 "
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            className={confirmClasses}
-            onClick={handleConfirm}
-            disabled={loading}
-          >
-            {loading ? "Processing..." : confirmText}
-          </Button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      open={open && !!item}
+      tone={confirmVariant}
+      title={title}
+      description={description}
+      confirmLabel={confirmText}
+      loading={loading}
+      onConfirm={handleConfirm}
+      onClose={onClose}
+    />
   );
 }

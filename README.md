@@ -1,61 +1,155 @@
-# Podcast Frontend (rst-frontend)
+# PMS-V2 — Podcast Management System (Frontend)
 
-This is a modern web application built for managing a podcast studio and dashboard. It is built using the latest React and Next.js features, focusing on high performance, modern design aesthetics, and a smooth developer experience.
+A full-featured **Podcast Management System** dashboard built with Next.js 16 and React 19. It provides end-to-end studio workflow management including guest handling, interview scheduling, media management, channel administration, subscription plans, and platform-admin tooling.
+
+---
 
 ## Tech Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
-- **Library**: [React 19](https://react.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [Material UI](https://mui.com/)
-- **Form Management & Validation**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-- **Data Fetching**: [Axios](https://axios-http.com/) & [SWR](https://swr.vercel.app/) (Note: swr is in the root package.json, while other deps are in rst-frontend/package.json)
-- **Drag & Drop**: [@dnd-kit](https://dndkit.com/)
-- **Notifications**: [Sonner](https://sonner.emilkowal.ski/)
-- **Icons**: [@iconify/react](https://iconify.design/) and `@mui/icons-material`
+| Category | Library / Tool |
+|---|---|
+| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
+| **UI Library** | [React 19](https://react.dev/) |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) + [Material UI v7](https://mui.com/) |
+| **Headless UI** | [@headlessui/react](https://headlessui.com/) |
+| **Forms & Validation** | [React Hook Form v7](https://react-hook-form.com/) + [Zod v4](https://zod.dev/) |
+| **HTTP Client** | [Axios](https://axios-http.com/) |
+| **Drag & Drop** | [@dnd-kit](https://dndkit.com/) (core, sortable, utilities) |
+| **Date Picker** | [react-datepicker](https://reactdatepicker.com/) |
+| **Select** | [react-select](https://react-select.com/) |
+| **Notifications** | [Sonner](https://sonner.emilkowal.ski/) |
+| **Icons** | [@iconify/react](https://iconify.design/) + `@mui/icons-material` |
+| **Auth Cookies** | [js-cookie](https://github.com/js-cookie/js-cookie) |
+| **Class Utilities** | `clsx` + `tailwind-merge` |
+| **Language** | TypeScript 5 |
+| **Package Manager** | pnpm |
+
+---
 
 ## Project Structure
 
-The project follows a standard Next.js App Router structure:
+```
+PMS-V2/
+├── public/                      # Static assets (icons, images, SVGs)
+├── src/
+│   ├── app/                     # Next.js App Router — pages & layouts
+│   │   ├── layout.tsx           # Root layout
+│   │   ├── page.tsx             # Login / landing page
+│   │   ├── verify-otp/          # OTP verification flow
+│   │   └── dashboard/           # Authenticated dashboard area
+│   │       ├── layout.tsx       # Dashboard shell layout
+│   │       ├── page.tsx         # Dashboard home
+│   │       ├── guest/           # Guest management (list, add, edit, view)
+│   │       ├── interview/       # Interview scheduling (list, add, edit)
+│   │       ├── media/           # Media library (list, add, edit)
+│   │       ├── studio/          # Studio management (list, add, edit)
+│   │       ├── tags/            # Tag management
+│   │       ├── users/           # User management
+│   │       ├── settings/        # Account & app settings
+│   │       └── platform-admin/  # Platform-admin tooling
+│   │           ├── admins/      # Admin user CRUD
+│   │           ├── channels/    # Channel CRUD
+│   │           └── plans/       # Subscription plan CRUD
+│   ├── components/              # Reusable UI components
+│   │   ├── channels/            # Channel-specific components
+│   │   ├── guest/               # Guest-specific components (reapproval modal, etc.)
+│   │   ├── media/               # Media selector modal
+│   │   ├── plans/               # Platform plan field components
+│   │   ├── sortable/            # Drag-and-drop sortable list & item
+│   │   └── ui/                  # Generic UI primitives (Button, Card, FormField, Pagination, Modals…)
+│   ├── context/                 # React Context providers
+│   │   ├── AuthContext.tsx      # Authentication state & helpers
+│   │   └── InterviewContext.tsx # Interview workflow state
+│   ├── hooks/                   # Custom React hooks
+│   │   └── useConfirmDialog.ts
+│   └── lib/                     # Shared utilities & API layer
+│       ├── axios.ts             # Axios instance with interceptors
+│       ├── utils.ts             # General utility functions
+│       ├── date-utils.ts        # Date formatting helpers
+│       ├── api/                 # Per-domain API modules
+│       │   ├── auth.ts
+│       │   ├── channel.ts
+│       │   ├── channelProfile.ts
+│       │   ├── guest.ts
+│       │   ├── guestReapproval.ts
+│       │   ├── guest_note.ts
+│       │   ├── interview.ts
+│       │   ├── media.ts
+│       │   ├── permissions.ts
+│       │   ├── permissionSettings.ts
+│       │   ├── platformAdmin.ts
+│       │   ├── roles.ts
+│       │   ├── settings.ts
+│       │   ├── studio.ts
+│       │   ├── subscriptionPlan.ts
+│       │   ├── tags.ts
+│       │   └── user.ts
+│       └── validations/         # Zod schemas (one per domain)
+├── .github/workflows/
+│   └── deploy.yml               # CI/CD — auto-deploy on push to `frontend` branch
+├── next.config.ts
+├── postcss.config.mjs
+├── tsconfig.json
+└── package.json
+```
 
-- `/src/app`: Contains all Next.js routes, layouts, and page components.
-  - `/app/dashboard`: Main authenticated area with sub-modules like `guest`, `interview`, `media`, `settings`, `studio`, `tags`, and `users`.
-  - `/app/verify-otp`: Authentication and OTP verification flows.
-- `/src/components`: Reusable UI components.
-  - `/components/media`: Media playback and management components.
-  - `/components/sortable`: Drag-and-drop sortable components utilizing `dnd-kit`.
-  - `/components/ui`: Generic and headless UI components.
-- `/src/context`: React Context providers for global state management.
-- `/src/lib`: Utility functions, API configurations (e.g., Axios instances), and shared helpers.
+---
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v20+ recommended)
-- `pnpm` (recommended package manager for this project)
 
-### Installation
+- **Node.js** v20+
+- **pnpm** (recommended)
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-2. Set up environment variables:
-   Review the existing `.env.local` or `.env` files and populate necessary variables.
+### Installation & Development
 
-3. Run the development server:
-   ```bash
-   pnpm dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+# 1. Install dependencies
+pnpm install
 
-## Context for Claude & AI Assistants
+# 2. Configure environment
+#    Review .env.local and populate the required variables
 
-This section provides specific instructions for Claude (or other AI coding assistants) working on this project:
+# 3. Start the dev server
+pnpm dev
+```
 
-1. **Routing and Layouts**: We use the Next.js **App Router** (`src/app`). Any new pages should be created as `page.tsx` within their respective directory in `src/app`. Layouts (`layout.tsx`) wrap specific route segments. Use Server Components by default unless client interactivity is required (then add `'use client'` at the top of the file).
-2. **Styling Approach**: The primary styling engine is **Tailwind CSS**. Prefer Tailwind utility classes over custom CSS. Material UI components are used for complex interactive widgets. We use `clsx` and `tailwind-merge` to conditionally join classes safely.
-3. **Forms and Validation**: Always use `react-hook-form` coupled with `zod` resolvers for form state and validation.
-4. **Data Fetching**: Use `axios` for REST API calls. For client-side data fetching and caching, utilize `swr`.
-5. **State Management**: For local state, use React hooks (`useState`, `useReducer`). For global state, refer to the providers in `src/context`. 
-6. **Imports**: Keep imports organized and follow the existing codebase structure.
-7. **Design & Code Quality**: Maintain a modern, vibrant, and responsive design language. Keep components modular (single-responsibility). Ensure accessibility (a11y) standards are met when building custom UI elements using `@headlessui/react`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Available Scripts
+
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start development server |
+| `pnpm build` | Production build |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+
+---
+
+## Deployment
+
+Deployment is automated via **GitHub Actions** ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+
+- **Trigger**: push to the `frontend` branch (or manual `workflow_dispatch`)
+- **Target**: remote server via SSH
+- **Process**: `git pull` → `pnpm install` → `pnpm build` → `pm2 restart 3`
+
+> [!IMPORTANT]
+> The `SSH_PRIVATE_KEY` secret must be configured in the repository's GitHub Actions secrets.
+
+---
+
+## Context for AI Assistants
+
+Guidelines when working on this codebase:
+
+1. **Routing & Layouts** — Use Next.js **App Router** (`src/app`). New pages go in `page.tsx` files inside their route directory. Use Server Components by default; add `'use client'` only when client interactivity is needed.
+2. **Styling** — Primary engine is **Tailwind CSS v4**. Prefer utility classes over custom CSS. Use `clsx` + `tailwind-merge` for conditional class merging. MUI components are used for complex interactive widgets.
+3. **Forms & Validation** — Always use `react-hook-form` with `@hookform/resolvers/zod` and a Zod schema defined in `src/lib/validations/`.
+4. **Data Fetching** — Use the per-domain API modules in `src/lib/api/` (backed by the shared Axios instance in `src/lib/axios.ts`).
+5. **State Management** — `useState` / `useReducer` for local state; Context providers in `src/context/` for global state.
+6. **Imports** — Keep imports organized; follow the existing structure and patterns in the codebase.
+7. **Code Quality** — Keep components single-responsibility. Maintain accessible, responsive, modern UI. Use `@headlessui/react` for custom interactive primitives.
+8. **New API domains** — Add an API module in `src/lib/api/` and a matching Zod validation file in `src/lib/validations/`.

@@ -14,6 +14,8 @@ import {
   reactivateChannel,
   isDefaultChannel,
 } from "@/lib/api/channel";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 const formatDate = (iso: string | null) =>
   iso
@@ -34,6 +36,11 @@ export default function ChannelsPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const confirm = useConfirmDialog<{
+    channel: Channel;
+    action: "suspend" | "reactivate";
+  }>();
+
   const loadChannels = async () => {
     setLoading(true);
     try {
@@ -50,16 +57,9 @@ export default function ChannelsPage() {
     loadChannels();
   }, []);
 
-  const runStatusAction = async (
-    channel: Channel,
-    action: "suspend" | "reactivate",
-  ) => {
-    const message =
-      action === "suspend"
-        ? `Suspend "${channel.channel_name}"? All of its users are blocked immediately until it is reactivated.`
-        : `Reactivate "${channel.channel_name}"? Its users will be able to use the channel again.`;
-
-    if (!window.confirm(message)) return;
+  const runStatusAction = async () => {
+    if (!confirm.item) return;
+    const { channel, action } = confirm.item;
 
     setBusyId(channel.id);
     try {
@@ -74,6 +74,7 @@ export default function ChannelsPage() {
       setChannels((prev) =>
         prev.map((c) => (c.id === channel.id ? updated : c)),
       );
+      confirm.close();
     } catch (error) {
       // Surfaces backend messages like "Cannot suspend a cancelled channel".
       const err = error as { response?: { data?: { message?: string } } };
@@ -84,6 +85,8 @@ export default function ChannelsPage() {
       setBusyId(null);
     }
   };
+
+  const isSuspendAction = confirm.item?.action === "suspend";
 
   return (
     <div className="space-y-6">
@@ -181,7 +184,7 @@ export default function ChannelsPage() {
                           {canSuspend && (
                             <button
                               onClick={() =>
-                                runStatusAction(channel, "suspend")
+                                confirm.open({ channel, action: "suspend" })
                               }
                               disabled={busy}
                               className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
@@ -194,7 +197,7 @@ export default function ChannelsPage() {
                           {canReactivate && (
                             <button
                               onClick={() =>
-                                runStatusAction(channel, "reactivate")
+                                confirm.open({ channel, action: "reactivate" })
                               }
                               disabled={busy}
                               className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 disabled:text-gray-300 disabled:cursor-not-allowed text-sm font-medium"
@@ -213,6 +216,28 @@ export default function ChannelsPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirm.isOpen}
+        tone={isSuspendAction ? "warning" : "success"}
+        icon={
+          isSuspendAction
+            ? "mdi:pause-circle-outline"
+            : "mdi:play-circle-outline"
+        }
+        title={
+          isSuspendAction ? "Suspend this channel?" : "Reactivate this channel?"
+        }
+        highlight={confirm.item?.channel.channel_name}
+        description={
+          isSuspendAction
+            ? "All of its users are blocked immediately until the channel is reactivated."
+            : "Its users will be able to use the channel again."
+        }
+        confirmLabel={isSuspendAction ? "Suspend" : "Reactivate"}
+        loading={busyId !== null}
+        onConfirm={runStatusAction}
+        onClose={confirm.close}
+      />
     </div>
   );
 }

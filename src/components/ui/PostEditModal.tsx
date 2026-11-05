@@ -1,14 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Interview } from "@/lib/api/interview";
-import { toast } from "sonner";
+import {
+  FormModal,
+  FormModalField,
+  formInputClass,
+} from "@/components/ui/FormModal";
+
+const schema = z.object({
+  drive_link: z
+    .string()
+    .trim()
+    .min(1, "Please enter Google Drive link")
+    .url("Enter a valid link, e.g. https://drive.google.com/..."),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 interface PostEditModalProps {
   open: boolean;
   onClose: () => void;
   interview: Interview | null;
-  onSubmit: (id: string, drive_link: string) => void;
+  onSubmit: (id: string, drive_link: string) => void | Promise<void>;
 }
 
 export default function PostEditModal({
@@ -17,76 +34,54 @@ export default function PostEditModal({
   interview,
   onSubmit,
 }: PostEditModalProps) {
-  const [driveLink, setDriveLink] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { drive_link: "" },
+  });
 
   useEffect(() => {
-    if (open && interview) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDriveLink(interview.google_drive_link ?? "");
-    }
-  }, [open, interview]);
+    if (open) reset({ drive_link: interview?.google_drive_link ?? "" });
+  }, [open, interview, reset]);
 
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    if (open) window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const handleSubmit = () => {
+  const submit = handleSubmit(async (values) => {
     if (!interview) return;
-
-    if (!driveLink.trim()) {
-      toast.error("Please enter Google Drive link");
-      return;
-    }
-
-    onSubmit(interview.id, driveLink);
-  };
+    await onSubmit(interview.id, values.drive_link);
+  });
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onClose}
+    <FormModal
+      open={open}
+      icon="mdi:movie-edit-outline"
+      tone="primary"
+      title="Mark as Edited"
+      subtitle={
+        interview?.guest
+          ? `Interview with ${interview.guest.full_name}`
+          : undefined
+      }
+      loading={isSubmitting}
+      onSubmit={submit}
+      onClose={onClose}
     >
-      <div
-        className="bg-white rounded-xl p-6 w-[420px] space-y-5"
-        onClick={(e) => e.stopPropagation()}
+      <FormModalField
+        label="Google Drive Link"
+        htmlFor="drive_link"
+        error={errors.drive_link?.message}
       >
-        <h3 className="text-lg font-semibold">Edited</h3>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-700">Google Drive Link</label>
-
-          <input
-            type="url"
-            placeholder="https://drive.google.com/..."
-            value={driveLink}
-            onChange={(e) => setDriveLink(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 bg-gray-50"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-1 bg-white text-gray-600 cursor-pointer transition text-xs rounded-md border hover:scale-[0.96]"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-1 bg-blue-600 text-white cursor-pointer transition text-xs rounded-md hover:bg-blue-700 hover:scale-[0.96]"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+        <input
+          id="drive_link"
+          type="url"
+          autoFocus
+          placeholder="https://drive.google.com/..."
+          className={formInputClass(!!errors.drive_link)}
+          {...register("drive_link")}
+        />
+      </FormModalField>
+    </FormModal>
   );
 }
